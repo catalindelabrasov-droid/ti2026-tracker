@@ -17,8 +17,8 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-06-18T14:10:47.055834+00:00",
-    "dataSource": "Curated from official Valve announcements & PGL qualifier brackets",
+    "lastUpdated": "2026-06-18T22:31:50.137099+00:00",
+    "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
@@ -27,42 +27,52 @@
     "note": "Base $1.6M; grows with TI 2026 Compendium sales. Full distribution announced closer to the event.",
     "distribution": [
       {
-        "place": "1st",
+        "place": "1",
         "amount": null,
         "team": null
       },
       {
-        "place": "2nd",
+        "place": "2",
         "amount": null,
         "team": null
       },
       {
-        "place": "3rd",
+        "place": "3",
         "amount": null,
         "team": null
       },
       {
-        "place": "4th",
+        "place": "4",
         "amount": null,
         "team": null
       },
       {
-        "place": "5th-6th",
+        "place": "5-6",
         "amount": null,
         "team": null
       },
       {
-        "place": "7th-8th",
+        "place": "7-8",
         "amount": null,
         "team": null
       },
       {
-        "place": "9th-12th",
+        "place": "9-12",
         "amount": null,
         "team": null
       },
       {
-        "place": "13th-16th",
+        "place": "13-16",
+        "amount": null,
+        "team": null
+      },
+      {
+        "place": "17-18",
+        "amount": null,
+        "team": null
+      },
+      {
+        "place": "19-20",
         "amount": null,
         "team": null
       }
