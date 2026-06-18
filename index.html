@@ -627,7 +627,16 @@
       <div class="lg-panel" id="lgPanel"></div>
     </div>
   </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ----- Supabase backend (accounts + shared league) ------------------------
+const SUPABASE_URL = "https://hqpynfzatnmwvlxdfhsw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxcHluZnphdG5td3ZseGRmaHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzE0NjUsImV4cCI6MjA5NzM0NzQ2NX0.lVTsgb1DwTkzeb-G3403IGY3jWvFg4TNbetZR6ANkj0";
+// The anon key is safe to ship in the browser — Row-Level Security protects data.
+let SB = null;
+try { if (window.supabase) SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){ console.warn("Supabase init failed", e); }
+const SB_READY = () => !!SB;
+
 const LS_DATA="ti2026_data_override",LS_NOTIF="ti2026_notif_ids",LS_SEEN="ti2026_seen_scores";
 let DATA=null;
 let notifIds=new Set(JSON.parse(localStorage.getItem(LS_NOTIF)||"[]"));
@@ -1224,7 +1233,7 @@ function renderAuthArea(){
     let u={}; try{u=JSON.parse(raw);}catch(e){}
     const initial=(u.username||u.name||"?").trim().charAt(0).toUpperCase();
     area.innerHTML=`<span class="user-chip"><span class="av">${esc(initial)}</span>${esc(u.username||u.name||"Account")}<button class="signout" id="signoutBtn">Sign out</button></span>`;
-    $("#signoutBtn").addEventListener("click",()=>{localStorage.removeItem(LS_USER);renderAuthArea();});
+    $("#signoutBtn").addEventListener("click",async()=>{try{if(SB_READY())await SB.auth.signOut();}catch(e){}localStorage.removeItem(LS_USER);renderAuthArea();});
   }else{
     area.innerHTML=`<button class="tbtn" id="signinBtn">Sign in</button><button class="tbtn tbtn-accent" id="signupBtn">Sign up</button>`;
     $("#signinBtn").addEventListener("click",()=>openModal("signinModal"));
@@ -1276,21 +1285,32 @@ function showCheckEmail(email){
   const rb=$("#resendBtn"); if(rb) rb.addEventListener("click",()=>{rb.textContent="Email re-sent";rb.disabled=true;});
 }
 
-// When the user returns from clicking the email link (?confirmed=1), show a
-// success note and open Sign in. The backend should redirect to ...?confirmed=1.
-function handleConfirmationLanding(){
+// When the user returns from clicking the email link (?confirmed=1), Supabase
+// has already created a session — sync it into our local user and greet them.
+async function handleConfirmationLanding(){
   const params=new URLSearchParams(location.search);
-  if(params.get("confirmed")!=="1") return;
-  // promote any pending signup to a known account so sign-in recognizes them
-  const pending=localStorage.getItem(LS_PENDING);
-  let prefillId="";
-  if(pending){try{const d=JSON.parse(pending);prefillId=d.email||d.username||"";localStorage.removeItem(LS_PENDING);}catch(e){}}
-  // clean the URL so a refresh doesn't re-trigger
+  const isConfirmed=params.get("confirmed")==="1";
+  // Always try to restore an existing Supabase session (keeps refreshes logged in).
+  if(SB_READY()){
+    try{
+      const {data:{user}}=await SB.auth.getUser();
+      if(user){
+        localStorage.setItem(LS_USER,JSON.stringify({
+          username:(user.user_metadata&&user.user_metadata.username)||(user.email||"").split("@")[0],
+          email:user.email, name:(user.user_metadata&&user.user_metadata.name)||""
+        }));
+        renderAuthArea();
+        if(isConfirmed){ history.replaceState(null,"",location.pathname); toast("Email confirmed","You're signed in. Welcome!"); }
+        return;
+      }
+    }catch(e){}
+  }
+  if(!isConfirmed) return;
+  localStorage.removeItem(LS_PENDING);
   history.replaceState(null,"",location.pathname);
   openModal("signinModal");
   const ok=$("#signinOk");
   if(ok){ok.classList.add("show");ok.textContent="Email confirmed. Sign in to continue.";}
-  if(prefillId && $("#si_id")) $("#si_id").value=prefillId;
 }
 
 function wireAuth(){
@@ -1306,24 +1326,49 @@ function wireAuth(){
   document.querySelectorAll("[data-switch]").forEach(b=>b.addEventListener("click",()=>{
     openModal(b.getAttribute("data-switch")==="signup"?"signupModal":"signinModal");
   }));
-  $("#signupSubmit").addEventListener("click",()=>{
+  $("#signupSubmit").addEventListener("click",async()=>{
     const data=validateSignup(); if(!data)return;
-    // In a real build: POST to your auth API, which creates a pending account
-    // and emails a tokenized confirmation link (see email_confirmation_template.html).
-    // Until the backend exists, we store a "pending" record and show the
-    // check-your-inbox state so the flow is complete end to end.
-    localStorage.setItem(LS_PENDING,JSON.stringify(data));
-    showCheckEmail(data.email);
+    const pw=$("#su_pw").value;
+    const btn=$("#signupSubmit");
+    if(!SB_READY()){setErr("su_pw","Backend not reachable. Try again in a moment.");return;}
+    btn.disabled=true; const orig=btn.textContent; btn.textContent="Creating…";
+    try{
+      const {data:res,error}=await SB.auth.signUp({
+        email:data.email, password:pw,
+        options:{ data:{ username:data.username, name:data.name, phone:data.phone },
+                  emailRedirectTo: location.origin + "/?confirmed=1" }
+      });
+      if(error){ setErr("su_email", error.message||"Sign-up failed."); btn.disabled=false; btn.textContent=orig; return; }
+      // Save a profile row (username → user) so login-by-username works later.
+      if(res && res.user){
+        try{ await SB.from("profiles").insert({ id:res.user.id, username:data.username }); }catch(e){ /* may already exist */ }
+      }
+      localStorage.setItem(LS_PENDING,JSON.stringify(data));
+      showCheckEmail(data.email);
+    }catch(e){ setErr("su_email","Something went wrong. Try again."); btn.disabled=false; btn.textContent=orig; }
   });
-  $("#signinSubmit").addEventListener("click",()=>{
+  $("#signinSubmit").addEventListener("click",async()=>{
     const data=validateSignin(); if(!data)return;
-    const ok=$("#signinOk"); ok.classList.add("show");
-    ok.textContent="Signed in. (Demo session — real verification connects with the backend.)";
-    const existing=localStorage.getItem(LS_USER); let u=existing?JSON.parse(existing):{};
-    u.username=u.username||(data.id.includes("@")?data.id.split("@")[0]:data.id);
-    if(data.id.includes("@")) u.email=data.id;
-    localStorage.setItem(LS_USER,JSON.stringify(u));
-    setTimeout(()=>{closeModals();renderAuthArea();},1100);
+    if(!SB_READY()){setErr("si_pw","Backend not reachable. Try again in a moment.");return;}
+    const btn=$("#signinSubmit"); btn.disabled=true; const orig=btn.textContent; btn.textContent="Signing in…";
+    try{
+      // Resolve username → email if they didn't type an email.
+      let email=data.id;
+      if(!data.id.includes("@")){
+        const {data:em,error:rpcErr}=await SB.rpc("email_for_username",{ p_username:data.id });
+        if(rpcErr || !em){ setErr("si_id","Username login isn't set up yet — please sign in with your email."); btn.disabled=false; btn.textContent=orig; return; }
+        email=em;
+      }
+      const {data:s,error}=await SB.auth.signInWithPassword({ email, password:data.pw });
+      if(error){ setErr("si_pw", /confirm/i.test(error.message)?"Please confirm your email first (check your inbox).":(error.message||"Sign-in failed.")); btn.disabled=false; btn.textContent=orig; return; }
+      const u=s.user;
+      localStorage.setItem(LS_USER,JSON.stringify({
+        username:(u.user_metadata&&u.user_metadata.username)||email.split("@")[0],
+        email:u.email, name:(u.user_metadata&&u.user_metadata.name)||""
+      }));
+      const ok=$("#signinOk"); if(ok){ok.classList.add("show");ok.textContent="Signed in.";}
+      setTimeout(()=>{closeModals();renderAuthArea();},700);
+    }catch(e){ setErr("si_pw","Something went wrong. Try again."); btn.disabled=false; btn.textContent=orig; }
   });
   handleConfirmationLanding();
 }
@@ -1391,6 +1436,46 @@ let _lgTab="home";
 
 function lgLoad(){ try{return JSON.parse(localStorage.getItem(LS_LEAGUE)||"null");}catch(e){return null;} }
 function lgSave(s){ localStorage.setItem(LS_LEAGUE,JSON.stringify(s)); }
+
+// ----- Supabase-backed league sync ----------------------------------------
+// We keep a local mirror (lgSave) for instant rendering, and sync it to the DB
+// so friends on other devices share the same league. _lgBusy guards reloads.
+let _lgSyncing=false;
+async function lgCurrentUserId(){
+  if(!SB_READY()) return null;
+  try{ const {data:{user}}=await SB.auth.getUser(); return user?user.id:null; }catch(e){ return null; }
+}
+async function lgFetchActive(){
+  // Find the league this user belongs to (most recent) and hydrate the local
+  // mirror with its members, rules, my predictions, and everyone's locked picks.
+  if(!SB_READY()) return lgLoad();
+  const uid=await lgCurrentUserId(); if(!uid) return lgLoad();
+  try{
+    const {data:mem}=await SB.from("league_members").select("league_id").eq("user_id",uid).order("joined_at",{ascending:false}).limit(1);
+    if(!mem||!mem.length){ return null; }
+    const leagueId=mem[0].league_id;
+    const {data:lg}=await SB.from("leagues").select("*").eq("id",leagueId).maybeSingle();
+    if(!lg) return null;
+    const {data:members}=await SB.from("league_members").select("username,user_id").eq("league_id",leagueId);
+    const {data:myPreds}=await SB.from("predictions").select("*").eq("league_id",leagueId).eq("user_id",uid);
+    const {data:myOut}=await SB.from("outcome_predictions").select("*").eq("league_id",leagueId).eq("user_id",uid);
+    // leaderboard for ALL members comes from a server-side function (RLS-safe)
+    let board=[];
+    try{ const {data:lb}=await SB.rpc("league_leaderboard",{ p_league:leagueId }); board=lb||[]; }catch(e){ console.warn("leaderboard rpc missing",e); }
+    // shape into the structure the UI already uses
+    const me=(localStorage.getItem(LS_USER)?JSON.parse(localStorage.getItem(LS_USER)).username:null)||"You";
+    const predictions={}; (myPreds||[]).forEach(p=>{ predictions[p.match_id]={pick:p.pick,sa:p.score_a,sb:p.score_b,locked:p.locked}; });
+    const outcomes={}; (myOut||[]).forEach(o=>{ outcomes[o.kind]= (o.kind==="topFour")?{teams:o.value,locked:o.locked}:{pick:o.value,locked:o.locked}; });
+    const state={ id:leagueId, name:lg.name, code:lg.code, me, adminId:lg.admin_id,
+      admin:(members||[]).length?(members.find(x=>x.user_id===lg.admin_id)||{}).username:me,
+      members:(members||[]).map(m=>m.username),
+      rules:Object.keys(lg.rules||{}).length?lg.rules:{...DEFAULT_RULES},
+      predictions, outcomes, _uid:uid, otherPredictions:{}, board:board };
+    lgSave(state);
+    return state;
+  }catch(e){ console.warn("league fetch failed",e); return lgLoad(); }
+}
+
 // Safe rule accessors: rules can be {on,pts} objects or (legacy) plain numbers.
 function rPts(r,key){ const v=r&&r[key]; if(v==null)return 0; if(typeof v==="number")return v; return (v.on!==false)?(v.pts||0):0; }
 function rOn(r,key){ const v=r&&r[key]; if(v==null)return false; if(typeof v==="number")return v>0; return !!v.on; }
@@ -1407,10 +1492,11 @@ function lgCurrentEmail(){
 function lgCode(){ return Math.random().toString(36).slice(2,7).toUpperCase(); }
 function avatarColor(name){let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%360;return `hsl(${h} 45% 38%)`;}
 
-function openLeague(){
+async function openLeague(){
   document.body.classList.add("league-open");
   window.scrollTo(0,0);
-  renderLeague();
+  renderLeague(); // instant from local mirror
+  if(SB_READY()){ try{ await lgFetchActive(); renderLeague(); }catch(e){} } // then sync from DB
 }
 function closeLeague(){ document.body.classList.remove("league-open"); }
 
@@ -1420,10 +1506,31 @@ function renderLeague(){
   const lg=lgLoad();
   if(!lg){ panel.innerHTML=lgCreateOrJoin(); wireLeaguePanel(); return; }
   if(_lgTab==="home") panel.innerHTML=lgHome(lg);
-  else if(_lgTab==="predict") panel.innerHTML=lgPredictions(lg);
+  else if(_lgTab==="predict"){ panel.innerHTML=lgPredictions(lg); lgLoadOthersForLocked(lg); }
   else if(_lgTab==="leaderboard") panel.innerHTML=lgLeaderboard(lg);
   else if(_lgTab==="rules") panel.innerHTML=lgRulesView(lg);
   wireLeaguePanel();
+}
+
+// For each match the user has LOCKED, pull everyone else's picks via the
+// server function (RLS-safe reveal-after-lock), then refresh the view once.
+let _othersFetching=false;
+async function lgLoadOthersForLocked(lg){
+  if(!SB_READY() || !lg.id || _othersFetching) return;
+  const locked=Object.entries(lg.predictions||{}).filter(([,p])=>p.locked).map(([mid])=>mid);
+  if(!locked.length) return;
+  _othersFetching=true;
+  try{
+    const out={};
+    for(const mid of locked){
+      const {data}=await SB.rpc("get_match_predictions",{ p_league:lg.id, p_match:mid });
+      if(data && data.length){
+        out[mid]=data.filter(r=>r.username!==lg.me).map(r=>({name:r.username,pick:r.pick,sa:r.score_a,sb:r.score_b}));
+      }
+    }
+    const s=lgLoad(); if(s){ s.otherPredictions=out; lgSave(s); if(_lgTab==="predict") { const p=$("#lgPanel"); if(p){ p.innerHTML=lgPredictions(s); wireLeaguePanel(); } } }
+  }catch(e){ console.warn("others fetch failed",e); }
+  finally{ _othersFetching=false; }
 }
 
 function lgCreateOrJoin(){
@@ -1573,7 +1680,13 @@ function lgOthersBlock(lg,m,unlockedToSee){
 }
 
 function lgLeaderboard(lg){
-  const board=lgComputeLeaderboard(lg);
+  // Prefer the server-computed board (scores ALL members); fall back to local.
+  let board;
+  if(lg.board && lg.board.length){
+    board=lg.board.map(p=>({name:p.username,points:p.points,correct:p.correct,scored:p.scored}));
+  }else{
+    board=lgComputeLeaderboard(lg);
+  }
   if(!board.length) return `<div class="lg-empty"><div class="big">🏆</div><h3>Leaderboard is empty</h3><div class="hint">Points appear here as matches finish and predictions are scored.</div></div>`;
   const rows=board.map((p,i)=>`<tr class="lb-row ${i===0?'top1':''} ${p.name===lg.me?'lb-you':''}">
     <td class="lb-rank"><span class="lb-place">${i+1}</span>${i===0?' 🥇':i===1?' 🥈':i===2?' 🥉':''}</td>
@@ -1704,24 +1817,51 @@ function wireLeaguePanel(){
   const gsi=$("#lgGoSignin"); if(gsi) gsi.onclick=()=>{closeLeague();openModal("signinModal");};
   const gsu=$("#lgGoSignup"); if(gsu) gsu.onclick=()=>{closeLeague();openModal("signupModal");};
   // create / join
-  const cb=$("#lgCreateBtn"); if(cb) cb.onclick=()=>{
+  const cb=$("#lgCreateBtn"); if(cb) cb.onclick=async()=>{
     const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to create a league.");return;}
     const name=($("#lgNewName").value||"").trim()||"My League";
     const code=lgCode();
-    const seeded=lgSeedOthers();
-    lgSave({name,code,me,admin:me,members:[me,...seeded.names],rules:{...DEFAULT_RULES},predictions:{},otherPredictions:seeded.preds,outcomes:{}});
-    const email=lgCurrentEmail();
-    toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
+    if(SB_READY()){
+      const uid=await lgCurrentUserId();
+      if(!uid){toast("Sign in first","Please sign in again to create a league.");return;}
+      cb.disabled=true; const o=cb.textContent; cb.textContent="Creating…";
+      try{
+        const {data:lg,error}=await SB.from("leagues").insert({name,code,admin_id:uid,rules:DEFAULT_RULES}).select().maybeSingle();
+        if(error) throw error;
+        await SB.from("league_members").insert({league_id:lg.id,user_id:uid,username:me});
+        await lgFetchActive();
+        const email=lgCurrentEmail();
+        toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
+        _lgTab="home"; renderLeague();
+      }catch(e){ console.warn(e); toast("Couldn't create league", e.message||"Try again."); cb.disabled=false; cb.textContent=o; }
+      return;
+    }
+    // offline fallback
+    lgSave({name,code,me,admin:me,members:[me],rules:{...DEFAULT_RULES},predictions:{},otherPredictions:{},outcomes:{}});
+    toast("League created (local)",`Code ${code}. Sign-in/online sync needed to share it.`);
     _lgTab="home"; renderLeague();
   };
-  const jb=$("#lgJoinBtn"); if(jb) jb.onclick=()=>{
+  const jb=$("#lgJoinBtn"); if(jb) jb.onclick=async()=>{
     const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to join a league.");return;}
     const code=($("#lgJoinCode").value||"").trim().toUpperCase();
     if(code.length<4){toast("Invalid code","Enter the 5-character code your friend shared.");return;}
-    const seeded=lgSeedOthers();
-    lgSave({name:"Joined League ("+code+")",code,me,admin:seeded.names[0]||me,members:[seeded.names[0]||"Host",me,...seeded.names.slice(1)],rules:{...DEFAULT_RULES},predictions:{},otherPredictions:seeded.preds,outcomes:{}});
-    _lgTab="home"; renderLeague();
-    toast("Joined (local)","Real cross-device joining activates with the backend.");
+    if(SB_READY()){
+      const uid=await lgCurrentUserId();
+      if(!uid){toast("Sign in first","Please sign in again to join.");return;}
+      jb.disabled=true; const o=jb.textContent; jb.textContent="Joining…";
+      try{
+        const {data:lg,error}=await SB.from("leagues").select("id").eq("code",code).maybeSingle();
+        if(error) throw error;
+        if(!lg){ toast("No league found","Double-check the code with your friend."); jb.disabled=false; jb.textContent=o; return; }
+        const {error:jerr}=await SB.from("league_members").insert({league_id:lg.id,user_id:uid,username:me});
+        if(jerr && !/duplicate|unique/i.test(jerr.message)) throw jerr;
+        await lgFetchActive();
+        toast("Joined!","You're in. Make your predictions and climb the board.");
+        _lgTab="home"; renderLeague();
+      }catch(e){ console.warn(e); toast("Couldn't join", e.message||"Try again."); jb.disabled=false; jb.textContent=o; }
+      return;
+    }
+    toast("Sign in needed","Joining a shared league requires being signed in online.");
   };
   const cc=$("#lgCopyCode"); if(cc) cc.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(lg.code);cc.textContent="Copied!";setTimeout(()=>cc.textContent="Copy",1200);};
   const gp=$("#lgGoPredict"); if(gp) gp.onclick=()=>{_lgTab="predict";renderLeague();};
@@ -1732,55 +1872,68 @@ function wireLeaguePanel(){
     t.classList.add("sel");
   });
   // lock prediction
-  document.querySelectorAll("[data-lock]").forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll("[data-lock]").forEach(btn=>btn.onclick=async()=>{
     const mid=btn.getAttribute("data-lock");
     const sel=document.querySelector(`.pred-team.sel[data-mid="${cssEscape(mid)}"]`);
     const sa=$("#sa_"+CSS.escape(mid)).value, sb=$("#sb_"+CSS.escape(mid)).value;
     if(!sel){toast("Pick a winner","Choose which team you think will win.");return;}
     if(sa===""||sb===""){toast("Enter a score","Add your predicted exact score, e.g. 2–1.");return;}
-    const s=lgLoad();
-    s.predictions=s.predictions||{};
-    s.predictions[mid]={pick:sel.getAttribute("data-pick"),sa:+sa,sb:+sb,locked:true,at:Date.now()};
+    const pick=sel.getAttribute("data-pick");
+    const s=lgLoad(); s.predictions=s.predictions||{};
+    s.predictions[mid]={pick,sa:+sa,sb:+sb,locked:true,at:Date.now()};
     lgSave(s);
+    if(SB_READY() && s.id){
+      const uid=s._uid||await lgCurrentUserId();
+      try{ await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:mid,pick,score_a:+sa,score_b:+sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"}); }
+      catch(e){ console.warn("save prediction failed",e); }
+    }
     toast("Prediction locked","It's final now — and you can see others' picks for this match.");
     renderLeague();
   });
   // lock champion pick
-  const lc=$("#lgLockChamp"); if(lc) lc.onclick=()=>{
+  const lc=$("#lgLockChamp"); if(lc) lc.onclick=async()=>{
     const pick=($("#lgChampSel").value||"").trim();
     if(!pick){toast("Pick a team","Choose who you think wins the whole thing.");return;}
     const s=lgLoad(); s.outcomes=s.outcomes||{};
     s.outcomes.champion={pick,locked:true,at:Date.now()};
-    lgSave(s); toast("Champion locked",`${pick} for the Aegis — final pick.`); renderLeague();
+    lgSave(s);
+    if(SB_READY() && s.id){ const uid=s._uid||await lgCurrentUserId();
+      try{ await SB.from("outcome_predictions").upsert({league_id:s.id,user_id:uid,kind:"champion",value:pick,locked:true},{onConflict:"league_id,user_id,kind"}); }catch(e){console.warn(e);} }
+    toast("Champion locked",`${pick} for the Aegis — final pick.`); renderLeague();
   };
   // lock top 4
-  const lt=$("#lgLockT4"); if(lt) lt.onclick=()=>{
+  const lt=$("#lgLockT4"); if(lt) lt.onclick=async()=>{
     const picks=[...document.querySelectorAll(".lg-t4")].map(s=>s.value).filter(Boolean);
     const uniq=[...new Set(picks)];
     if(uniq.length<4){toast("Pick four teams","Select four different teams for the top 4.");return;}
     const s=lgLoad(); s.outcomes=s.outcomes||{};
     s.outcomes.topFour={teams:uniq,locked:true,at:Date.now()};
-    lgSave(s); toast("Top 4 locked","Your top-4 picks are final."); renderLeague();
+    lgSave(s);
+    if(SB_READY() && s.id){ const uid=s._uid||await lgCurrentUserId();
+      try{ await SB.from("outcome_predictions").upsert({league_id:s.id,user_id:uid,kind:"topFour",value:uniq,locked:true},{onConflict:"league_id,user_id,kind"}); }catch(e){console.warn(e);} }
+    toast("Top 4 locked","Your top-4 picks are final."); renderLeague();
   };
   // save rules (new nested structure: toggles, points, mode, lock time, tie-breakers)
-  const saveRules=()=>{
+  const saveRules=async()=>{
     const s=lgLoad();
-    // toggles
     document.querySelectorAll("[data-ruleon]").forEach(inp=>{
       const k=inp.getAttribute("data-ruleon");
       if(typeof s.rules[k]!=="object"||s.rules[k]===null) s.rules[k]={on:false,pts:(typeof s.rules[k]==="number"?s.rules[k]:0)};
       s.rules[k].on=inp.checked;
     });
-    // points
     document.querySelectorAll("[data-rulepts]").forEach(inp=>{
       const k=inp.getAttribute("data-rulepts");
       if(typeof s.rules[k]!=="object"||s.rules[k]===null) s.rules[k]={on:true,pts:0};
       s.rules[k].pts=+inp.value||0;
     });
-    // lock minutes
     const lm=document.querySelector("[data-rulemin]"); if(lm) s.rules.lockLeadMs=Math.max(1,+lm.value||60)*60000;
-    // scoring mode is set on click (below); just persist whatever's current
-    lgSave(s); toast("Rules saved","Your league rules are updated."); renderLeague();
+    lgSave(s);
+    if(SB_READY() && s.id){
+      try{ const {error}=await SB.from("leagues").update({rules:s.rules}).eq("id",s.id);
+        if(error){ toast("Saved locally","Only the admin can change shared rules."); }
+      }catch(e){ console.warn(e); }
+    }
+    toast("Rules saved","Your league rules are updated."); renderLeague();
   };
   const sr=$("#lgSaveRules"); if(sr) sr.onclick=saveRules;
   const sr2=$("#lgSaveRules2"); if(sr2) sr2.onclick=saveRules;
