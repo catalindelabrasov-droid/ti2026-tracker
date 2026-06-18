@@ -1,0 +1,1205 @@
+{
+  "meta": {
+    "title": "The International 2026",
+    "year": "2026",
+    "shortName": "TI 15",
+    "edition": 15,
+    "location": "Shanghai, China",
+    "venue": "Oriental Sports Center",
+    "organizers": "Valve / PGL",
+    "basePrizePool": 1600000,
+    "currency": "USD",
+    "teamCount": 16,
+    "dates": {
+      "openQualifiers": "2026-06-09 to 2026-06-12",
+      "regionalQualifiers": "2026-06-15 to 2026-06-28",
+      "groupStage": "2026-08-13 to 2026-08-16",
+      "mainEvent": "2026-08-20 to 2026-08-23"
+    },
+    "lastUpdated": "2026-08-21T14:30:00+00:00",
+    "dataSource": "DEMO DATA — sample results to preview the app. Replace with real data via auto-update.",
+    "demo": true,
+    "officialUrl": "https://www.dota2.com/esports"
+  },
+  "prizePool": {
+    "total": 1600000,
+    "distribution": [
+      {
+        "place": "1st",
+        "amount": 544000,
+        "team": null
+      },
+      {
+        "place": "2nd",
+        "amount": 256000,
+        "team": null
+      },
+      {
+        "place": "3rd",
+        "amount": 184000,
+        "team": null
+      },
+      {
+        "place": "4th",
+        "amount": 128000,
+        "team": null
+      },
+      {
+        "place": "5th-6th",
+        "amount": 96000,
+        "team": null
+      },
+      {
+        "place": "7th-8th",
+        "amount": 64000,
+        "team": null
+      },
+      {
+        "place": "9th-12th",
+        "amount": 32000,
+        "team": null
+      },
+      {
+        "place": "13th-16th",
+        "amount": 16000,
+        "team": null
+      }
+    ]
+  },
+  "qualifiers": [
+    {
+      "region": "Western Europe",
+      "status": "completed",
+      "winners": [
+        "Team Falcons",
+        "Tundra Esports"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Team Falcons",
+        "Tundra Esports",
+        "Gaimin Gladiators",
+        "Team Liquid",
+        "Quest Esports",
+        "Entity"
+      ],
+      "matches": [
+        {
+          "id": "weq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Falcons",
+            "score": 3
+          },
+          "teamB": {
+            "name": "Tundra Esports",
+            "score": 1
+          }
+        },
+        {
+          "id": "weq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Falcons",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Gaimin Gladiators",
+            "score": 0
+          }
+        },
+        {
+          "id": "weq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Tundra Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Liquid",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "Eastern Europe",
+      "status": "completed",
+      "winners": [
+        "Team Spirit",
+        "PARIVISION"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Team Spirit",
+        "PARIVISION",
+        "Aurora Gaming",
+        "BetBoom Team",
+        "Natus Vincere",
+        "9Pandas"
+      ],
+      "matches": [
+        {
+          "id": "eeq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": 3
+          },
+          "teamB": {
+            "name": "PARIVISION",
+            "score": 2
+          }
+        },
+        {
+          "id": "eeq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": 2
+          },
+          "teamB": {
+            "name": "BetBoom Team",
+            "score": 1
+          }
+        },
+        {
+          "id": "eeq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "PARIVISION",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Aurora Gaming",
+            "score": 0
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "China",
+      "status": "ongoing",
+      "winners": [
+        "Xtreme Gaming"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Xtreme Gaming",
+        "Team Tidebound",
+        "Azure Ray",
+        "Yakult Brothers",
+        "LGD Gaming",
+        "Invictus Gaming"
+      ],
+      "matches": [
+        {
+          "id": "cnq_f",
+          "stage": "Final",
+          "bestOf": 5,
+          "status": "live",
+          "scheduled": "2026-06-27T10:00:00+08:00",
+          "teamA": {
+            "name": "Xtreme Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Tidebound",
+            "score": 1
+          }
+        },
+        {
+          "id": "cnq_lb",
+          "stage": "Lower Final",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-28T12:00:00+08:00",
+          "teamA": {
+            "name": "Azure Ray",
+            "score": null
+          },
+          "teamB": {
+            "name": "LGD Gaming",
+            "score": null
+          }
+        },
+        {
+          "id": "cnq_sf1",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "Xtreme Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "LGD Gaming",
+            "score": 1
+          }
+        },
+        {
+          "id": "cnq_sf2",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "Team Tidebound",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Azure Ray",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "Southeast Asia",
+      "status": "ongoing",
+      "winners": [
+        "BOOM Esports"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "BOOM Esports",
+        "Talon Esports",
+        "Team SMG",
+        "Bleed Esports",
+        "Fnatic",
+        "Geek Slate"
+      ],
+      "matches": [
+        {
+          "id": "seaq_f",
+          "stage": "Final",
+          "bestOf": 5,
+          "status": "upcoming",
+          "scheduled": "2026-06-28T16:00:00+07:00",
+          "teamA": {
+            "name": "BOOM Esports",
+            "score": null
+          },
+          "teamB": {
+            "name": "Talon Esports",
+            "score": null
+          }
+        },
+        {
+          "id": "seaq_sf1",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "BOOM Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Fnatic",
+            "score": 0
+          }
+        },
+        {
+          "id": "seaq_sf2",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "Talon Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team SMG",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "North America",
+      "status": "completed",
+      "winners": [
+        "Shopify Rebellion",
+        "nouns"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Shopify Rebellion",
+        "nouns",
+        "TSM",
+        "Wildcard",
+        "Coal Esports",
+        "M80"
+      ],
+      "matches": [
+        {
+          "id": "naq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "Shopify Rebellion",
+            "score": 3
+          },
+          "teamB": {
+            "name": "nouns",
+            "score": 1
+          }
+        },
+        {
+          "id": "naq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Shopify Rebellion",
+            "score": 2
+          },
+          "teamB": {
+            "name": "TSM",
+            "score": 0
+          }
+        },
+        {
+          "id": "naq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "nouns",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Wildcard",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "South America",
+      "status": "completed",
+      "winners": [
+        "beastcoast",
+        "HEROIC"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "beastcoast",
+        "HEROIC",
+        "Evil Geniuses",
+        "boom (SA)",
+        "Infinity",
+        "Hokori"
+      ],
+      "matches": [
+        {
+          "id": "saq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "beastcoast",
+            "score": 3
+          },
+          "teamB": {
+            "name": "HEROIC",
+            "score": 2
+          }
+        },
+        {
+          "id": "saq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "beastcoast",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Evil Geniuses",
+            "score": 1
+          }
+        },
+        {
+          "id": "saq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "HEROIC",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Infinity",
+            "score": 0
+          }
+        }
+      ],
+      "slots": 2
+    }
+  ],
+  "teams": [
+    {
+      "name": "Team Falcons",
+      "region": "Western Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "skiter",
+          "role": "Carry"
+        },
+        {
+          "ign": "Malr1ne",
+          "role": "Mid"
+        },
+        {
+          "ign": "ATF",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Cr1t-",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Sneyking",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "Heen"
+    },
+    {
+      "name": "Tundra Esports",
+      "region": "Western Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Crystallis",
+          "role": "Carry"
+        },
+        {
+          "ign": "bzm",
+          "role": "Mid"
+        },
+        {
+          "ign": "Saksa",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Pure",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Whitemon",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Team Spirit",
+      "region": "Eastern Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Yatoro",
+          "role": "Carry"
+        },
+        {
+          "ign": "Larl",
+          "role": "Mid"
+        },
+        {
+          "ign": "Collapse",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Mira",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Miposhka",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "Silent"
+    },
+    {
+      "name": "PARIVISION",
+      "region": "Eastern Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Pure~",
+          "role": "Carry"
+        },
+        {
+          "ign": "gpk",
+          "role": "Mid"
+        },
+        {
+          "ign": "DM",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Save-",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Dukalis",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Xtreme Gaming",
+      "region": "China",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Ame",
+          "role": "Carry"
+        },
+        {
+          "ign": "Xm",
+          "role": "Mid"
+        },
+        {
+          "ign": "xNova",
+          "role": "Offlane"
+        },
+        {
+          "ign": "XinQ",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Xxs",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Team Tidebound",
+      "region": "China",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Erika",
+          "role": "Carry"
+        },
+        {
+          "ign": "Setsu",
+          "role": "Mid"
+        },
+        {
+          "ign": "Yuma",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Doinb",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Funn1k",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "BOOM Esports",
+      "region": "Southeast Asia",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Jhocam",
+          "role": "Carry"
+        },
+        {
+          "ign": "Tims",
+          "role": "Mid"
+        },
+        {
+          "ign": "Saberlight",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Fbz",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Hyde",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Talon Esports",
+      "region": "Southeast Asia",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "23savage",
+          "role": "Carry"
+        },
+        {
+          "ign": "Mikoto",
+          "role": "Mid"
+        },
+        {
+          "ign": "JACKKY",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Q",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Oli",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Shopify Rebellion",
+      "region": "North America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Arteezy",
+          "role": "Carry"
+        },
+        {
+          "ign": "Abed",
+          "role": "Mid"
+        },
+        {
+          "ign": "SabeRLight~",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Ceb",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Yamsun",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "nouns",
+      "region": "North America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Pakazs",
+          "role": "Carry"
+        },
+        {
+          "ign": "Yopaj",
+          "role": "Mid"
+        },
+        {
+          "ign": "tlathjust",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Husky",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Wisper",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "beastcoast",
+      "region": "South America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Wisper",
+          "role": "Carry"
+        },
+        {
+          "ign": "Parker",
+          "role": "Mid"
+        },
+        {
+          "ign": "Scofield",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Chris Luck",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "K1",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "HEROIC",
+      "region": "South America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Frank",
+          "role": "Carry"
+        },
+        {
+          "ign": "Chris Luck",
+          "role": "Mid"
+        },
+        {
+          "ign": "Pba",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Matthew",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Mnz",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Gaimin Gladiators",
+      "region": "Western Europe",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Dyrachyo",
+          "role": "Carry"
+        },
+        {
+          "ign": "Quinn",
+          "role": "Mid"
+        },
+        {
+          "ign": "Ace",
+          "role": "Offlane"
+        },
+        {
+          "ign": "tOfu",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Seleri",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Team Liquid",
+      "region": "Western Europe",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "qojqva",
+          "role": "Carry"
+        },
+        {
+          "ign": "Nisha",
+          "role": "Mid"
+        },
+        {
+          "ign": "33",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Boxi",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Insania",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "Blitz"
+    },
+    {
+      "name": "Aurora Gaming",
+      "region": "Eastern Europe",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Crystallis",
+          "role": "Carry"
+        },
+        {
+          "ign": "Ato",
+          "role": "Mid"
+        },
+        {
+          "ign": "Nine",
+          "role": "Offlane"
+        },
+        {
+          "ign": "TORONTOTOKYO",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Kataomi",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Azure Ray",
+      "region": "China",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Somnus",
+          "role": "Carry"
+        },
+        {
+          "ign": "Beyond",
+          "role": "Mid"
+        },
+        {
+          "ign": "fy",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Fade",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "planet",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    }
+  ],
+  "groupStage": {
+    "format": "Swiss-system (16 teams)",
+    "note": "Top 8 advance to the Main Event playoffs. Bottom 8 are eliminated.",
+    "standings": [
+      {
+        "team": "Team Falcons",
+        "wins": 3,
+        "losses": 0,
+        "status": "advanced"
+      },
+      {
+        "team": "Xtreme Gaming",
+        "wins": 3,
+        "losses": 1,
+        "status": "advanced"
+      },
+      {
+        "team": "Team Spirit",
+        "wins": 3,
+        "losses": 1,
+        "status": "advanced"
+      },
+      {
+        "team": "Tundra Esports",
+        "wins": 3,
+        "losses": 1,
+        "status": "advanced"
+      },
+      {
+        "team": "Team Liquid",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "PARIVISION",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "Team Tidebound",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "BOOM Esports",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Talon Esports",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Aurora Gaming",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Shopify Rebellion",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Azure Ray",
+        "wins": 1,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "beastcoast",
+        "wins": 1,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "nouns",
+        "wins": 0,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "HEROIC",
+        "wins": 0,
+        "losses": 3,
+        "status": "eliminated"
+      }
+    ]
+  },
+  "bracket": {
+    "format": "Double elimination — top 8 from the group stage",
+    "rounds": {
+      "upper": [
+        {
+          "name": "Upper Quarterfinals",
+          "matches": [
+            {
+              "id": "ubqf1",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Team Falcons",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Gaimin Gladiators",
+                "score": 0
+              }
+            },
+            {
+              "id": "ubqf2",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Xtreme Gaming",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Team Tidebound",
+                "score": 1
+              }
+            },
+            {
+              "id": "ubqf3",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Team Spirit",
+                "score": 2
+              },
+              "teamB": {
+                "name": "PARIVISION",
+                "score": 1
+              }
+            },
+            {
+              "id": "ubqf4",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Tundra Esports",
+                "score": 1
+              },
+              "teamB": {
+                "name": "Team Liquid",
+                "score": 2
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upper Semifinals",
+          "matches": [
+            {
+              "id": "ubsf1",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Team Falcons",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Xtreme Gaming",
+                "score": 1
+              }
+            },
+            {
+              "id": "ubsf2",
+              "bestOf": 3,
+              "status": "live",
+              "teamA": {
+                "name": "Team Spirit",
+                "score": 1
+              },
+              "teamB": {
+                "name": "Team Liquid",
+                "score": 1
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        },
+        {
+          "name": "Upper Final",
+          "matches": [
+            {
+              "id": "ubf1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": "2026-08-22T12:00:00+00:00",
+              "teamA": {
+                "name": "Team Falcons",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        }
+      ],
+      "lower": [
+        {
+          "name": "Lower Round 1",
+          "matches": [
+            {
+              "id": "lbr1m1",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Gaimin Gladiators",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Team Tidebound",
+                "score": 0
+              }
+            },
+            {
+              "id": "lbr1m2",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "PARIVISION",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Tundra Esports",
+                "score": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lower Round 2",
+          "matches": [
+            {
+              "id": "lbr2m1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": "2026-08-22T15:00:00+00:00",
+              "teamA": {
+                "name": "Gaimin Gladiators",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        },
+        {
+          "name": "Lower Final",
+          "matches": [
+            {
+              "id": "lbf1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": "2026-08-23T10:00:00+00:00",
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        }
+      ]
+    },
+    "grandFinal": {
+      "id": "gf",
+      "bestOf": 5,
+      "status": "upcoming",
+      "scheduled": "2026-08-23T13:00:00+00:00",
+      "teamA": {
+        "name": "TBD",
+        "score": null
+      },
+      "teamB": {
+        "name": "TBD",
+        "score": null
+      },
+      "streamUrl": "https://www.twitch.tv/dota2ti"
+    }
+  },
+  "logos": {
+    "Team Falcons": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23d9a441'/%3E%3Ctext x='20' y='27' font-family='Arial' font-size='20' font-weight='bold' text-anchor='middle' fill='%230b0e13'%3ETF%3C/text%3E%3C/svg%3E"
+  }
+}
