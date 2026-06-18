@@ -363,6 +363,18 @@
   .lg-field label{display:block;font-size:12px;font-weight:600;color:var(--ink-dim);margin-bottom:6px}
   .lg-field input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-size:15px;padding:11px 13px;outline:none}
   .lg-field input:focus{border-color:var(--aegis)}
+  /* league switcher + join/create */
+  .lg-switchbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .lg-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .lg-chip{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:13px;letter-spacing:.03em;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:7px 15px;transition:.15s}
+  .lg-chip:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .lg-chip.on{background:rgba(217,164,65,.14);color:var(--aegis);border-color:var(--aegis)}
+  .lg-switchactions{display:flex;gap:8px}
+  .lg-mini{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.04em;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 13px;transition:.15s}
+  .lg-mini:hover{color:var(--aegis);border-color:var(--aegis)}
+  .lg-preview{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:14px}
+  .lg-preview h4{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:17px;margin-bottom:4px}
+  .lg-preview .meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint)}
   .vtoggle{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);border:1px solid var(--line);border-radius:4px;padding:4px 9px;transition:.15s}
   .vtoggle:hover{color:var(--ink);border-color:var(--ink-faint)}
   .vtoggle.on{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
@@ -606,6 +618,17 @@
     <div class="wrap">
       <button class="rp-back" id="teamBack">&larr; Back</button>
       <div id="teamPageBody" style="padding-bottom:60px"></div>
+    </div>
+  </div>
+
+  <!-- Join / Create league modal -->
+  <div class="modal" id="leagueModal">
+    <div class="modal-card" style="max-width:460px">
+      <div class="modal-head">
+        <div><h3 id="lgModalTitle">Join a league</h3></div>
+        <button class="x" data-close="leagueModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="leagueModalBody"></div>
     </div>
   </div>
 
@@ -1445,24 +1468,41 @@ async function lgCurrentUserId(){
   if(!SB_READY()) return null;
   try{ const {data:{user}}=await SB.auth.getUser(); return user?user.id:null; }catch(e){ return null; }
 }
+const LS_ACTIVE="ti2026_active_league";
+async function lgFetchList(){
+  // Return all leagues the user belongs to: [{id,name,code,admin_id}]
+  if(!SB_READY()) return [];
+  const uid=await lgCurrentUserId(); if(!uid) return [];
+  try{
+    const {data:mem}=await SB.from("league_members").select("league_id,joined_at").eq("user_id",uid).order("joined_at",{ascending:false});
+    if(!mem||!mem.length) return [];
+    const ids=mem.map(m=>m.league_id);
+    const {data:lgs}=await SB.from("leagues").select("id,name,code,admin_id").in("id",ids);
+    // keep them in joined order
+    const byId={}; (lgs||[]).forEach(l=>byId[l.id]=l);
+    return ids.map(id=>byId[id]).filter(Boolean);
+  }catch(e){ console.warn("league list failed",e); return []; }
+}
+function lgActiveId(){ return localStorage.getItem(LS_ACTIVE)||null; }
+function lgSetActive(id){ if(id) localStorage.setItem(LS_ACTIVE,id); }
 async function lgFetchActive(){
-  // Find the league this user belongs to (most recent) and hydrate the local
-  // mirror with its members, rules, my predictions, and everyone's locked picks.
+  // Hydrate the ACTIVE league (or the most recent if none chosen) into the
+  // local mirror: members, rules, my predictions, leaderboard.
   if(!SB_READY()) return lgLoad();
   const uid=await lgCurrentUserId(); if(!uid) return lgLoad();
   try{
-    const {data:mem}=await SB.from("league_members").select("league_id").eq("user_id",uid).order("joined_at",{ascending:false}).limit(1);
-    if(!mem||!mem.length){ return null; }
-    const leagueId=mem[0].league_id;
+    const list=await lgFetchList();
+    if(!list.length){ localStorage.removeItem(LS_LEAGUE); return null; }
+    let leagueId=lgActiveId();
+    if(!leagueId || !list.some(l=>l.id===leagueId)) leagueId=list[0].id; // default newest
+    lgSetActive(leagueId);
     const {data:lg}=await SB.from("leagues").select("*").eq("id",leagueId).maybeSingle();
     if(!lg) return null;
     const {data:members}=await SB.from("league_members").select("username,user_id").eq("league_id",leagueId);
     const {data:myPreds}=await SB.from("predictions").select("*").eq("league_id",leagueId).eq("user_id",uid);
     const {data:myOut}=await SB.from("outcome_predictions").select("*").eq("league_id",leagueId).eq("user_id",uid);
-    // leaderboard for ALL members comes from a server-side function (RLS-safe)
     let board=[];
     try{ const {data:lb}=await SB.rpc("league_leaderboard",{ p_league:leagueId }); board=lb||[]; }catch(e){ console.warn("leaderboard rpc missing",e); }
-    // shape into the structure the UI already uses
     const me=(localStorage.getItem(LS_USER)?JSON.parse(localStorage.getItem(LS_USER)).username:null)||"You";
     const predictions={}; (myPreds||[]).forEach(p=>{ predictions[p.match_id]={pick:p.pick,sa:p.score_a,sb:p.score_b,locked:p.locked}; });
     const outcomes={}; (myOut||[]).forEach(o=>{ outcomes[o.kind]= (o.kind==="topFour")?{teams:o.value,locked:o.locked}:{pick:o.value,locked:o.locked}; });
@@ -1470,11 +1510,18 @@ async function lgFetchActive(){
       admin:(members||[]).length?(members.find(x=>x.user_id===lg.admin_id)||{}).username:me,
       members:(members||[]).map(m=>m.username),
       rules:Object.keys(lg.rules||{}).length?lg.rules:{...DEFAULT_RULES},
-      predictions, outcomes, _uid:uid, otherPredictions:{}, board:board };
+      predictions, outcomes, _uid:uid, otherPredictions:{}, board:board,
+      leagueList:list };
     lgSave(state);
     return state;
   }catch(e){ console.warn("league fetch failed",e); return lgLoad(); }
 }
+async function lgSwitchTo(id){
+  lgSetActive(id);
+  if(SB_READY()){ await lgFetchActive(); }
+  _lgTab="home"; renderLeague();
+}
+
 
 // Safe rule accessors: rules can be {on,pts} objects or (legacy) plain numbers.
 function rPts(r,key){ const v=r&&r[key]; if(v==null)return 0; if(typeof v==="number")return v; return (v.on!==false)?(v.pts||0):0; }
@@ -1560,10 +1607,23 @@ function lgCreateOrJoin(){
   </div>`;
 }
 
+function lgLeagueSwitcher(lg){
+  const list=lg.leagueList||[];
+  if(list.length<=1 && !SB_READY()) return "";
+  const chips=list.map(l=>`<button class="lg-chip ${l.id===lg.id?'on':''}" data-switch-league="${esc(l.id)}">${esc(l.name)}</button>`).join("");
+  return `<div class="lg-switchbar">
+    <div class="lg-chips">${chips||'<span class="hint" style="margin:0">No leagues yet</span>'}</div>
+    <div class="lg-switchactions">
+      <button class="lg-mini" id="lgOpenJoin">+ Join</button>
+      <button class="lg-mini" id="lgOpenCreate">+ Create</button>
+    </div>
+  </div>`;
+}
 function lgHome(lg){
   const me=lg.me;
-  const members=lg.members.map(m=>`<div class="lg-member"><span class="av" style="background:${avatarColor(m)}">${esc(m.charAt(0).toUpperCase())}</span>${esc(m)}${m===me?'<span class="you">You · Admin</span>':''}</div>`).join("");
-  return `<div class="lg-grid2">
+  const members=lg.members.map(m=>{const isAdmin=(m===lg.admin);return `<div class="lg-member"><span class="av" style="background:${avatarColor(m)}">${esc(m.charAt(0).toUpperCase())}</span>${esc(m)}${m===me?'<span class="you">You</span>':''}${isAdmin?'<span class="you" style="color:var(--ink-faint)">Admin</span>':''}</div>`;}).join("");
+  return `${lgLeagueSwitcher(lg)}
+  <div class="lg-grid2">
     <div class="lg-card">
       <h3>${esc(lg.name)}</h3>
       <div class="hint">Share this code so friends can join your league.</div>
@@ -1850,10 +1910,10 @@ function wireLeaguePanel(){
       if(!uid){toast("Sign in first","Please sign in again to join.");return;}
       jb.disabled=true; const o=jb.textContent; jb.textContent="Joining…";
       try{
-        const {data:lg,error}=await SB.from("leagues").select("id").eq("code",code).maybeSingle();
+        const {data:lid,error}=await SB.rpc("league_id_by_code",{ p_code:code });
         if(error) throw error;
-        if(!lg){ toast("No league found","Double-check the code with your friend."); jb.disabled=false; jb.textContent=o; return; }
-        const {error:jerr}=await SB.from("league_members").insert({league_id:lg.id,user_id:uid,username:me});
+        if(!lid){ toast("No league found","Double-check the code with your friend."); jb.disabled=false; jb.textContent=o; return; }
+        const {error:jerr}=await SB.from("league_members").insert({league_id:lid,user_id:uid,username:me});
         if(jerr && !/duplicate|unique/i.test(jerr.message)) throw jerr;
         await lgFetchActive();
         toast("Joined!","You're in. Make your predictions and climb the board.");
@@ -1865,6 +1925,10 @@ function wireLeaguePanel(){
   };
   const cc=$("#lgCopyCode"); if(cc) cc.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(lg.code);cc.textContent="Copied!";setTimeout(()=>cc.textContent="Copy",1200);};
   const gp=$("#lgGoPredict"); if(gp) gp.onclick=()=>{_lgTab="predict";renderLeague();};
+  // league switcher chips + join/create entry points
+  document.querySelectorAll("[data-switch-league]").forEach(b=>b.onclick=()=>lgSwitchTo(b.getAttribute("data-switch-league")));
+  const oj=$("#lgOpenJoin"); if(oj) oj.onclick=lgOpenJoinModal;
+  const oc=$("#lgOpenCreate"); if(oc) oc.onclick=lgOpenCreateModal;
   // predictions: select winner
   document.querySelectorAll(".pred-team").forEach(t=>t.onclick=()=>{
     const mid=t.getAttribute("data-mid");
@@ -1965,6 +2029,85 @@ function lgSeedOthers(){
     });
   });
   return {names,preds};
+}
+
+function lgOpenJoinModal(){
+  const title=$("#lgModalTitle"); if(title) title.textContent="Join a league";
+  const body=$("#leagueModalBody");
+  body.innerHTML=`
+    <div class="hint" style="margin-bottom:14px">Enter the 5-character code your friend shared. You'll appear under your username.</div>
+    <div class="lg-field"><label>Join code</label><input id="lgmCode" placeholder="ABC12" maxlength="5" style="text-transform:uppercase;letter-spacing:.2em;font-family:'JetBrains Mono',monospace;font-size:18px;text-align:center"></div>
+    <div id="lgmPreview"></div>
+    <button class="lg-btn" id="lgmJoinBtn" style="width:100%;margin-top:6px">Find league</button>`;
+  openModal("leagueModal");
+  const codeInp=$("#lgmCode"); if(codeInp) codeInp.focus();
+  const btn=$("#lgmJoinBtn");
+  let foundId=null;
+  btn.onclick=async()=>{
+    const code=($("#lgmCode").value||"").trim().toUpperCase();
+    if(code.length<4){toast("Invalid code","Enter the 5-character code.");return;}
+    if(!SB_READY()){toast("Sign in needed","Joining requires being online and signed in.");return;}
+    const uid=await lgCurrentUserId(); if(!uid){toast("Sign in first","Please sign in again.");return;}
+    btn.disabled=true; const o=btn.textContent;
+    if(!foundId){
+      btn.textContent="Finding…";
+      try{
+        const {data:lid,error}=await SB.rpc("league_id_by_code",{ p_code:code });
+        if(error) throw error;
+        if(!lid){ toast("No league found","Double-check the code with your friend."); btn.disabled=false; btn.textContent=o; return; }
+        const {data:lg}=await SB.rpc("league_info_by_code",{ p_code:code });
+        const info=(lg&&lg.length)?lg[0]:null;
+        foundId=lid;
+        $("#lgmPreview").innerHTML=`<div class="lg-preview"><h4>${esc(info?info.name:"League found")}</h4><div class="meta">${info?info.member_count+" member(s)":""}</div></div>`;
+        btn.textContent="Join this league";
+        btn.disabled=false;
+      }catch(e){ console.warn(e); toast("Couldn't find league", e.message||"Try again."); btn.disabled=false; btn.textContent=o; }
+      return;
+    }
+    // second click → actually join
+    btn.textContent="Joining…";
+    try{
+      const me=lgCurrentUser();
+      const {error:jerr}=await SB.from("league_members").insert({league_id:foundId,user_id:uid,username:me});
+      if(jerr && !/duplicate|unique/i.test(jerr.message)) throw jerr;
+      lgSetActive(foundId);
+      await lgFetchActive();
+      closeModals();
+      toast("Joined!","You're in. Make your predictions and climb the board.");
+      _lgTab="home"; renderLeague();
+    }catch(e){ console.warn(e); toast("Couldn't join", e.message||"Try again."); btn.disabled=false; btn.textContent="Join this league"; }
+  };
+}
+function lgOpenCreateModal(){
+  const title=$("#lgModalTitle"); if(title) title.textContent="Create a league";
+  const body=$("#leagueModalBody");
+  const user=lgCurrentUser()||"You";
+  body.innerHTML=`
+    <div class="hint" style="margin-bottom:14px">Start a league and invite friends. You'll be the admin and set the rules. Your code is emailed to you to share.</div>
+    <div class="lg-field"><label>League name</label><input id="lgmName" placeholder="The Aegis Office Pool" maxlength="40"></div>
+    <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
+    <button class="lg-btn" id="lgmCreateBtn" style="width:100%;margin-top:6px">Create league</button>`;
+  openModal("leagueModal");
+  const btn=$("#lgmCreateBtn");
+  btn.onclick=async()=>{
+    const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in.");return;}
+    const name=($("#lgmName").value||"").trim()||"My League";
+    const code=lgCode();
+    if(!SB_READY()){toast("Sign in needed","Creating a shared league requires being online.");return;}
+    const uid=await lgCurrentUserId(); if(!uid){toast("Sign in first","Please sign in again.");return;}
+    btn.disabled=true; const o=btn.textContent; btn.textContent="Creating…";
+    try{
+      const {data:lg,error}=await SB.from("leagues").insert({name,code,admin_id:uid,rules:DEFAULT_RULES}).select().maybeSingle();
+      if(error) throw error;
+      await SB.from("league_members").insert({league_id:lg.id,user_id:uid,username:me});
+      lgSetActive(lg.id);
+      await lgFetchActive();
+      closeModals();
+      const email=lgCurrentEmail();
+      toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
+      _lgTab="home"; renderLeague();
+    }catch(e){ console.warn(e); toast("Couldn't create league", e.message||"Try again."); btn.disabled=false; btn.textContent=o; }
+  };
 }
 
 function wireLeague(){
