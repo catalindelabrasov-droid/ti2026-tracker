@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0045)file:///C:/Users/Azog/Downloads/index_14.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The International 2026 — Results Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./index_files/css2" rel="stylesheet">
 <style>
   :root{
     --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
@@ -241,6 +241,18 @@
   /* league */
   .tbtn-league{background:rgba(217,164,65,.14);color:var(--aegis);border-color:rgba(217,164,65,.4)}
   .tbtn-league:hover{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
+  .lg-dropdown{position:absolute;top:calc(100% + 6px);right:0;min-width:220px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 32px rgba(0,0,0,.45);padding:6px;z-index:60;display:none}
+  .lg-dropdown.show{display:block}
+  .lg-dropdown .lgd-head{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:8px 10px 6px}
+  .lgd-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:10px;border-radius:6px;color:var(--ink);font-size:14px;font-weight:600;transition:.12s}
+  .lgd-item:hover{background:var(--panel-2)}
+  .lgd-item.on{color:var(--aegis)}
+  .lgd-item .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);flex:0 0 auto}
+  .lgd-item.on .dot{background:var(--aegis)}
+  .lgd-sep{height:1px;background:var(--line);margin:6px 4px}
+  .lgd-action{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 10px;border-radius:6px;color:var(--ink-dim);font-size:13px;font-family:'JetBrains Mono',monospace}
+  .lgd-action:hover{background:var(--panel-2);color:var(--aegis)}
+  .lgd-empty{padding:10px;color:var(--ink-faint);font-size:13px}
   body.league-open #app,body.league-open #regionPage,body.league-open #teamPage{display:none}
   .league-page{display:none}
   body.league-open .league-page{display:block}
@@ -478,11 +490,11 @@
 </style>
 </head>
 <body>
-  <div id="app"><div class="loading">Loading tournament data…</div></div>
+  <div id="app"><div class="wrap"><div class="loading">Couldn't load <b>data.json</b>.<br>If opening the file directly, run a local server (browsers block fetch on file://).</div></div></div>
   <div class="toast-host" id="toastHost"></div>
   <div class="editor" id="editor">
     <div class="editor-panel">
-      <div class="editor-head"><h3>Edit results</h3><button class="x" id="editorClose" aria-label="Close editor">&times;</button></div>
+      <div class="editor-head"><h3>Edit results</h3><button class="x" id="editorClose" aria-label="Close editor">×</button></div>
       <div class="editor-body">
         <div class="editor-tip">Edit the tournament data below as JSON, then <b>Apply</b> to preview instantly. Changes save in this browser only. Use <b>Download data.json</b> to export and commit it to your repo so everyone sees it. <b>Reset</b> reloads the original file.</div>
         <textarea id="editorText" spellcheck="false"></textarea>
@@ -501,7 +513,7 @@
     <div class="modal-card">
       <div class="modal-head">
         <div><h3>Sign in</h3><p>Use the username or email and password from your sign-up email.</p></div>
-        <button class="x" data-close="signinModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="signinModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="form-ok" id="signinOk"></div>
@@ -531,7 +543,7 @@
     <div class="modal-card">
       <div class="modal-head">
         <div><h3>Create account</h3><p>Sign up to follow matches and get result alerts.</p></div>
-        <button class="x" data-close="signupModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="signupModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="form-note">After you sign up, your login details will be sent to your email. (Email delivery activates once the backend is connected.)</div>
@@ -549,7 +561,7 @@
         <div class="field">
           <label for="su_phone">Phone number</label>
           <div class="phone-row">
-            <select id="su_prefix" aria-label="Country prefix"></select>
+            <select id="su_prefix" aria-label="Country prefix"><option value="+40">RO +40</option><option value="+1">US +1</option><option value="+44">GB +44</option><option value="+49">DE +49</option><option value="+33">FR +33</option><option value="+34">ES +34</option><option value="+39">IT +39</option><option value="+31">NL +31</option><option value="+46">SE +46</option><option value="+48">PL +48</option><option value="+380">UA +380</option><option value="+7">RU +7</option><option value="+86">CN +86</option><option value="+65">SG +65</option><option value="+63">PH +63</option><option value="+62">ID +62</option><option value="+60">MY +60</option><option value="+91">IN +91</option><option value="+55">BR +55</option><option value="+54">AR +54</option><option value="+51">PE +51</option><option value="+61">AU +61</option><option value="+1">CA +1</option><option value="+81">JP +81</option><option value="+82">KR +82</option><option value="+971">AE +971</option><option value="+966">SA +966</option><option value="+90">TR +90</option></select>
             <input id="su_phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="712 345 678">
           </div>
           <div class="err" id="su_phone_err"></div>
@@ -588,7 +600,7 @@
     <div class="modal-card" style="max-width:680px">
       <div class="modal-head">
         <div style="flex:1"></div>
-        <button class="x" data-close="regionModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="regionModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="regionModalBody" style="padding-top:0"></div>
     </div>
@@ -597,7 +609,7 @@
   <!-- Region detail: PAGE version (full in-app view) -->
   <div class="region-page" id="regionPage">
     <div class="wrap">
-      <button class="rp-back" id="regionBack">&larr; Back to all regions</button>
+      <button class="rp-back" id="regionBack">← Back to all regions</button>
       <div id="regionPageBody" style="padding-bottom:60px"></div>
     </div>
   </div>
@@ -607,7 +619,7 @@
     <div class="modal-card" style="max-width:560px">
       <div class="modal-head">
         <div style="flex:1"></div>
-        <button class="x" data-close="teamModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="teamModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="teamModalBody" style="padding-top:0"></div>
     </div>
@@ -616,7 +628,7 @@
   <!-- Team detail: PAGE version -->
   <div class="region-page" id="teamPage">
     <div class="wrap">
-      <button class="rp-back" id="teamBack">&larr; Back</button>
+      <button class="rp-back" id="teamBack">← Back</button>
       <div id="teamPageBody" style="padding-bottom:60px"></div>
     </div>
   </div>
@@ -626,7 +638,7 @@
     <div class="modal-card" style="max-width:460px">
       <div class="modal-head">
         <div><h3 id="lgModalTitle">Join a league</h3></div>
-        <button class="x" data-close="leagueModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="leagueModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="leagueModalBody"></div>
     </div>
@@ -635,7 +647,7 @@
   <!-- League page -->
   <div class="league-page" id="leaguePage">
     <div class="wrap">
-      <button class="rp-back" id="leagueBack">&larr; Back to tracker</button>
+      <button class="rp-back" id="leagueBack">← Back to tracker</button>
       <div class="lg-hero">
         <div class="eyebrow">Friends · Predictions · Bragging rights</div>
         <h2>Prediction <span class="acc">League</span></h2>
@@ -650,7 +662,7 @@
       <div class="lg-panel" id="lgPanel"></div>
     </div>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./index_files/supabase-js@2"></script>
 <script>
 // ----- Supabase backend (accounts + shared league) ------------------------
 const SUPABASE_URL = "https://hqpynfzatnmwvlxdfhsw.supabase.co";
@@ -810,6 +822,10 @@ function render(d){
       <button class="tbtn filt ${activeFilter==='live'?'on':''}" data-filter="live">Live</button>
       <button class="tbtn filt ${activeFilter==='upcoming'?'on':''}" data-filter="upcoming">Upcoming</button>
       <button class="tbtn" id="notifBtn">🔔 Notifications ${notifIds.size?`(${notifIds.size})`:""}</button>
+      <span class="lg-menu-wrap" id="myLeaguesWrap" style="display:none;position:relative">
+        <button class="tbtn tbtn-league" id="myLeaguesBtn">📋 My Leagues ▾</button>
+        <div class="lg-dropdown" id="myLeaguesMenu"></div>
+      </span>
       <button class="tbtn tbtn-league" id="leagueBtn">🏆 Create League</button>
       <span class="toolbar-spacer"></span>
       <span class="auth-area" id="authArea">
@@ -831,6 +847,40 @@ function render(d){
   $("#app").replaceWith(root);
   wireToolbar();wireNav();applySearchFilter();renderAuthArea();startCountdown(d);wireQualifiers(d);wireTeams(d);
   const _lb=$("#leagueBtn"); if(_lb) _lb.onclick=openLeague;
+  wireMyLeaguesMenu();
+}
+
+// "My Leagues" toolbar dropdown: lists the leagues you're in and jumps to one.
+async function wireMyLeaguesMenu(){
+  const wrap=$("#myLeaguesWrap"), btn=$("#myLeaguesBtn"), menu=$("#myLeaguesMenu");
+  if(!wrap||!btn||!menu) return;
+  if(!SB_READY() || !lgCurrentUser()){ wrap.style.display="none"; return; }
+  // Populate from the user's leagues; only show the button if they have any.
+  let list=[];
+  try{ list=await lgFetchList(); }catch(e){}
+  if(!list.length){ wrap.style.display="none"; return; }
+  wrap.style.display="";
+  const activeId=lgActiveId();
+  menu.innerHTML=`<div class="lgd-head">Your leagues</div>`+
+    list.map(l=>`<button class="lgd-item ${l.id===activeId?'on':''}" data-go-league="${esc(l.id)}"><span class="dot"></span>${esc(l.name)}</button>`).join("")+
+    `<div class="lgd-sep"></div>
+     <button class="lgd-action" id="lgdJoin">＋ Join a league</button>
+     <button class="lgd-action" id="lgdCreate">＋ Create a league</button>`;
+  btn.onclick=(e)=>{ e.stopPropagation(); menu.classList.toggle("show"); };
+  menu.querySelectorAll("[data-go-league]").forEach(b=>b.onclick=async()=>{
+    menu.classList.remove("show");
+    const id=b.getAttribute("data-go-league");
+    lgSetActive(id);
+    document.body.classList.add("league-open"); window.scrollTo(0,0);
+    _lgTab="home"; renderLeague();
+    if(SB_READY()){ try{ await lgFetchActive(); renderLeague(); }catch(e){} }
+  });
+  const j=$("#lgdJoin"); if(j) j.onclick=()=>{ menu.classList.remove("show"); document.body.classList.add("league-open"); window.scrollTo(0,0); renderLeague(); lgOpenJoinModal(); };
+  const c=$("#lgdCreate"); if(c) c.onclick=()=>{ menu.classList.remove("show"); document.body.classList.add("league-open"); window.scrollTo(0,0); renderLeague(); lgOpenCreateModal(); };
+  // close on outside click
+  if(!window.__lgMenuOutside){ window.__lgMenuOutside=true;
+    document.addEventListener("click",(e)=>{ const m=$("#myLeaguesMenu"); const w=$("#myLeaguesWrap"); if(m&&w&&!w.contains(e.target)) m.classList.remove("show"); });
+  }
 }
 function statusBadge(s){
   if(s==="live"||s==="ongoing")return`<span class="badge live"><span class="pulse"></span>Live</span>`;
@@ -1256,7 +1306,7 @@ function renderAuthArea(){
     let u={}; try{u=JSON.parse(raw);}catch(e){}
     const initial=(u.username||u.name||"?").trim().charAt(0).toUpperCase();
     area.innerHTML=`<span class="user-chip"><span class="av">${esc(initial)}</span>${esc(u.username||u.name||"Account")}<button class="signout" id="signoutBtn">Sign out</button></span>`;
-    $("#signoutBtn").addEventListener("click",async()=>{try{if(SB_READY())await SB.auth.signOut();}catch(e){}localStorage.removeItem(LS_USER);renderAuthArea();});
+    $("#signoutBtn").addEventListener("click",async()=>{try{if(SB_READY())await SB.auth.signOut();}catch(e){}localStorage.removeItem(LS_USER);localStorage.removeItem(LS_LEAGUE);localStorage.removeItem(LS_ACTIVE);renderAuthArea();wireMyLeaguesMenu();});
   }else{
     area.innerHTML=`<button class="tbtn" id="signinBtn">Sign in</button><button class="tbtn tbtn-accent" id="signupBtn">Sign up</button>`;
     $("#signinBtn").addEventListener("click",()=>openModal("signinModal"));
@@ -1390,7 +1440,7 @@ function wireAuth(){
         email:u.email, name:(u.user_metadata&&u.user_metadata.name)||""
       }));
       const ok=$("#signinOk"); if(ok){ok.classList.add("show");ok.textContent="Signed in.";}
-      setTimeout(()=>{closeModals();renderAuthArea();},700);
+      setTimeout(()=>{closeModals();renderAuthArea();wireMyLeaguesMenu();},700);
     }catch(e){ setErr("si_pw","Something went wrong. Try again."); btn.disabled=false; btn.textContent=orig; }
   });
   handleConfirmationLanding();
@@ -2074,7 +2124,7 @@ function lgOpenJoinModal(){
       await lgFetchActive();
       closeModals();
       toast("Joined!","You're in. Make your predictions and climb the board.");
-      _lgTab="home"; renderLeague();
+      _lgTab="home"; renderLeague(); wireMyLeaguesMenu();
     }catch(e){ console.warn(e); toast("Couldn't join", e.message||"Try again."); btn.disabled=false; btn.textContent="Join this league"; }
   };
 }
@@ -2105,7 +2155,7 @@ function lgOpenCreateModal(){
       closeModals();
       const email=lgCurrentEmail();
       toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
-      _lgTab="home"; renderLeague();
+      _lgTab="home"; renderLeague(); wireMyLeaguesMenu();
     }catch(e){ console.warn(e); toast("Couldn't create league", e.message||"Try again."); btn.disabled=false; btn.textContent=o; }
   };
 }
@@ -2211,5 +2261,6 @@ function setupAutoRefresh(){
 }
 init();
 </script>
-</body>
-</html>
+
+
+</body></html>
