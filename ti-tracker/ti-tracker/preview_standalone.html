@@ -1,0 +1,3126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The International 2026 — Results Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
+    --line:#28303f;--line-soft:#1f2632;--ink:#e9eef5;--ink-dim:#8e99ac;--ink-faint:#5b6478;
+    --aegis:#d9a441;--aegis-bright:#f3c764;--win:#4ec98f;--live:#ef5350;--upcoming:#5b9bd5;--radius:5px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(1000px 520px at 82% -10%,rgba(217,164,65,.10),transparent 60%),radial-gradient(760px 600px at -5% 105%,rgba(40,49,66,.45),transparent 55%)}
+  .wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:0 22px}
+  a{color:inherit}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  ::selection{background:rgba(217,164,65,.3)}
+  .demo-banner{background:rgba(217,164,65,.12);border-bottom:1px solid rgba(217,164,65,.3);color:var(--aegis-bright);
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;text-align:center;padding:8px 16px;position:relative;z-index:2}
+  header{padding:46px 0 26px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--aegis);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--aegis),transparent)}
+  h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(38px,7.5vw,80px);line-height:.92;letter-spacing:-.01em;text-transform:uppercase}
+  h1 .yr{color:var(--aegis);display:block}
+  /* countdown */
+  .title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;flex-wrap:wrap}
+  .title-row h1{flex:0 1 auto}
+  .countdown{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:10px;padding-bottom:6px}
+  .cd-target{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:8px}
+  .cd-target::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--aegis);box-shadow:0 0 0 3px rgba(217,164,65,.16);animation:pulse 1.6s infinite}
+  .cd-units{display:flex;align-items:flex-start;gap:4px}
+  .cd-unit{display:flex;flex-direction:column;align-items:center;min-width:52px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 6px 7px}
+  .cd-num{font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+  .cd-unit:first-child .cd-num,.cd-unit:last-child .cd-num{color:var(--aegis-bright)}
+  .cd-lab{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:5px}
+  .cd-sep{font-family:'Oswald',sans-serif;font-weight:600;font-size:26px;color:var(--line);align-self:flex-start;margin-top:8px}
+  .cd-tick{animation:cdtick .5s ease}
+  @keyframes cdtick{0%{transform:translateY(-2px);opacity:.5}100%{transform:none;opacity:1}}
+  .countdown.live-now .cd-units{display:none}
+  .cd-livebanner{display:none;font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:22px;letter-spacing:.05em;color:var(--live);align-items:center;gap:10px}
+  .cd-livebanner .pulse{width:9px;height:9px;border-radius:50%;background:var(--live);animation:pulse 1.2s infinite}
+  .countdown.live-now .cd-livebanner{display:flex}
+  @media(max-width:860px){
+    .title-row{align-items:flex-start}
+    .countdown{align-items:flex-start;width:100%}
+    .cd-unit{min-width:46px}
+    .cd-num{font-size:25px}
+  }
+  @media(max-width:480px){
+    .cd-unit{min-width:0;flex:1;padding:7px 2px 5px}
+    .cd-units{gap:3px;width:100%}
+    .cd-sep{display:none}
+    .cd-num{font-size:21px}
+  }
+  .subline{margin-top:16px;display:flex;flex-wrap:wrap;gap:7px 24px;color:var(--ink-dim);font-size:14px}
+  .subline b{color:var(--ink);font-weight:600}
+  .updated{margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--win);box-shadow:0 0 0 3px rgba(78,201,143,.16)}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:22px}
+  .search{position:relative;flex:1;min-width:200px;max-width:340px}
+  .search input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-size:14px;padding:10px 12px 10px 36px;outline:none;transition:.15s}
+  .search input:focus{border-color:var(--aegis);box-shadow:0 0 0 3px rgba(217,164,65,.12)}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5}
+  .tbtn{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-dim);display:inline-flex;align-items:center;gap:7px;transition:.15s}
+  .tbtn:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .tbtn.on{color:#0b0e13;background:var(--aegis);border-color:var(--aegis)}
+  .tbtn.on:hover{background:var(--aegis-bright)}
+  nav{position:sticky;top:0;z-index:30;background:rgba(11,14,19,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:2px;overflow-x:auto}
+  nav a{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--ink-dim);text-decoration:none;padding:15px 15px 13px;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+  nav a:hover{color:var(--ink)}
+  nav a.active{color:var(--aegis);border-bottom-color:var(--aegis)}
+  section{padding:44px 0;border-bottom:1px solid var(--line);scroll-margin-top:54px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+  .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--aegis);border:1px solid var(--line);border-radius:2px;padding:3px 8px}
+  .sec-head h2{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:clamp(22px,3.4vw,32px);letter-spacing:.01em}
+  .sec-note{color:var(--ink-dim);font-size:14px;margin-bottom:22px;max-width:64ch}
+  .live-rail{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+  .live-status{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .live-status .ls-dot{width:7px;height:7px;border-radius:50%;background:var(--win);box-shadow:0 0 0 3px rgba(78,201,143,.16)}
+  .live-status.updating .ls-dot{animation:pulse .9s infinite}
+  .live-status.offline{color:var(--live)}
+  .live-status.offline .ls-dot{background:var(--live);box-shadow:0 0 0 3px rgba(239,83,80,.16);animation:none}
+  .lcard.flash{animation:cardflash 1.1s ease}
+  @keyframes cardflash{0%{box-shadow:0 0 0 0 rgba(217,164,65,.55)}100%{box-shadow:0 0 0 0 rgba(217,164,65,0)}}
+  .lcard{min-width:280px;flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;position:relative}
+  .lcard.is-live{border-color:rgba(239,83,80,.5)}
+  .lcard-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+  .lc-stage{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+  .badge.live{background:rgba(239,83,80,.16);color:var(--live)}
+  .badge.live .pulse{width:6px;height:6px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+  .badge.upcoming{background:rgba(91,155,213,.14);color:var(--upcoming)}
+  .badge.completed{background:rgba(78,201,143,.13);color:var(--win)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .lc-team{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-weight:600;font-size:15px}
+  .lc-team.win{color:var(--ink)}.lc-team.lose{color:var(--ink-dim)}
+  .lc-score{font-family:'Oswald',sans-serif;font-weight:600;font-size:20px}
+  .lc-team.win .lc-score{color:var(--aegis-bright)}
+  .lc-foot{margin-top:12px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line-soft);padding-top:11px}
+  .lc-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint)}
+  .bell{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);transition:.15s;flex:0 0 auto}
+  .bell:hover{border-color:var(--aegis)}
+  .bell.on{background:var(--aegis);border-color:var(--aegis)}
+  .watch{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:20px;border:1px solid var(--live);color:var(--live);font-size:12px;font-weight:600;text-decoration:none;transition:.15s;flex:0 0 auto}
+  .watch:hover{background:var(--live);color:#fff}
+  .watch svg{width:12px;height:12px}
+  .watch.mini{height:24px;padding:0 9px;font-size:11px}
+  .lc-actions{display:flex;align-items:center;gap:8px}
+  /* prize pool — distribution ladder */
+  .pz-wrap{display:grid;grid-template-columns:300px 1fr;gap:16px}
+  .pz-hero{background:linear-gradient(150deg,rgba(217,164,65,.14),rgba(217,164,65,.02));border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+  .pz-hero::after{content:"";position:absolute;right:-30px;bottom:-30px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(217,164,65,.12),transparent 70%)}
+  .pz-hero-amt{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(34px,5vw,52px);color:var(--aegis-bright);line-height:1;position:relative}
+  .pz-hero-lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin-top:12px;position:relative;line-height:1.5}
+  .pz-hero-meta{font-size:12.5px;color:var(--ink-faint);margin-top:14px;position:relative}
+  .pz-ladder{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px 18px 14px}
+  .pz-ladder-head{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:14px;padding:10px 0 9px;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .pz-ladder-head .pz-h-share{justify-self:start}
+  .pz-ladder-head .pz-h-amt{justify-self:end}
+  .pz-row{display:grid;grid-template-columns:96px 1fr auto auto;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--line-soft);position:relative}
+  .pz-row:last-child{border-bottom:none}
+  .pz-rank{display:flex;align-items:center;gap:7px}
+  .pz-place{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--aegis);font-weight:600}
+  .pz-aegis{font-size:15px;line-height:1}
+  .pz-track{height:9px;background:var(--bg-2);border-radius:6px;overflow:hidden;position:relative}
+  .pz-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#8a6420,var(--aegis));transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .pz-amt{font-family:'Oswald',sans-serif;font-weight:600;font-size:18px;color:var(--ink);justify-self:end;font-variant-numeric:tabular-nums}
+  .pz-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);justify-self:end;min-width:40px;text-align:right}
+  .pz-team{display:none}
+  .pz-first{padding:15px 0}
+  .pz-first .pz-place{color:var(--aegis-bright);font-size:15px}
+  .pz-first .pz-bar{background:linear-gradient(90deg,var(--aegis),var(--aegis-bright));box-shadow:0 0 14px rgba(243,199,100,.4)}
+  .pz-first .pz-track{height:12px}
+  .pz-first .pz-amt{font-size:23px;color:var(--aegis-bright)}
+  .pz-row.pz-first::before{content:"";position:absolute;left:-18px;right:-18px;top:0;bottom:0;background:rgba(217,164,65,.05);z-index:-1}
+  @media(max-width:760px){
+    .pz-wrap{grid-template-columns:1fr}
+    .pz-ladder-head,.pz-row{grid-template-columns:74px 1fr auto}
+    .pz-pct{display:none}
+    .pz-ladder-head .pz-h-share{display:none}
+  }
+  .tbl{width:100%;border-collapse:collapse;font-size:14px}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft)}
+  .tbl tr:hover td{background:var(--panel)}
+  .tbl .rank{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);width:42px}
+  .tbl tr.adv .rank{color:var(--aegis)}
+  .tbl tr.adv td{background:rgba(217,164,65,.045)}
+  .tbl tr.elim td{opacity:.62}
+  .team-name{font-weight:600;display:flex;align-items:center;gap:9px}
+  .tlogo{width:var(--s,20px);height:var(--s,20px);border-radius:5px;flex:0 0 auto;object-fit:contain;background:var(--panel-2);display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+  .tlogo-badge{font-family:'Oswald',sans-serif;font-weight:600;font-size:calc(var(--s,20px)*.46);color:#fff;letter-spacing:.3px}
+  .tlogo-tbd{background:var(--panel-2);color:var(--ink-faint);font-family:'JetBrains Mono',monospace;font-size:calc(var(--s,20px)*.5)}
+  .team-wl{display:inline-flex;align-items:center;gap:8px;min-width:0}
+  .twl-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rec{font-family:'JetBrains Mono',monospace}
+  .rec .w{color:var(--win)}.rec .l{color:var(--ink-faint)}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px}
+  .pill.adv{background:rgba(217,164,65,.14);color:var(--aegis)}
+  .pill.elim{background:var(--panel-2);color:var(--ink-faint)}
+  .reg-tag{font-size:12px;color:var(--ink-dim)}
+  .qual-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px}
+  .qual-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;cursor:pointer;transition:.16s;position:relative;overflow:hidden}
+  .qual-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--aegis);transform:scaleY(0);transform-origin:top;transition:transform .2s}
+  .qual-card:hover{border-color:var(--aegis);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+  .qual-card:hover::after{transform:scaleY(1)}
+  .qual-card:focus-visible{outline:2px solid var(--aegis);outline-offset:2px}
+  .qual-region{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:17px;letter-spacing:.02em}
+  .qual-dates{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin-top:3px}
+  .qual-winners{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+  .qual-win{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14px}
+  .qual-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between}
+  .qual-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint)}
+  .qual-view{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--aegis);display:inline-flex;align-items:center;gap:5px;font-weight:600}
+  .qual-view svg{width:12px;height:12px;transition:transform .16s}
+  .qual-card:hover .qual-view svg{transform:translateX(3px)}
+  /* region detail (shared by modal + page) */
+  .rd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:4px}
+  .rd-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--aegis)}
+  .rd-title{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:26px;letter-spacing:.02em;line-height:1.05;margin-top:6px}
+  .rd-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin-top:6px}
+  .rd-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:18px;margin-top:20px}
+  .rd-col h4{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .rd-team{display:flex;align-items:center;gap:10px;padding:9px 0;font-weight:600;font-size:14px;border-bottom:1px solid var(--line-soft)}
+  .rd-team:last-child{border-bottom:none}
+  .rd-team .av{width:24px;height:24px;border-radius:5px;background:var(--panel-2);color:var(--ink-dim);display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:12px;flex:0 0 auto}
+  .rd-team.qualified .tlogo{box-shadow:0 0 0 2px var(--aegis)}
+  .rd-team .qtag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--aegis)}
+  .rd-match{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+  .rd-match.is-live{border-color:rgba(239,83,80,.5)}
+  .rd-match-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px 0}
+  .rd-match-meta{display:flex;align-items:center;gap:7px}
+  .rd-match-stage{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .rd-match-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}
+  .rd-match-row.w{color:var(--ink)}.rd-match-row.l{color:var(--ink-dim)}
+  .rd-match-row .s{font-family:'Oswald',sans-serif;font-weight:600;font-size:17px}
+  .rd-match-row.w .s{color:var(--aegis-bright)}
+  .rd-match-foot{padding:0 12px 9px}
+  .rd-when{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--upcoming)}
+  .rd-mgroup{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 9px}
+  .rd-mgroup:first-child{margin-top:0}
+  .rd-pending{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--upcoming);background:rgba(91,155,213,.14);padding:3px 7px;border-radius:20px;margin-left:6px;vertical-align:middle}
+  .rd-empty{color:var(--ink-faint);font-size:13px;font-family:'JetBrains Mono',monospace;padding:8px 0}
+  @media(max-width:640px){.rd-grid{grid-template-columns:1fr}}
+  /* region page (full in-app view) */
+  .region-page{display:none}
+  body.region-open .region-page#regionPage{display:block}
+  body.team-open .region-page#teamPage{display:block}
+  body.region-open #app,body.team-open #app{display:none}
+  body.team-open #regionPage{display:none}
+  .rp-back{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);padding:22px 0;letter-spacing:.04em;cursor:pointer}
+  .rp-back:hover{color:var(--aegis)}
+  /* team detail */
+  .td-head{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+  .td-logo{width:54px;height:54px;border-radius:10px;flex:0 0 auto}
+  .td-title{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:26px;letter-spacing:.02em;line-height:1.05}
+  .td-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin-top:5px;display:flex;gap:6px 14px;flex-wrap:wrap}
+  .td-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:20px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .td-player{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .td-player:last-child{border-bottom:none}
+  .td-pnum{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);width:18px;flex:0 0 auto}
+  .td-pav{width:30px;height:30px;border-radius:7px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;color:#fff}
+  .td-pign{font-weight:600;font-size:15px}
+  .td-prole{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);background:var(--panel-2);padding:4px 9px;border-radius:20px}
+  .td-prole.cap{color:var(--aegis);background:rgba(217,164,65,.12)}
+  .td-coach{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  .td-coach .td-pav{background:var(--panel-2);color:var(--ink-dim)}
+  .td-coach .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .td-coach .nm{font-weight:600;font-size:15px;margin-top:2px}
+  .td-empty{color:var(--ink-faint);font-size:13px;font-family:'JetBrains Mono',monospace;padding:6px 0}
+  .clickable{cursor:pointer}
+  tr.clickable:hover td{background:var(--panel-2)!important}
+  /* league */
+  .tbtn-league{background:rgba(217,164,65,.14);color:var(--aegis);border-color:rgba(217,164,65,.4)}
+  .tbtn-league:hover{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
+  body.league-open #app,body.league-open #regionPage,body.league-open #teamPage{display:none}
+  .league-page{display:none}
+  body.league-open .league-page{display:block}
+  .lg-hero{padding:40px 0 26px;border-bottom:1px solid var(--line)}
+  .lg-hero .eyebrow{margin-bottom:14px}
+  .lg-hero h2{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:clamp(30px,5vw,52px);line-height:.95;letter-spacing:-.01em}
+  .lg-hero h2 .acc{color:var(--aegis)}
+  .lg-hero p{color:var(--ink-dim);font-size:15px;margin-top:14px;max-width:60ch}
+  .lg-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:26px;overflow-x:auto}
+  .lg-tab{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.05em;font-size:14px;color:var(--ink-dim);padding:14px 18px;border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer;transition:.15s}
+  .lg-tab:hover{color:var(--ink)}
+  .lg-tab.on{color:var(--aegis);border-bottom-color:var(--aegis)}
+  .lg-panel{padding:28px 0 70px}
+  .lg-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:18px}
+  .lg-card h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:18px;letter-spacing:.02em;margin-bottom:4px}
+  .lg-card .hint{color:var(--ink-dim);font-size:13px;margin-bottom:18px;line-height:1.5}
+  .lg-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.lg-grid2{grid-template-columns:1fr}}
+  .lg-rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+  .lg-rule{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+  .lg-rule label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:8px;font-weight:600;letter-spacing:.02em}
+  .lg-rule input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:4px;color:var(--ink);font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;padding:8px 12px;outline:none;text-align:center}
+  .lg-rule input:focus{border-color:var(--aegis)}
+  .lg-rule .unit{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-align:center;margin-top:6px;letter-spacing:.08em;text-transform:uppercase}
+  .lg-empty{text-align:center;padding:50px 20px;color:var(--ink-dim)}
+  .lg-empty .big{font-size:48px;margin-bottom:16px}
+  .lg-empty h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:22px;color:var(--ink);margin-bottom:8px}
+  .lg-code{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:.2em;color:var(--aegis);background:rgba(217,164,65,.1);border:1px dashed var(--aegis);border-radius:var(--radius);padding:12px 18px;display:inline-flex;align-items:center;gap:12px;margin-top:8px}
+  .lg-code button{font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.06em;color:var(--ink-dim);border:1px solid var(--line);border-radius:4px;padding:5px 9px}
+  .lg-code button:hover{color:var(--aegis);border-color:var(--aegis)}
+  .lg-member{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .lg-member:last-child{border-bottom:none}
+  .lg-member .av{width:30px;height:30px;border-radius:50%;background:var(--aegis);color:#0b0e13;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;flex:0 0 auto}
+  .lg-member .you{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--aegis);letter-spacing:.1em;text-transform:uppercase}
+  /* predictions */
+  .pred-match{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+  .pred-match.locked{border-color:rgba(78,201,143,.35)}
+  .pred-head{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--bg-2);border-bottom:1px solid var(--line-soft)}
+  .pred-stage{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .pred-deadline{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--upcoming)}
+  .pred-deadline.passed{color:var(--live)}
+  .pred-body{padding:16px}
+  .pred-pick{display:flex;gap:10px;margin-bottom:14px}
+  .pred-team{flex:1;display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:12px;cursor:pointer;transition:.15s;font-weight:600}
+  .pred-team:hover{border-color:var(--ink-faint)}
+  .pred-team.sel{border-color:var(--aegis);background:rgba(217,164,65,.1)}
+  .pred-team.sel::after{content:"✓";margin-left:auto;color:var(--aegis);font-weight:700}
+  .pred-score{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:14px}
+  .pred-score input{width:56px;background:var(--panel);border:1px solid var(--line);border-radius:4px;color:var(--ink);font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;text-align:center;padding:6px;outline:none}
+  .pred-score input:focus{border-color:var(--aegis)}
+  .pred-score .vs{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);font-size:12px}
+  .pred-actions{display:flex;gap:10px;align-items:center}
+  .pred-lock{flex:1;background:var(--aegis);color:#0b0e13;font-weight:600;font-size:14px;padding:11px;border-radius:var(--radius);transition:.15s}
+  .pred-lock:hover{background:var(--aegis-bright)}
+  .pred-lock:disabled{background:var(--panel-2);color:var(--ink-faint);cursor:not-allowed}
+  .pred-locked-tag{display:flex;align-items:center;gap:8px;color:var(--win);font-weight:600;font-size:13px;font-family:'JetBrains Mono',monospace}
+  .pred-others{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+  .pred-others h5{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .pred-other-row{display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 0}
+  .pred-other-row .nm{font-weight:600}
+  .pred-other-row .pk{margin-left:auto;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;font-size:12px}
+  .pred-hidden{color:var(--ink-faint);font-size:12.5px;font-style:italic}
+  /* leaderboard */
+  .lb-table{width:100%;border-collapse:collapse}
+  .lb-table th{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .lb-table td{padding:14px;border-bottom:1px solid var(--line-soft)}
+  .lb-rank{font-family:'Oswald',sans-serif;font-weight:600;font-size:20px;width:50px;color:var(--ink-dim)}
+  .lb-row.top1 .lb-rank{color:var(--aegis-bright)}
+  .lb-row.top1 td{background:rgba(217,164,65,.05)}
+  .lb-name{font-weight:600;display:flex;align-items:center;gap:10px}
+  .lb-name .av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;color:#fff;flex:0 0 auto}
+  .lb-pts{font-family:'Oswald',sans-serif;font-weight:600;font-size:20px;color:var(--aegis-bright);text-align:right}
+  .lb-place{font-family:'Oswald',sans-serif;font-weight:700}
+  .lb-row.lb-you td{background:rgba(91,155,213,.07)}
+  .lb-youtag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--upcoming);background:rgba(91,155,213,.14);padding:3px 7px;border-radius:20px}
+  .lb-admintag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--aegis);background:rgba(217,164,65,.12);padding:3px 7px;border-radius:20px}
+  .lb-live{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--win)}
+  .lb-livedot{width:7px;height:7px;border-radius:50%;background:var(--win);box-shadow:0 0 0 3px rgba(78,201,143,.16);animation:pulse 1.2s infinite}
+  /* tournament outcome predictions */
+  .pred-outcome{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .pred-outcome h4{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+  .pred-outcome .sub{color:var(--ink-dim);font-size:12.5px;margin-bottom:12px}
+  .pred-outcome select{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-size:14px;padding:11px 12px;outline:none}
+  .pred-outcome select:focus{border-color:var(--aegis)}
+  .pred-outcome.locked{border-color:rgba(78,201,143,.35)}
+  .pred-multi{display:flex;flex-direction:column;gap:8px}
+  /* rules UI */
+  .rule-group{margin-top:22px}
+  .rule-group-h{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:14px;letter-spacing:.06em;color:var(--aegis);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .rule-row{display:flex;align-items:center;gap:14px;padding:13px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px;opacity:.62;transition:.15s}
+  .rule-row.on{opacity:1;border-color:rgba(217,164,65,.3)}
+  .rule-toggle{position:relative;flex:0 0 auto;cursor:pointer}
+  .rule-toggle input{position:absolute;opacity:0;width:0;height:0}
+  .rs-track{display:block;width:38px;height:22px;border-radius:20px;background:var(--panel-3);position:relative;transition:.2s}
+  .rs-track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--ink-dim);transition:.2s}
+  .rule-toggle input:checked+.rs-track{background:var(--aegis)}
+  .rule-toggle input:checked+.rs-track::after{transform:translateX(16px);background:#0b0e13}
+  .rule-info{flex:1;min-width:0}
+  .rule-name{font-weight:600;font-size:14.5px}
+  .rule-desc{color:var(--ink-dim);font-size:12.5px;margin-top:2px;line-height:1.4}
+  .rule-pts{flex:0 0 auto;display:flex;align-items:center;gap:7px}
+  .rule-pts input{width:62px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;color:var(--ink);font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;text-align:center;padding:6px;outline:none}
+  .rule-pts input:focus{border-color:var(--aegis)}
+  .rule-pts input:disabled{opacity:.5}
+  .rule-pts span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
+  .rule-nopts{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
+  .rule-modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .rule-mode{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink-dim);font-weight:600;font-size:13px;padding:12px;transition:.15s;text-align:center}
+  .rule-mode:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .rule-mode.on{background:rgba(217,164,65,.12);color:var(--aegis);border-color:var(--aegis)}
+  .tb-list{display:flex;flex-direction:column;gap:9px}
+  .tb-item{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);cursor:pointer;padding:8px 0}
+  .tb-item input{width:16px;height:16px;accent-color:var(--aegis)}
+  .lb-acc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);text-align:right}
+  .lg-btn{background:var(--aegis);color:#0b0e13;font-weight:600;font-size:14px;padding:12px 22px;border-radius:var(--radius);transition:.15s}
+  .lg-btn:hover{background:var(--aegis-bright)}
+  .lg-btn-ghost{background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-weight:600;font-size:14px;padding:12px 22px;border-radius:var(--radius)}
+  .lg-btn-ghost:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .lg-field{margin-bottom:16px}
+  .lg-field label{display:block;font-size:12px;font-weight:600;color:var(--ink-dim);margin-bottom:6px}
+  .lg-field input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-size:15px;padding:11px 13px;outline:none}
+  .lg-field input:focus{border-color:var(--aegis)}
+  .vtoggle{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);border:1px solid var(--line);border-radius:4px;padding:4px 9px;transition:.15s}
+  .vtoggle:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .vtoggle.on{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
+  .bracket-wrap{overflow-x:auto;padding-bottom:10px}
+  .bracket{display:flex;gap:26px;min-width:max-content}
+  .br-col{display:flex;flex-direction:column;justify-content:space-around;min-width:236px;gap:14px}
+  .br-col-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .match{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:.15s}
+  .match.is-live{border-color:rgba(239,83,80,.5)}
+  .match.notif{border-color:var(--aegis)}
+  .match-head{display:flex;justify-content:space-between;align-items:center;padding:6px 11px;background:var(--bg-2);border-bottom:1px solid var(--line-soft)}
+  .match-bo{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:.08em}
+  .match-row{display:flex;justify-content:space-between;align-items:center;padding:10px 13px}
+  .match-row+.match-row{border-top:1px solid var(--line-soft)}
+  .match-row.winner{background:rgba(217,164,65,.06)}
+  .mt{font-weight:600;font-size:13.5px;color:var(--ink-dim)}
+  .mt.clickable{cursor:pointer;border-radius:4px;transition:.12s}
+  .mt.clickable:hover{color:var(--aegis)!important}
+  .match-row.winner .mt{color:var(--ink)}
+  .ms{font-family:'Oswald',sans-serif;font-weight:600;font-size:17px;min-width:22px;text-align:center;color:var(--ink-dim)}
+  .match-row.winner .ms{color:var(--aegis-bright)}
+  .br-section-label{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.08em;color:var(--ink-dim);margin:8px 0 14px}
+  .gf-wrap{max-width:340px}
+  .gf .match{border-color:var(--aegis)}
+  .gf .match-head{background:rgba(217,164,65,.1)}
+  .champ{display:none;background:linear-gradient(120deg,rgba(217,164,65,.16),rgba(217,164,65,.02));border:1px solid var(--aegis);border-radius:var(--radius);padding:22px 24px;margin-bottom:22px;align-items:center;gap:18px}
+  .champ.show{display:flex}
+  .champ .aegis{font-size:36px}
+  .champ .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--aegis)}
+  .champ .n{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;text-transform:uppercase}
+  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);padding:32px 26px;text-align:center;color:var(--ink-dim);font-size:14px}
+  .empty b{color:var(--ink);font-family:'Oswald',sans-serif;font-weight:500;display:block;margin-bottom:6px;font-size:16px;text-transform:uppercase;letter-spacing:.03em}
+  footer{padding:38px 0 70px;color:var(--ink-faint);font-size:12.5px;font-family:'JetBrains Mono',monospace;line-height:1.8}
+  .loading{padding:80px 0;text-align:center;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;font-size:13px}
+  .hidden{display:none !important}
+  .toast-host{position:fixed;bottom:18px;right:18px;z-index:80;display:flex;flex-direction:column;gap:10px;max-width:340px}
+  .toast{background:var(--panel-2);border:1px solid var(--aegis);border-radius:var(--radius);padding:13px 15px;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:slidein .3s ease}
+  .toast .tt{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:13px;letter-spacing:.05em;color:var(--aegis)}
+  .toast .tb{font-size:13px;color:var(--ink);margin-top:3px}
+  @keyframes slidein{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+  .editor{position:fixed;inset:0;z-index:90;background:rgba(8,10,14,.7);backdrop-filter:blur(4px);display:none;align-items:stretch;justify-content:flex-end}
+  .editor.show{display:flex}
+  .editor-panel{width:min(640px,100%);background:var(--bg-2);border-left:1px solid var(--line);height:100%;display:flex;flex-direction:column}
+  .editor-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .editor-head h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:20px;letter-spacing:.03em}
+  .editor-body{flex:1;overflow:auto;padding:18px 22px}
+  .editor-tip{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:12.5px;color:var(--ink-dim);margin-bottom:16px;line-height:1.6}
+  .editor textarea{width:100%;min-height:50vh;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.55;padding:14px;resize:vertical;outline:none}
+  .editor textarea:focus{border-color:var(--aegis)}
+  .editor textarea.invalid{border-color:var(--live)}
+  .editor-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{padding:10px 16px;border-radius:var(--radius);font-weight:600;font-size:13px;transition:.15s;border:1px solid var(--line)}
+  .btn-primary{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
+  .btn-primary:hover{background:var(--aegis-bright)}
+  .btn-ghost{color:var(--ink-dim)}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .editor-msg{font-size:12px;font-family:'JetBrains Mono',monospace;margin-left:auto}
+  .editor-msg.ok{color:var(--win)}.editor-msg.err{color:var(--live)}
+  .x{font-size:22px;line-height:1;color:var(--ink-dim)}
+  .x:hover{color:var(--ink)}
+  /* auth */
+  .toolbar-spacer{flex:1 1 auto}
+  .tbtn-accent{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
+  .tbtn-accent:hover{background:var(--aegis-bright);color:#0b0e13}
+  .auth-area{display:flex;gap:10px;align-items:center}
+  .user-chip{display:inline-flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:5px 6px 5px 13px;font-size:13px;font-weight:600}
+  .user-chip .av{width:26px;height:26px;border-radius:50%;background:var(--aegis);color:#0b0e13;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px}
+  .user-chip .signout{color:var(--ink-faint);font-size:12px;border-left:1px solid var(--line);padding-left:9px;margin-left:2px}
+  .user-chip .signout:hover{color:var(--live)}
+  .modal{position:fixed;inset:0;z-index:95;background:rgba(8,10,14,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px}
+  .modal.show{display:flex}
+  .modal-card{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+  .modal-head{padding:22px 24px 0;display:flex;align-items:flex-start;justify-content:space-between}
+  .modal-head h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:23px;letter-spacing:.02em}
+  .modal-head p{color:var(--ink-dim);font-size:13px;margin-top:4px}
+  .modal-body{padding:18px 24px 8px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink-dim);margin-bottom:6px;letter-spacing:.02em}
+  .field input,.field select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-size:14px;font-family:inherit;padding:11px 12px;outline:none;transition:.15s}
+  .field input:focus,.field select:focus{border-color:var(--aegis);box-shadow:0 0 0 3px rgba(217,164,65,.12)}
+  .field input.bad,.field select.bad{border-color:var(--live)}
+  .field .err{color:var(--live);font-size:11.5px;margin-top:5px;display:none}
+  .field .err.show{display:block}
+  .pw-wrap{position:relative}
+  .pw-wrap input{padding-right:54px}
+  .pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:var(--ink-faint);letter-spacing:.06em}
+  .pw-toggle:hover{color:var(--aegis)}
+  .phone-row{display:flex;gap:8px}
+  .phone-row select{width:118px;flex:0 0 auto}
+  .phone-row input{flex:1}
+  .modal-foot{padding:6px 24px 22px}
+  .modal-foot .btn{width:100%;justify-content:center;display:flex;padding:12px}
+  .modal-alt{text-align:center;font-size:13px;color:var(--ink-dim);margin-top:14px}
+  .modal-alt button{color:var(--aegis);font-weight:600}
+  .modal-alt button:hover{text-decoration:underline}
+  .form-note{background:rgba(91,155,213,.1);border:1px solid rgba(91,155,213,.3);color:#aacbec;border-radius:var(--radius);padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:16px}
+  .form-ok{background:rgba(78,201,143,.1);border:1px solid rgba(78,201,143,.35);color:#9fe0c0;border-radius:var(--radius);padding:11px 13px;font-size:13px;line-height:1.5;display:none}
+  .form-ok.show{display:block}
+  @media(max-width:640px){header{padding:34px 0 22px}section{padding:34px 0}.toast-host{left:18px;right:18px;max-width:none}}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none !important}}
+</style>
+</head>
+<body>
+  <div id="app"><div class="loading">Loading tournament data…</div></div>
+  <div class="toast-host" id="toastHost"></div>
+  <div class="editor" id="editor">
+    <div class="editor-panel">
+      <div class="editor-head"><h3>Edit results</h3><button class="x" id="editorClose" aria-label="Close editor">&times;</button></div>
+      <div class="editor-body">
+        <div class="editor-tip">Edit the tournament data below as JSON, then <b>Apply</b> to preview instantly. Changes save in this browser only. Use <b>Download data.json</b> to export and commit it to your repo so everyone sees it. <b>Reset</b> reloads the original file.</div>
+        <textarea id="editorText" spellcheck="false"></textarea>
+      </div>
+      <div class="editor-foot">
+        <button class="btn btn-primary" id="editorApply">Apply</button>
+        <button class="btn btn-ghost" id="editorDownload">Download data.json</button>
+        <button class="btn btn-ghost" id="editorReset">Reset to file</button>
+        <span class="editor-msg" id="editorMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sign in modal -->
+  <div class="modal" id="signinModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><h3>Sign in</h3><p>Use the username or email and password from your sign-up email.</p></div>
+        <button class="x" data-close="signinModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-ok" id="signinOk"></div>
+        <div class="field">
+          <label for="si_id">Username or email</label>
+          <input id="si_id" type="text" autocomplete="username" placeholder="you@example.com">
+          <div class="err" id="si_id_err"></div>
+        </div>
+        <div class="field">
+          <label for="si_pw">Password</label>
+          <div class="pw-wrap">
+            <input id="si_pw" type="password" autocomplete="current-password" placeholder="Your password">
+            <button type="button" class="pw-toggle" data-pw="si_pw">SHOW</button>
+          </div>
+          <div class="err" id="si_pw_err"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" id="signinSubmit">Sign in</button>
+        <div class="modal-alt">No account yet? <button data-switch="signup">Create one</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sign up modal -->
+  <div class="modal" id="signupModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><h3>Create account</h3><p>Sign up to follow matches and get result alerts.</p></div>
+        <button class="x" data-close="signupModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-note">After you sign up, your login details will be sent to your email. (Email delivery activates once the backend is connected.)</div>
+        <div class="form-ok" id="signupOk"></div>
+        <div class="field">
+          <label for="su_name">Full name</label>
+          <input id="su_name" type="text" autocomplete="name" placeholder="Jane Doe">
+          <div class="err" id="su_name_err"></div>
+        </div>
+        <div class="field">
+          <label for="su_email">Email</label>
+          <input id="su_email" type="email" autocomplete="email" placeholder="you@example.com">
+          <div class="err" id="su_email_err"></div>
+        </div>
+        <div class="field">
+          <label for="su_phone">Phone number</label>
+          <div class="phone-row">
+            <select id="su_prefix" aria-label="Country prefix"></select>
+            <input id="su_phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="712 345 678">
+          </div>
+          <div class="err" id="su_phone_err"></div>
+        </div>
+        <div class="field">
+          <label for="su_user">Username</label>
+          <input id="su_user" type="text" autocomplete="username" placeholder="janedoe">
+          <div class="err" id="su_user_err"></div>
+        </div>
+        <div class="field">
+          <label for="su_pw">Password</label>
+          <div class="pw-wrap">
+            <input id="su_pw" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+            <button type="button" class="pw-toggle" data-pw="su_pw">SHOW</button>
+          </div>
+          <div class="err" id="su_pw_err"></div>
+        </div>
+        <div class="field">
+          <label for="su_pw2">Repeat password</label>
+          <div class="pw-wrap">
+            <input id="su_pw2" type="password" autocomplete="new-password" placeholder="Re-enter password">
+            <button type="button" class="pw-toggle" data-pw="su_pw2">SHOW</button>
+          </div>
+          <div class="err" id="su_pw2_err"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" id="signupSubmit">Create account</button>
+        <div class="modal-alt">Already have an account? <button data-switch="signin">Sign in</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Region detail: MODAL version -->
+  <div class="modal" id="regionModal">
+    <div class="modal-card" style="max-width:680px">
+      <div class="modal-head">
+        <div style="flex:1"></div>
+        <button class="x" data-close="regionModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="regionModalBody" style="padding-top:0"></div>
+    </div>
+  </div>
+
+  <!-- Region detail: PAGE version (full in-app view) -->
+  <div class="region-page" id="regionPage">
+    <div class="wrap">
+      <button class="rp-back" id="regionBack">&larr; Back to all regions</button>
+      <div id="regionPageBody" style="padding-bottom:60px"></div>
+    </div>
+  </div>
+
+  <!-- Team detail: MODAL version -->
+  <div class="modal" id="teamModal">
+    <div class="modal-card" style="max-width:560px">
+      <div class="modal-head">
+        <div style="flex:1"></div>
+        <button class="x" data-close="teamModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="teamModalBody" style="padding-top:0"></div>
+    </div>
+  </div>
+
+  <!-- Team detail: PAGE version -->
+  <div class="region-page" id="teamPage">
+    <div class="wrap">
+      <button class="rp-back" id="teamBack">&larr; Back</button>
+      <div id="teamPageBody" style="padding-bottom:60px"></div>
+    </div>
+  </div>
+
+  <!-- League page -->
+  <div class="league-page" id="leaguePage">
+    <div class="wrap">
+      <button class="rp-back" id="leagueBack">&larr; Back to tracker</button>
+      <div class="lg-hero">
+        <div class="eyebrow">Friends · Predictions · Bragging rights</div>
+        <h2>Prediction <span class="acc">League</span></h2>
+        <p>Create a league, invite your friends, predict match winners and exact scores, and climb the leaderboard. Lock your picks at least an hour before each match — once locked they're final, and you'll only see everyone else's picks for a match after you've locked yours.</p>
+      </div>
+      <div class="lg-tabs" id="lgTabs">
+        <div class="lg-tab on" data-lgtab="home">My League</div>
+        <div class="lg-tab" data-lgtab="predict">Predictions</div>
+        <div class="lg-tab" data-lgtab="leaderboard">Leaderboard</div>
+        <div class="lg-tab" data-lgtab="rules">Rules</div>
+      </div>
+      <div class="lg-panel" id="lgPanel"></div>
+    </div>
+  </div>
+<script>window.__INLINE_DATA__ = {
+  "meta": {
+    "title": "The International 2026",
+    "year": "2026",
+    "shortName": "TI 15",
+    "edition": 15,
+    "location": "Shanghai, China",
+    "venue": "Oriental Sports Center",
+    "organizers": "Valve / PGL",
+    "basePrizePool": 1600000,
+    "currency": "USD",
+    "teamCount": 16,
+    "dates": {
+      "openQualifiers": "2026-06-09 to 2026-06-12",
+      "regionalQualifiers": "2026-06-15 to 2026-06-28",
+      "groupStage": "2026-08-13 to 2026-08-16",
+      "mainEvent": "2026-08-20 to 2026-08-23"
+    },
+    "lastUpdated": "2026-08-21T14:30:00+00:00",
+    "dataSource": "DEMO DATA — sample results to preview the app. Replace with real data via auto-update.",
+    "demo": true,
+    "officialUrl": "https://www.dota2.com/esports"
+  },
+  "prizePool": {
+    "total": 1600000,
+    "distribution": [
+      {
+        "place": "1st",
+        "amount": 544000,
+        "team": null
+      },
+      {
+        "place": "2nd",
+        "amount": 256000,
+        "team": null
+      },
+      {
+        "place": "3rd",
+        "amount": 184000,
+        "team": null
+      },
+      {
+        "place": "4th",
+        "amount": 128000,
+        "team": null
+      },
+      {
+        "place": "5th-6th",
+        "amount": 96000,
+        "team": null
+      },
+      {
+        "place": "7th-8th",
+        "amount": 64000,
+        "team": null
+      },
+      {
+        "place": "9th-12th",
+        "amount": 32000,
+        "team": null
+      },
+      {
+        "place": "13th-16th",
+        "amount": 16000,
+        "team": null
+      }
+    ]
+  },
+  "qualifiers": [
+    {
+      "region": "Western Europe",
+      "status": "completed",
+      "winners": [
+        "Team Falcons",
+        "Tundra Esports"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Team Falcons",
+        "Tundra Esports",
+        "Gaimin Gladiators",
+        "Team Liquid",
+        "Quest Esports",
+        "Entity"
+      ],
+      "matches": [
+        {
+          "id": "weq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Falcons",
+            "score": 3
+          },
+          "teamB": {
+            "name": "Tundra Esports",
+            "score": 1
+          }
+        },
+        {
+          "id": "weq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Falcons",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Gaimin Gladiators",
+            "score": 0
+          }
+        },
+        {
+          "id": "weq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Tundra Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Liquid",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "Eastern Europe",
+      "status": "completed",
+      "winners": [
+        "Team Spirit",
+        "PARIVISION"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Team Spirit",
+        "PARIVISION",
+        "Aurora Gaming",
+        "BetBoom Team",
+        "Natus Vincere",
+        "9Pandas"
+      ],
+      "matches": [
+        {
+          "id": "eeq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": 3
+          },
+          "teamB": {
+            "name": "PARIVISION",
+            "score": 2
+          }
+        },
+        {
+          "id": "eeq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": 2
+          },
+          "teamB": {
+            "name": "BetBoom Team",
+            "score": 1
+          }
+        },
+        {
+          "id": "eeq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "PARIVISION",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Aurora Gaming",
+            "score": 0
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "China",
+      "status": "ongoing",
+      "winners": [
+        "Xtreme Gaming"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Xtreme Gaming",
+        "Team Tidebound",
+        "Azure Ray",
+        "Yakult Brothers",
+        "LGD Gaming",
+        "Invictus Gaming"
+      ],
+      "matches": [
+        {
+          "id": "cnq_f",
+          "stage": "Final",
+          "bestOf": 5,
+          "status": "live",
+          "scheduled": "2026-06-27T10:00:00+08:00",
+          "teamA": {
+            "name": "Xtreme Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Tidebound",
+            "score": 1
+          }
+        },
+        {
+          "id": "cnq_lb",
+          "stage": "Lower Final",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-28T12:00:00+08:00",
+          "teamA": {
+            "name": "Azure Ray",
+            "score": null
+          },
+          "teamB": {
+            "name": "LGD Gaming",
+            "score": null
+          }
+        },
+        {
+          "id": "cnq_sf1",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "Xtreme Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "LGD Gaming",
+            "score": 1
+          }
+        },
+        {
+          "id": "cnq_sf2",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "Team Tidebound",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Azure Ray",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "Southeast Asia",
+      "status": "ongoing",
+      "winners": [
+        "BOOM Esports"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "BOOM Esports",
+        "Talon Esports",
+        "Team SMG",
+        "Bleed Esports",
+        "Fnatic",
+        "Geek Slate"
+      ],
+      "matches": [
+        {
+          "id": "seaq_f",
+          "stage": "Final",
+          "bestOf": 5,
+          "status": "upcoming",
+          "scheduled": "2026-06-28T16:00:00+07:00",
+          "teamA": {
+            "name": "BOOM Esports",
+            "score": null
+          },
+          "teamB": {
+            "name": "Talon Esports",
+            "score": null
+          }
+        },
+        {
+          "id": "seaq_sf1",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "BOOM Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Fnatic",
+            "score": 0
+          }
+        },
+        {
+          "id": "seaq_sf2",
+          "stage": "Semifinal",
+          "bestOf": 3,
+          "status": "completed",
+          "teamA": {
+            "name": "Talon Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team SMG",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "North America",
+      "status": "completed",
+      "winners": [
+        "Shopify Rebellion",
+        "nouns"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "Shopify Rebellion",
+        "nouns",
+        "TSM",
+        "Wildcard",
+        "Coal Esports",
+        "M80"
+      ],
+      "matches": [
+        {
+          "id": "naq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "Shopify Rebellion",
+            "score": 3
+          },
+          "teamB": {
+            "name": "nouns",
+            "score": 1
+          }
+        },
+        {
+          "id": "naq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "Shopify Rebellion",
+            "score": 2
+          },
+          "teamB": {
+            "name": "TSM",
+            "score": 0
+          }
+        },
+        {
+          "id": "naq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "nouns",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Wildcard",
+            "score": 1
+          }
+        }
+      ],
+      "slots": 2
+    },
+    {
+      "region": "South America",
+      "status": "completed",
+      "winners": [
+        "beastcoast",
+        "HEROIC"
+      ],
+      "dates": "2026-06-15 to 2026-06-28",
+      "teams": [
+        "beastcoast",
+        "HEROIC",
+        "Evil Geniuses",
+        "boom (SA)",
+        "Infinity",
+        "Hokori"
+      ],
+      "matches": [
+        {
+          "id": "saq_f",
+          "stage": "Final",
+          "status": "completed",
+          "teamA": {
+            "name": "beastcoast",
+            "score": 3
+          },
+          "teamB": {
+            "name": "HEROIC",
+            "score": 2
+          }
+        },
+        {
+          "id": "saq_sf1",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "beastcoast",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Evil Geniuses",
+            "score": 1
+          }
+        },
+        {
+          "id": "saq_sf2",
+          "stage": "Semifinal",
+          "status": "completed",
+          "teamA": {
+            "name": "HEROIC",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Infinity",
+            "score": 0
+          }
+        }
+      ],
+      "slots": 2
+    }
+  ],
+  "teams": [
+    {
+      "name": "Team Falcons",
+      "region": "Western Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "skiter",
+          "role": "Carry"
+        },
+        {
+          "ign": "Malr1ne",
+          "role": "Mid"
+        },
+        {
+          "ign": "ATF",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Cr1t-",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Sneyking",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "Heen"
+    },
+    {
+      "name": "Tundra Esports",
+      "region": "Western Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Crystallis",
+          "role": "Carry"
+        },
+        {
+          "ign": "bzm",
+          "role": "Mid"
+        },
+        {
+          "ign": "Saksa",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Pure",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Whitemon",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Team Spirit",
+      "region": "Eastern Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Yatoro",
+          "role": "Carry"
+        },
+        {
+          "ign": "Larl",
+          "role": "Mid"
+        },
+        {
+          "ign": "Collapse",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Mira",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Miposhka",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "Silent"
+    },
+    {
+      "name": "PARIVISION",
+      "region": "Eastern Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Pure~",
+          "role": "Carry"
+        },
+        {
+          "ign": "gpk",
+          "role": "Mid"
+        },
+        {
+          "ign": "DM",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Save-",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Dukalis",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Xtreme Gaming",
+      "region": "China",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Ame",
+          "role": "Carry"
+        },
+        {
+          "ign": "Xm",
+          "role": "Mid"
+        },
+        {
+          "ign": "xNova",
+          "role": "Offlane"
+        },
+        {
+          "ign": "XinQ",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Xxs",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Team Tidebound",
+      "region": "China",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Erika",
+          "role": "Carry"
+        },
+        {
+          "ign": "Setsu",
+          "role": "Mid"
+        },
+        {
+          "ign": "Yuma",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Doinb",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Funn1k",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "BOOM Esports",
+      "region": "Southeast Asia",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Jhocam",
+          "role": "Carry"
+        },
+        {
+          "ign": "Tims",
+          "role": "Mid"
+        },
+        {
+          "ign": "Saberlight",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Fbz",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Hyde",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Talon Esports",
+      "region": "Southeast Asia",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "23savage",
+          "role": "Carry"
+        },
+        {
+          "ign": "Mikoto",
+          "role": "Mid"
+        },
+        {
+          "ign": "JACKKY",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Q",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Oli",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Shopify Rebellion",
+      "region": "North America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Arteezy",
+          "role": "Carry"
+        },
+        {
+          "ign": "Abed",
+          "role": "Mid"
+        },
+        {
+          "ign": "SabeRLight~",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Ceb",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Yamsun",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "nouns",
+      "region": "North America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Pakazs",
+          "role": "Carry"
+        },
+        {
+          "ign": "Yopaj",
+          "role": "Mid"
+        },
+        {
+          "ign": "tlathjust",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Husky",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Wisper",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "beastcoast",
+      "region": "South America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Wisper",
+          "role": "Carry"
+        },
+        {
+          "ign": "Parker",
+          "role": "Mid"
+        },
+        {
+          "ign": "Scofield",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Chris Luck",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "K1",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "HEROIC",
+      "region": "South America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Frank",
+          "role": "Carry"
+        },
+        {
+          "ign": "Chris Luck",
+          "role": "Mid"
+        },
+        {
+          "ign": "Pba",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Matthew",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Mnz",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Gaimin Gladiators",
+      "region": "Western Europe",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Dyrachyo",
+          "role": "Carry"
+        },
+        {
+          "ign": "Quinn",
+          "role": "Mid"
+        },
+        {
+          "ign": "Ace",
+          "role": "Offlane"
+        },
+        {
+          "ign": "tOfu",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Seleri",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Team Liquid",
+      "region": "Western Europe",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "qojqva",
+          "role": "Carry"
+        },
+        {
+          "ign": "Nisha",
+          "role": "Mid"
+        },
+        {
+          "ign": "33",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Boxi",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Insania",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "Blitz"
+    },
+    {
+      "name": "Aurora Gaming",
+      "region": "Eastern Europe",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Crystallis",
+          "role": "Carry"
+        },
+        {
+          "ign": "Ato",
+          "role": "Mid"
+        },
+        {
+          "ign": "Nine",
+          "role": "Offlane"
+        },
+        {
+          "ign": "TORONTOTOKYO",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "Kataomi",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    },
+    {
+      "name": "Azure Ray",
+      "region": "China",
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Somnus",
+          "role": "Carry"
+        },
+        {
+          "ign": "Beyond",
+          "role": "Mid"
+        },
+        {
+          "ign": "fy",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Fade",
+          "role": "Soft Support"
+        },
+        {
+          "ign": "planet",
+          "role": "Hard Support / Captain"
+        }
+      ],
+      "coach": "—"
+    }
+  ],
+  "groupStage": {
+    "format": "Swiss-system (16 teams)",
+    "note": "Top 8 advance to the Main Event playoffs. Bottom 8 are eliminated.",
+    "standings": [
+      {
+        "team": "Team Falcons",
+        "wins": 3,
+        "losses": 0,
+        "status": "advanced"
+      },
+      {
+        "team": "Xtreme Gaming",
+        "wins": 3,
+        "losses": 1,
+        "status": "advanced"
+      },
+      {
+        "team": "Team Spirit",
+        "wins": 3,
+        "losses": 1,
+        "status": "advanced"
+      },
+      {
+        "team": "Tundra Esports",
+        "wins": 3,
+        "losses": 1,
+        "status": "advanced"
+      },
+      {
+        "team": "Team Liquid",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "PARIVISION",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "Team Tidebound",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "wins": 3,
+        "losses": 2,
+        "status": "advanced"
+      },
+      {
+        "team": "BOOM Esports",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Talon Esports",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Aurora Gaming",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Shopify Rebellion",
+        "wins": 2,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "Azure Ray",
+        "wins": 1,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "beastcoast",
+        "wins": 1,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "nouns",
+        "wins": 0,
+        "losses": 3,
+        "status": "eliminated"
+      },
+      {
+        "team": "HEROIC",
+        "wins": 0,
+        "losses": 3,
+        "status": "eliminated"
+      }
+    ]
+  },
+  "bracket": {
+    "format": "Double elimination — top 8 from the group stage",
+    "rounds": {
+      "upper": [
+        {
+          "name": "Upper Quarterfinals",
+          "matches": [
+            {
+              "id": "ubqf1",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Team Falcons",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Gaimin Gladiators",
+                "score": 0
+              }
+            },
+            {
+              "id": "ubqf2",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Xtreme Gaming",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Team Tidebound",
+                "score": 1
+              }
+            },
+            {
+              "id": "ubqf3",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Team Spirit",
+                "score": 2
+              },
+              "teamB": {
+                "name": "PARIVISION",
+                "score": 1
+              }
+            },
+            {
+              "id": "ubqf4",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Tundra Esports",
+                "score": 1
+              },
+              "teamB": {
+                "name": "Team Liquid",
+                "score": 2
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upper Semifinals",
+          "matches": [
+            {
+              "id": "ubsf1",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Team Falcons",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Xtreme Gaming",
+                "score": 1
+              }
+            },
+            {
+              "id": "ubsf2",
+              "bestOf": 3,
+              "status": "live",
+              "teamA": {
+                "name": "Team Spirit",
+                "score": 1
+              },
+              "teamB": {
+                "name": "Team Liquid",
+                "score": 1
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        },
+        {
+          "name": "Upper Final",
+          "matches": [
+            {
+              "id": "ubf1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": "2026-08-22T12:00:00+00:00",
+              "teamA": {
+                "name": "Team Falcons",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        }
+      ],
+      "lower": [
+        {
+          "name": "Lower Round 1",
+          "matches": [
+            {
+              "id": "lbr1m1",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "Gaimin Gladiators",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Team Tidebound",
+                "score": 0
+              }
+            },
+            {
+              "id": "lbr1m2",
+              "bestOf": 3,
+              "status": "completed",
+              "teamA": {
+                "name": "PARIVISION",
+                "score": 2
+              },
+              "teamB": {
+                "name": "Tundra Esports",
+                "score": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lower Round 2",
+          "matches": [
+            {
+              "id": "lbr2m1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": "2026-08-22T15:00:00+00:00",
+              "teamA": {
+                "name": "Gaimin Gladiators",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        },
+        {
+          "name": "Lower Final",
+          "matches": [
+            {
+              "id": "lbf1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": "2026-08-23T10:00:00+00:00",
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              },
+              "streamUrl": "https://www.twitch.tv/dota2ti"
+            }
+          ]
+        }
+      ]
+    },
+    "grandFinal": {
+      "id": "gf",
+      "bestOf": 5,
+      "status": "upcoming",
+      "scheduled": "2026-08-23T13:00:00+00:00",
+      "teamA": {
+        "name": "TBD",
+        "score": null
+      },
+      "teamB": {
+        "name": "TBD",
+        "score": null
+      },
+      "streamUrl": "https://www.twitch.tv/dota2ti"
+    }
+  },
+  "logos": {
+    "Team Falcons": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23d9a441'/%3E%3Ctext x='20' y='27' font-family='Arial' font-size='20' font-weight='bold' text-anchor='middle' fill='%230b0e13'%3ETF%3C/text%3E%3C/svg%3E"
+  }
+}
+;</script>
+<script>
+const LS_DATA="ti2026_data_override",LS_NOTIF="ti2026_notif_ids",LS_SEEN="ti2026_seen_scores";
+let DATA=null;
+let notifIds=new Set(JSON.parse(localStorage.getItem(LS_NOTIF)||"[]"));
+let activeFilter="all",searchTerm="";
+const fmt=n=>n==null?"—":"$"+Number(n).toLocaleString("en-US");
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
+// --- team logos -------------------------------------------------------------
+// Builds a lookup of team name -> logo URL from the data (top-level teams plus
+// per-region qualifier teams if they're given as objects). When no logo URL is
+// available, teamLogo() renders a colored initials badge so nothing looks empty.
+let _logoMap={};
+function buildLogoMap(d){
+  _logoMap={};
+  const add=(name,logo)=>{if(name&&logo)_logoMap[name.toLowerCase()]=logo;};
+  (d.teams||[]).forEach(t=>{ if(typeof t==="object") add(t.name,t.logo); });
+  (d.qualifiers||[]).forEach(q=>{
+    (q.teams||[]).forEach(t=>{ if(typeof t==="object") add(t.name,t.logo); });
+  });
+  // optional explicit map: d.logos = { "Team Name": "https://..." }
+  if(d.logos) Object.keys(d.logos).forEach(k=>add(k,d.logos[k]));
+}
+function teamColor(name){
+  // deterministic pleasant color from the name
+  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%360;
+  return `hsl(${h} 42% 32%)`;
+}
+function teamInitials(name){
+  const parts=name.replace(/[^a-zA-Z0-9 ]/g,"").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "?";
+  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+function teamLogo(name,size){
+  const n=(name||"").trim();
+  if(!n||n==="TBD"||n.toUpperCase()==="TBD") return `<span class="tlogo tlogo-tbd" style="--s:${size||20}px">?</span>`;
+  const url=_logoMap[n.toLowerCase()];
+  if(url) return `<img class="tlogo" style="--s:${size||20}px" src="${esc(url)}" alt="" loading="lazy" onerror="this.outerHTML=window.__logoFallback(${JSON.stringify(n).replace(/"/g,'&quot;')},${size||20})">`;
+  return logoFallback(n,size||20);
+}
+function logoFallback(name,size){
+  return `<span class="tlogo tlogo-badge" style="--s:${size||20}px;background:${teamColor(name)}">${esc(teamInitials(name))}</span>`;
+}
+window.__logoFallback=(n,s)=>logoFallback(n,s); // used by <img onerror>
+function teamWithLogo(name,size){
+  // logo + name as an inline unit (logo on the left)
+  return `<span class="team-wl">${teamLogo(name,size)}<span class="twl-name">${esc(name||'TBD')}</span></span>`;
+}
+const $=s=>document.querySelector(s);
+function saveNotif(){localStorage.setItem(LS_NOTIF,JSON.stringify([...notifIds]));}
+function matchWinner(m){if(!m)return null;const a=m.teamA||{},b=m.teamB||{};if(a.score==null||b.score==null)return null;if(a.score>b.score)return"A";if(b.score>a.score)return"B";return null;}
+function watchButton(m,mini){
+  // Shows a "Watch" link only when the match has a streamUrl and isn't finished.
+  const url=m.streamUrl||m.stream||"";
+  if(!url) return "";
+  if(m.status==="completed"||m.status==="done") return "";
+  const label=m.status==="live"?"Watch live":"Watch";
+  return `<a class="watch ${mini?'mini':''}" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Open the live stream in a new tab">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${label}</a>`;
+}
+function allMatches(d){const out=[];const b=d.bracket||{};const r=b.rounds||{};["upper","lower"].forEach(side=>{(r[side]||[]).forEach(rd=>{(rd.matches||[]).forEach(m=>out.push({...m,stage:rd.name,side}));});});if(b.grandFinal)out.push({...b.grandFinal,stage:"Grand Final",side:"gf"});return out;}
+
+let _cdTimer=null;
+function cdTargetDate(d){
+  // Prefer an explicit ISO date if present, else parse "YYYY-MM-DD to ..." from groupStage.
+  const m=d.meta||{}, dates=m.dates||{};
+  if(dates.groupStageStart) return new Date(dates.groupStageStart);
+  const gs=(dates.groupStage||"").match(/\d{4}-\d{2}-\d{2}/);
+  if(gs) return new Date(gs[0]+"T10:00:00+08:00"); // Shanghai morning start (UTC+8)
+  return null;
+}
+function diffParts(ms){
+  // Whole months/days/hours/min/sec between now and target (calendar-aware months).
+  let target=new Date(Date.now()+ms);
+  const now=new Date();
+  let months=(target.getFullYear()-now.getFullYear())*12+(target.getMonth()-now.getMonth());
+  let anchor=new Date(now); anchor.setMonth(anchor.getMonth()+months);
+  if(anchor>target){months--;anchor=new Date(now);anchor.setMonth(anchor.getMonth()+months);}
+  let rem=target-anchor;
+  const day=86400000,hr=3600000,min=60000;
+  const days=Math.floor(rem/day); rem-=days*day;
+  const hours=Math.floor(rem/hr); rem-=hours*hr;
+  const minutes=Math.floor(rem/min); rem-=minutes*min;
+  const seconds=Math.floor(rem/1000);
+  return {months,days,hours,minutes,seconds};
+}
+function startCountdown(d){
+  if(_cdTimer){clearInterval(_cdTimer);_cdTimer=null;}
+  const el=$("#countdown"); if(!el) return;
+  const target=cdTargetDate(d);
+  if(!target||isNaN(target)){el.style.display="none";return;}
+  el.style.display="";
+  const set=(k,v)=>{
+    const node=el.querySelector(`[data-cd="${k}"]`); if(!node)return;
+    const txt=String(v).padStart(2,"0");
+    if(node.textContent!==txt){node.textContent=txt;node.classList.remove("cd-tick");void node.offsetWidth;node.classList.add("cd-tick");}
+  };
+  const tick=()=>{
+    const ms=target-Date.now();
+    if(ms<=0){el.classList.add("live-now");if(_cdTimer){clearInterval(_cdTimer);_cdTimer=null;}return;}
+    el.classList.remove("live-now");
+    const p=diffParts(ms);
+    set("months",p.months);set("days",p.days);set("hours",p.hours);set("minutes",p.minutes);set("seconds",p.seconds);
+  };
+  tick();
+  _cdTimer=setInterval(tick,1000);
+}
+function render(d){
+  DATA=d;const m=d.meta||{};buildLogoMap(d);
+  const upd=m.lastUpdated?new Date(m.lastUpdated).toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}):"unknown";
+  const champion=((d.prizePool||{}).distribution||[]).find(x=>x.place==="1st"&&x.team);
+  const root=document.createElement("div");root.id="app";
+  root.innerHTML=`
+  ${m.demo?`<div class="demo-banner">DEMO DATA — sample results so you can see every feature. Swap in real data anytime.</div>`:""}
+  <header><div class="wrap">
+    <div class="eyebrow">Dota 2 World Championship · ${esc(m.shortName||"")}</div>
+    <div class="title-row">
+      <h1>The International<span class="yr">${esc(m.year||"2026")}</span></h1>
+      <div class="countdown" id="countdown" aria-label="Time until the tournament begins">
+        <div class="cd-target">Group Stage begins</div>
+        <div class="cd-units">
+          <div class="cd-unit"><span class="cd-num" data-cd="months">--</span><span class="cd-lab">Months</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit"><span class="cd-num" data-cd="days">--</span><span class="cd-lab">Days</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit"><span class="cd-num" data-cd="hours">--</span><span class="cd-lab">Hours</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit"><span class="cd-num" data-cd="minutes">--</span><span class="cd-lab">Minutes</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit"><span class="cd-num" data-cd="seconds">--</span><span class="cd-lab">Seconds</span></div>
+        </div>
+        <div class="cd-livebanner"><span class="pulse"></span>Tournament is live</div>
+      </div>
+    </div>
+    <div class="subline">
+      <span><b>${esc(m.venue||"")}</b> — ${esc(m.location||"")}</span>
+      <span>${esc(m.teamCount||16)} teams</span>
+      <span>Group Stage <b>${esc((m.dates&&m.dates.groupStage)||"")}</b></span>
+      <span>Main Event <b>${esc((m.dates&&m.dates.mainEvent)||"")}</b></span>
+    </div>
+    <div class="updated"><span class="dot"></span> Data updated ${esc(upd)}</div>
+    <div class="toolbar">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" type="search" placeholder="Search teams…" autocomplete="off" value="${esc(searchTerm)}">
+      </div>
+      <button class="tbtn filt ${activeFilter==='all'?'on':''}" data-filter="all">All</button>
+      <button class="tbtn filt ${activeFilter==='live'?'on':''}" data-filter="live">Live</button>
+      <button class="tbtn filt ${activeFilter==='upcoming'?'on':''}" data-filter="upcoming">Upcoming</button>
+      <button class="tbtn" id="notifBtn">🔔 Notifications ${notifIds.size?`(${notifIds.size})`:""}</button>
+      <button class="tbtn tbtn-league" id="leagueBtn">🏆 Create League</button>
+      <span class="toolbar-spacer"></span>
+      <span class="auth-area" id="authArea">
+        <button class="tbtn" id="signinBtn">Sign in</button>
+        <button class="tbtn tbtn-accent" id="signupBtn">Sign up</button>
+      </span>
+    </div>
+  </div></header>
+  <nav><div class="wrap">
+    <a href="#live" class="active">Live</a><a href="#prize">Prize</a><a href="#qualifiers">Qualifiers</a>
+    <a href="#teams">Teams</a><a href="#groups">Groups</a><a href="#bracket">Playoffs</a>
+  </div></nav>
+  <div class="wrap">
+    ${renderLive(d)}${renderPrize(d,champion)}${renderQualifiers(d)}${renderTeams(d)}${renderGroups(d)}${renderBracket(d)}
+    <footer>${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA), auto-updated by scheduled job.<br>
+      Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
+      Fan-made tracker, not affiliated with Valve.</footer>
+  </div>`;
+  $("#app").replaceWith(root);
+  wireToolbar();wireNav();applySearchFilter();renderAuthArea();startCountdown(d);wireQualifiers(d);wireTeams(d);
+  const _lb=$("#leagueBtn"); if(_lb) _lb.onclick=openLeague;
+}
+function statusBadge(s){
+  if(s==="live"||s==="ongoing")return`<span class="badge live"><span class="pulse"></span>Live</span>`;
+  if(s==="upcoming"||s==="scheduled")return`<span class="badge upcoming">Upcoming</span>`;
+  if(s==="completed"||s==="done")return`<span class="badge completed">Final</span>`;
+  return"";
+}
+function liveMatchesOf(d){
+  const matches=allMatches(d).filter(m=>m.status==="live"||m.status==="upcoming");
+  matches.sort((a,b)=>{const r=(a.status==="live"?0:1)-(b.status==="live"?0:1);if(r)return r;return new Date(a.scheduled||0)-new Date(b.scheduled||0);});
+  return matches;
+}
+function liveRailInner(d){
+  const matches=liveMatchesOf(d);
+  return matches.length?`<div class="live-rail">${matches.map(liveCard).join("")}</div>`:`<div class="empty"><b>No live or upcoming matches</b>Check back when the playoffs are underway.</div>`;
+}
+function renderLive(d){
+  return`<section id="live">
+    <div class="sec-head"><span class="sec-num">●</span><h2>Live &amp; Upcoming</h2>
+      <span class="live-status" id="liveStatus" title="This section refreshes automatically while you're online">
+        <span class="ls-dot"></span><span class="ls-text">Auto-updating</span></span>
+    </div>
+    <div id="liveRail">${liveRailInner(d)}</div>
+  </section>`;
+}
+function liveCard(m){
+  const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);
+  const time=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):"";
+  const on=notifIds.has(m.id);
+  return`<div class="lcard ${m.status==='live'?'is-live':''}" data-mid="${esc(m.id)}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status)}">
+    <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
+    <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24)}<span class="lc-score">${a.score??'–'}</span></div>
+    <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24)}<span class="lc-score">${b.score??'–'}</span></div>
+    <div class="lc-foot"><span class="lc-time">${m.status==='live'?'● LIVE NOW':esc(time)} · Bo${esc(m.bestOf||3)}</span>
+      <span class="lc-actions">${watchButton(m,false)}<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button></span></div>
+  </div>`;
+}
+function renderPrize(d,champion){
+  const pp=d.prizePool||{};const dist=pp.distribution||[];
+  const total=pp.total||d.meta.basePrizePool||0;
+  const maxAmt=dist.reduce((mx,r)=>Math.max(mx,r.amount||0),0)||1;
+  const rows=dist.map((r,i)=>{
+    const amt=r.amount||0;
+    const pct=total?(amt/total*100):0;
+    const barW=amt?Math.max((amt/maxAmt*100),3):0; // bar relative to top prize; none if pending
+    const pctTxt=amt?(pct>=1?pct.toFixed(0):pct.toFixed(1))+"%":"—";
+    return `<div class="pz-row ${i===0?'pz-first':''}">
+      <div class="pz-rank">${i===0?'<span class="pz-aegis">🏆</span>':''}<span class="pz-place">${esc(r.place)}</span></div>
+      <div class="pz-track"><div class="pz-bar" style="width:${barW.toFixed(1)}%"></div></div>
+      <div class="pz-amt">${fmt(r.amount)}</div>
+      <div class="pz-pct">${pctTxt}</div>
+      <div class="pz-team">${r.team?teamWithLogo(r.team,18):""}</div>
+    </div>`;
+  }).join("");
+  return`<section id="prize"><div class="sec-head"><span class="sec-num">01</span><h2>Prize Pool</h2></div>
+    <div class="champ ${champion?'show':''}"><div class="aegis">🏆</div><div><div class="l">Champions</div><div class="n" style="display:flex;align-items:center;gap:12px">${champion?teamLogo(champion.team,30):''}${esc(champion?champion.team:'')}</div></div></div>
+    <div class="pz-wrap">
+      <div class="pz-hero">
+        <div class="pz-hero-amt">${fmt(total)}</div>
+        <div class="pz-hero-lab">Total prize pool${pp.total?"":" — base, grows with the event"}</div>
+        <div class="pz-hero-meta">${dist.length} placements · ${esc(d.meta.teamCount||16)} teams</div>
+      </div>
+      <div class="pz-ladder">
+        <div class="pz-ladder-head"><span>Placement</span><span class="pz-h-share">Share of pool</span><span class="pz-h-amt">Prize</span></div>
+        ${rows}
+      </div>
+    </div></section>`;
+}
+function renderQualifiers(d){
+  const q=d.qualifiers||[];if(!q.length)return secEmpty("02","Qualifiers","qualifiers","No qualifier data yet.");
+  const arrow=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+  const cards=q.map((r,i)=>{
+    const winners=(r.winners||[]).map(w=>`<div class="qual-win" data-teams="${esc(w)}">${teamLogo(w,20)}<span>${esc(w)}</span></div>`).join("")||`<div class="qual-dates" style="margin-top:6px">Awaiting results</div>`;
+    const teamCount=(r.teams||[]).length, matchCount=(r.matches||[]).length;
+    const meta=teamCount?`${teamCount} teams · ${matchCount} matches`:(r.dates||"");
+    return`<div class="qual-card" role="button" tabindex="0" data-region="${esc(r.region)}" data-teams="${esc(((r.winners||[]).concat(r.teams||[])).join(' '))}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div class="qual-region">${esc(r.region)}</div><div class="qual-dates">${esc(r.dates||"")}</div></div>${statusBadge(r.status)}</div>
+      <div class="qual-winners">${winners}</div>
+      <div class="qual-foot"><span class="qual-meta">${esc(meta)}</span><span class="qual-view">View ${arrow}</span></div>
+    </div>`;
+  }).join("");
+  const mode=localStorage.getItem("ti2026_region_view")||"modal";
+  return`<section id="qualifiers"><div class="sec-head"><span class="sec-num">02</span><h2>Regional Qualifiers</h2>
+    <span class="reg-tag" style="margin-left:auto;display:inline-flex;align-items:center;gap:8px">Open as
+      <button class="vtoggle ${mode==='modal'?'on':''}" data-view="modal">Popup</button>
+      <button class="vtoggle ${mode==='page'?'on':''}" data-view="page">Page</button></span></div>
+    <p class="sec-note">Six regions, two slots each. Winners earn direct spots at the Main Event in Shanghai. Click a region for its teams and matches.</p>
+    <div class="qual-grid">${cards}</div></section>`;
+}
+
+function regionDetailHTML(d,region){
+  const r=(d.qualifiers||[]).find(x=>x.region===region); if(!r) return "";
+  const winners=new Set(r.winners||[]);
+  const teams=(r.teams&&r.teams.length?r.teams:(r.winners||[]));
+  const teamList=teams.map(t=>{
+    const q=winners.has(t);
+    return `<div class="rd-team ${q?'qualified':''}">${teamLogo(t,24)}${esc(t)}${q?'<span class="qtag">Qualified ✦</span>':''}</div>`;
+  }).join("")||`<div class="rd-empty">Team list pending.</div>`;
+  const allM=(r.matches||[]);
+  const fmtTime=iso=>{try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}catch(e){return "";}};
+  const renderM=m=>{
+    const a=m.teamA||{},b=m.teamB||{};
+    const done=m.status==="completed"||m.status==="done";
+    const aw=done&&a.score!=null&&b.score!=null&&a.score>b.score, bw=done&&a.score!=null&&b.score!=null&&b.score>a.score;
+    const when=(m.status==="upcoming"||m.status==="scheduled")&&m.scheduled?`<span class="rd-when">${esc(fmtTime(m.scheduled))}</span>`:"";
+    const watch=(typeof watchButton==="function")?watchButton(m,true):"";
+    return `<div class="rd-match ${m.status==='live'?'is-live':''}">
+      <div class="rd-match-head"><span class="rd-match-stage">${esc(m.stage||'Match')}${m.bestOf?` · Bo${esc(m.bestOf)}`:''}</span>
+        <span class="rd-match-meta">${watch}${statusBadge(m.status)}</span></div>
+      <div class="rd-match-row ${aw?'w':done?'l':''}">${teamWithLogo(a.name,22)}<span class="s">${a.score??'–'}</span></div>
+      <div class="rd-match-row ${bw?'w':done?'l':''}">${teamWithLogo(b.name,22)}<span class="s">${b.score??'–'}</span></div>
+      ${when?`<div class="rd-match-foot">${when}</div>`:""}
+    </div>`;
+  };
+  const upcoming=allM.filter(m=>m.status==="live"||m.status==="upcoming"||m.status==="scheduled");
+  const completed=allM.filter(m=>m.status==="completed"||m.status==="done");
+  const other=allM.filter(m=>!upcoming.includes(m)&&!completed.includes(m));
+  let matches="";
+  if(!allM.length){
+    matches=`<div class="rd-empty">No matches recorded yet. These will fill in from Liquipedia.</div>`;
+  }else{
+    if(upcoming.length) matches+=`<div class="rd-mgroup">Upcoming &amp; live</div>`+upcoming.map(renderM).join("");
+    if(other.length) matches+=other.map(renderM).join("");
+    if(completed.length) matches+=`<div class="rd-mgroup">Results</div>`+completed.map(renderM).join("");
+  }
+  return `<div class="rd-head">
+      <div><div class="rd-eyebrow">Regional Qualifier · ${statusLabelText(r.status)}</div>
+        <div class="rd-title">${esc(r.region)}</div>
+        <div class="rd-sub">${esc(r.dates||'')} · ${r.slots||2} slots to The International</div></div>
+    </div>
+    <div class="rd-grid">
+      <div class="rd-col"><h4>Teams (${teams.length})</h4>${teamList}</div>
+      <div class="rd-col"><h4>Matches${upcoming.length?` <span class="rd-pending">${upcoming.length} to play</span>`:''}</h4>${matches}</div>
+    </div>`;
+}
+function statusLabelText(s){return s==="completed"||s==="done"?"Completed":s==="live"||s==="ongoing"?"Live":"Upcoming";}
+
+let _openView=null; // {type:'region'|'team', name, mode}
+function openRegion(d,region){
+  const mode=localStorage.getItem("ti2026_region_view")||"modal";
+  const html=regionDetailHTML(d,region);
+  if(mode==="page"){
+    $("#regionPageBody").innerHTML=html;
+    document.body.classList.add("region-open");
+    window.scrollTo(0,0);
+    location.hash="region="+encodeURIComponent(region);
+  }else{
+    $("#regionModalBody").innerHTML=html;
+    $("#regionModal").classList.add("show");
+  }
+  _openView={type:"region",name:region,mode};
+}
+function closeRegionPage(){
+  document.body.classList.remove("region-open");_openView=null;
+  if(location.hash.startsWith("#region=")) history.replaceState(null,"",location.pathname+location.search);
+}
+function wireQualifiers(d){
+  document.querySelectorAll(".qual-card").forEach(c=>{
+    const region=c.getAttribute("data-region");
+    const go=()=>openRegion(d,region);
+    c.addEventListener("click",go);
+    c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});
+  });
+  document.querySelectorAll(".vtoggle").forEach(b=>b.addEventListener("click",e=>{
+    e.stopPropagation();
+    localStorage.setItem("ti2026_region_view",b.getAttribute("data-view"));
+    render(DATA);
+  }));
+  const back=$("#regionBack"); if(back) back.onclick=closeRegionPage;
+  const rm=$("#regionModal");
+  if(rm){
+    rm.querySelectorAll("[data-close]").forEach(x=>x.onclick=()=>rm.classList.remove("show"));
+    rm.addEventListener("click",e=>{if(e.target===rm)rm.classList.remove("show");});
+  }
+  // deep-link: if URL has #region=..., open the page view
+  if(location.hash.startsWith("#region=")){
+    const reg=decodeURIComponent(location.hash.slice(8));
+    if((d.qualifiers||[]).some(q=>q.region===reg)){
+      localStorage.setItem("ti2026_region_view","page");
+      $("#regionPageBody").innerHTML=regionDetailHTML(d,reg);
+      document.body.classList.add("region-open");
+    }
+  }
+}
+function renderTeams(d){
+  const t=d.teams||[];if(!t.length)return secEmpty("03","Teams","teams","Team list fills in as direct invites and qualifier winners are confirmed.");
+  const rows=t.map((tm,i)=>`<tr class="clickable" data-team="${esc(tm.name)}" data-teams="${esc(tm.name)}"><td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${teamLogo(tm.name,22)}${esc(tm.name)}</td><td class="reg-tag">${esc(tm.region||"—")}</td><td class="reg-tag">${esc(tm.qualification||"—")}</td></tr>`).join("");
+  return`<section id="teams"><div class="sec-head"><span class="sec-num">03</span><h2>Teams</h2><span class="reg-tag">${t.length} qualified</span></div>
+    <p class="sec-note">Click a team to see its roster and coach.</p>
+    <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>Region</th><th>Qualified via</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
+
+function teamRecord(d,name){
+  // pull W-L from group standings if present
+  const s=((d.groupStage||{}).standings||[]).find(x=>x.team===name);
+  return s?`${s.wins??0}–${s.losses??0} group stage`:"";
+}
+function teamDetailHTML(d,name){
+  const tm=(d.teams||[]).find(x=>x.name===name)||{name};
+  const players=tm.players||[];
+  const coach=tm.coach&&tm.coach!=="—"?tm.coach:null;
+  const rec=teamRecord(d,name);
+  const pcolor=ign=>{let h=0;for(let i=0;i<ign.length;i++)h=(h*31+ign.charCodeAt(i))%360;return `hsl(${h} 40% 34%)`;};
+  const pinit=ign=>ign.replace(/[^a-zA-Z0-9]/g,"").slice(0,2).toUpperCase()||"?";
+  const playerRows=players.length?players.map((p,i)=>{
+    const cap=/captain/i.test(p.role||"");
+    return `<div class="td-player">
+      <span class="td-pnum">${i+1}</span>
+      <span class="td-pav" style="background:${pcolor(p.ign||'?')}">${esc(pinit(p.ign||'?'))}</span>
+      <span class="td-pign">${esc(p.ign||'TBD')}</span>
+      <span class="td-prole ${cap?'cap':''}">${esc(p.role||'Player')}</span>
+    </div>`;
+  }).join(""):`<div class="td-empty">Roster will fill in from Liquipedia.</div>`;
+  const coachBlock=coach?`<div class="td-coach"><span class="td-pav">${esc((coach.match(/[a-zA-Z0-9]/)||['?'])[0].toUpperCase())}</span>
+      <div><div class="lbl">Coach</div><div class="nm">${esc(coach)}</div></div></div>`
+    :`<div class="td-empty">No coach listed.</div>`;
+  return `<div class="td-head">
+      ${teamLogo(name,54)}
+      <div><div class="td-title">${esc(name)}</div>
+        <div class="td-meta">${tm.region?`<span>${esc(tm.region)}</span>`:''}${tm.qualification?`<span>${esc(tm.qualification)}</span>`:''}${rec?`<span>${esc(rec)}</span>`:''}</div></div>
+    </div>
+    <div class="td-section-label">Roster</div>
+    ${playerRows}
+    <div class="td-section-label">Staff</div>
+    ${coachBlock}`;
+}
+function openTeam(d,name){
+  if(!name) return;
+  const mode=localStorage.getItem("ti2026_region_view")||"modal"; // share the same Popup/Page preference
+  const html=teamDetailHTML(d,name);
+  if(mode==="page"){
+    $("#teamPageBody").innerHTML=html;
+    document.body.classList.add("team-open");
+    window.scrollTo(0,0);
+  }else{
+    $("#teamModalBody").innerHTML=html;
+    $("#teamModal").classList.add("show");
+  }
+  _openView={type:"team",name,mode};
+}
+// Re-render whichever detail view is open, in place, using fresh data.
+function refreshOpenView(d){
+  if(!_openView) return;
+  if(_openView.type==="team"){
+    if(document.body.classList.contains("team-open")){$("#teamPageBody").innerHTML=teamDetailHTML(d,_openView.name);}
+    else if($("#teamModal").classList.contains("show")){$("#teamModalBody").innerHTML=teamDetailHTML(d,_openView.name);}
+    else { _openView=null; }
+  }else if(_openView.type==="region"){
+    if(document.body.classList.contains("region-open")){$("#regionPageBody").innerHTML=regionDetailHTML(d,_openView.name);}
+    else if($("#regionModal").classList.contains("show")){$("#regionModalBody").innerHTML=regionDetailHTML(d,_openView.name);}
+    else { _openView=null; }
+  }
+}
+function wireTeams(d){
+  document.querySelectorAll("[data-team]").forEach(el=>{
+    const name=el.getAttribute("data-team");
+    const go=ev=>{ev.stopPropagation();openTeam(d,name);};
+    el.addEventListener("click",go);
+    if(el.tagName==="TR"){el.setAttribute("tabindex","0");el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();openTeam(d,name);}});}
+  });
+  const tb=$("#teamBack"); if(tb) tb.onclick=()=>{document.body.classList.remove("team-open");_openView=null;};
+  const tm=$("#teamModal");
+  if(tm){
+    tm.querySelectorAll("[data-close]").forEach(x=>x.onclick=()=>{tm.classList.remove("show");_openView=null;});
+    tm.addEventListener("click",e=>{if(e.target===tm){tm.classList.remove("show");_openView=null;}});
+  }
+}
+function renderGroups(d){
+  const g=d.groupStage||{};const s=g.standings||[];
+  if(!s.length)return secEmpty("04","Group Stage","groups",(g.format?esc(g.format)+". ":"")+"Standings appear once the Swiss stage begins.");
+  const rows=s.map((r,i)=>{
+    const adv=r.status==="advanced"||(r.status==null&&i<8);const elim=r.status==="eliminated";
+    return`<tr class="clickable ${adv?'adv':''} ${elim?'elim':''}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" data-status="${adv?'advanced':'eliminated'}">
+      <td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${teamLogo(r.team,22)}${esc(r.team)}</td>
+      <td class="rec"><span class="w">${r.wins??0}</span> – <span class="l">${r.losses??0}</span></td>
+      <td>${adv?'<span class="pill adv">Advances</span>':elim?'<span class="pill elim">Out</span>':''}</td></tr>`;
+  }).join("");
+  return`<section id="groups"><div class="sec-head"><span class="sec-num">04</span><h2>Group Stage</h2></div>
+    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")} Click a team for its roster.</p>
+    <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>W–L</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
+function bracketMatch(m){
+  if(!m)return"";const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);const on=notifIds.has(m.id);
+  const clk=name=>(name&&name!=="TBD")?`class="mt clickable" data-team="${esc(name)}"`:`class="mt"`;
+  return`<div class="match ${m.status==='live'?'is-live':''} ${on?'notif':''}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status||'')}">
+    <div class="match-head"><span class="match-bo">Bo${esc(m.bestOf||3)}</span>
+      <span style="display:flex;align-items:center;gap:8px">${watchButton(m,true)}${statusBadge(m.status)}
+      <button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me" style="width:24px;height:24px;font-size:11px">${on?'🔔':'🔕'}</button></span></div>
+    <div class="match-row ${w==='A'?'winner':''}"><span ${clk(a.name)}>${teamWithLogo(a.name,20)}</span><span class="ms">${a.score??'–'}</span></div>
+    <div class="match-row ${w==='B'?'winner':''}"><span ${clk(b.name)}>${teamWithLogo(b.name,20)}</span><span class="ms">${b.score??'–'}</span></div></div>`;
+}
+function renderBracket(d){
+  const b=d.bracket||{};const rounds=b.rounds||{};
+  const hasData=(rounds.upper&&rounds.upper.length)||(rounds.lower&&rounds.lower.length)||b.grandFinal;
+  if(!hasData)return secEmpty("05","Playoffs","bracket","Double-elimination bracket populates after the group stage. Main Event runs Aug 20–23 in Shanghai.");
+  const colsFor=arr=>(arr||[]).map(rd=>`<div class="br-col"><div class="br-col-title">${esc(rd.name)}</div>${(rd.matches||[]).map(bracketMatch).join("")}</div>`).join("");
+  return`<section id="bracket"><div class="sec-head"><span class="sec-num">05</span><h2>Main Event — Playoffs</h2></div>
+    <p class="sec-note">${esc(b.format||"Double elimination")}.</p>
+    <div class="br-section-label">Upper Bracket</div>
+    <div class="bracket-wrap"><div class="bracket">${colsFor(rounds.upper)||'<div class="qual-dates">TBD</div>'}</div></div>
+    <div class="br-section-label" style="margin-top:30px">Lower Bracket</div>
+    <div class="bracket-wrap"><div class="bracket">${colsFor(rounds.lower)||'<div class="qual-dates">TBD</div>'}</div></div>
+    <div class="br-section-label" style="margin-top:30px">Grand Final</div>
+    <div class="gf gf-wrap">${bracketMatch(b.grandFinal)||'<div class="qual-dates">TBD</div>'}</div></section>`;
+}
+function secEmpty(num,title,id,msg){
+  return`<section id="${id}"><div class="sec-head"><span class="sec-num">${num}</span><h2>${esc(title)}</h2></div><div class="empty"><b>Not started</b>${esc(msg)}</div></section>`;
+}
+function applySearchFilter(){
+  const term=searchTerm.trim().toLowerCase();
+  document.querySelectorAll("[data-teams]").forEach(el=>{
+    const teams=(el.getAttribute("data-teams")||"").toLowerCase();
+    const status=(el.getAttribute("data-status")||"");
+    let show=true;
+    if(term&&!teams.includes(term))show=false;
+    if(activeFilter==="live"&&status!=="live")show=false;
+    if(activeFilter==="upcoming"&&status!=="upcoming")show=false;
+    el.classList.toggle("hidden",!show);
+  });
+}
+async function toggleNotif(id){
+  if(notifIds.has(id)){notifIds.delete(id);}
+  else{notifIds.add(id);if("Notification"in window&&Notification.permission==="default"){try{await Notification.requestPermission();}catch(e){}}}
+  saveNotif();render(DATA);
+}
+function toast(title,body){
+  const host=$("#toastHost");const el=document.createElement("div");el.className="toast";
+  el.innerHTML=`<div class="tt">${esc(title)}</div><div class="tb">${esc(body)}</div>`;
+  host.appendChild(el);setTimeout(()=>el.remove(),6000);
+}
+function fireBrowserNotification(title,body){if("Notification"in window&&Notification.permission==="granted"){try{new Notification(title,{body});}catch(e){}}}
+function checkForResultChanges(newData){
+  const seen=JSON.parse(localStorage.getItem(LS_SEEN)||"{}");const next={};let fired=0;
+  allMatches(newData).forEach(m=>{
+    const a=m.teamA||{},b=m.teamB||{};const key=`${a.score}-${b.score}-${m.status}`;next[m.id]=key;
+    if(notifIds.has(m.id)&&seen[m.id]&&seen[m.id]!==key){
+      const w=matchWinner(m);
+      if(w&&m.status==="completed"){
+        const winner=w==="A"?a.name:b.name;const msg=`${a.name} ${a.score}–${b.score} ${b.name} · ${winner} wins`;
+        toast(`Result: ${m.stage||"Match"}`,msg);fireBrowserNotification(`TI 2026 — ${winner} wins`,msg);fired++;
+      }
+    }
+  });
+  localStorage.setItem(LS_SEEN,JSON.stringify(next));return fired;
+}
+function wireToolbar(){
+  const si=$("#searchInput");
+  if(si)si.addEventListener("input",e=>{searchTerm=e.target.value;applySearchFilter();});
+  document.querySelectorAll(".filt").forEach(b=>b.addEventListener("click",()=>{activeFilter=b.getAttribute("data-filter");render(DATA);}));
+  document.querySelectorAll("[data-notif]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleNotif(b.getAttribute("data-notif"));}));
+  const nb=$("#notifBtn");
+  if(nb)nb.addEventListener("click",()=>{
+    if(!("Notification"in window)){toast("Not supported","This browser can't show notifications.");return;}
+    if(Notification.permission==="granted")toast("Notifications on",`Watching ${notifIds.size} match${notifIds.size===1?"":"es"}. Tap a 🔔 on any match.`);
+    else Notification.requestPermission().then(p=>toast(p==="granted"?"Notifications enabled":"Notifications blocked",p==="granted"?"Tap the 🔔 on matches you care about.":"Allow notifications in your browser settings to use this."));
+  });
+  const eb=$("#editBtn");if(eb)eb.addEventListener("click",openEditor);
+}
+function wireNav(){
+  const links=[...document.querySelectorAll("nav a")];
+  const secs=links.map(l=>document.querySelector(l.getAttribute("href"))).filter(Boolean);
+  const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const id="#"+e.target.id;links.forEach(l=>l.classList.toggle("active",l.getAttribute("href")===id));}});},{rootMargin:"-45% 0px -50% 0px"});
+  secs.forEach(s=>obs.observe(s));
+}
+function openEditor(){$("#editorText").value=JSON.stringify(DATA,null,2);$("#editorText").classList.remove("invalid");$("#editorMsg").textContent="";$("#editor").classList.add("show");}
+function closeEditor(){$("#editor").classList.remove("show");}
+function wireEditor(){
+  $("#editorClose").addEventListener("click",closeEditor);
+  $("#editor").addEventListener("click",e=>{if(e.target.id==="editor")closeEditor();});
+  $("#editorApply").addEventListener("click",()=>{
+    const ta=$("#editorText"),msg=$("#editorMsg");
+    try{
+      const parsed=JSON.parse(ta.value);ta.classList.remove("invalid");
+      localStorage.setItem(LS_DATA,JSON.stringify(parsed));checkForResultChanges(parsed);render(parsed);
+      msg.className="editor-msg ok";msg.textContent="Applied & saved locally";setTimeout(closeEditor,700);
+    }catch(err){ta.classList.add("invalid");msg.className="editor-msg err";msg.textContent="Invalid JSON: "+err.message;}
+  });
+  $("#editorDownload").addEventListener("click",()=>{
+    const blob=new Blob([$("#editorText").value],{type:"application/json"});const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="data.json";a.click();URL.revokeObjectURL(url);
+  });
+  $("#editorReset").addEventListener("click",async()=>{
+    localStorage.removeItem(LS_DATA);const msg=$("#editorMsg");msg.className="editor-msg ok";msg.textContent="Reloading original file…";
+    const fresh=await loadData(true);if(fresh){render(fresh);openEditor();}
+  });
+}
+async function loadData(skipOverride){
+  if(window.__INLINE_DATA__ && !localStorage.getItem(LS_DATA)) return window.__INLINE_DATA__;
+  if(!skipOverride){const ov=localStorage.getItem(LS_DATA);if(ov){try{return JSON.parse(ov);}catch(e){}}}
+  try{const res=await fetch("data.json?_="+Date.now());if(res.ok)return await res.json();}catch(e){}
+  return null;
+}
+/* ----------------------------- auth UI (front-end only; backend wired at deploy) ----------------------------- */
+const LS_USER="ti2026_user";
+const LS_PENDING="ti2026_pending_signup";
+const COUNTRY_PREFIXES=[
+  ["RO","+40"],["US","+1"],["GB","+44"],["DE","+49"],["FR","+33"],["ES","+34"],["IT","+39"],
+  ["NL","+31"],["SE","+46"],["PL","+48"],["UA","+380"],["RU","+7"],["CN","+86"],["SG","+65"],
+  ["PH","+63"],["ID","+62"],["MY","+60"],["IN","+91"],["BR","+55"],["AR","+54"],["PE","+51"],
+  ["AU","+61"],["CA","+1"],["JP","+81"],["KR","+82"],["AE","+971"],["SA","+966"],["TR","+90"]
+];
+function openModal(id){
+  closeModals();
+  document.querySelectorAll(`#${id} .err`).forEach(e=>e.classList.remove("show"));
+  document.querySelectorAll(`#${id} input`).forEach(e=>e.classList.remove("bad"));
+  const ok=document.querySelector(`#${id} .form-ok`); if(ok){ok.classList.remove("show");ok.textContent="";}
+  $("#"+id).classList.add("show");
+  const first=document.querySelector(`#${id} input`); if(first) setTimeout(()=>first.focus(),50);
+}
+function closeModals(){document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show"));}
+function setErr(fieldId,msg){const inp=$("#"+fieldId),err=$("#"+fieldId+"_err");if(inp)inp.classList.add("bad");if(err){err.textContent=msg;err.classList.add("show");}}
+function clearErr(fieldId){const inp=$("#"+fieldId),err=$("#"+fieldId+"_err");if(inp)inp.classList.remove("bad");if(err)err.classList.remove("show");}
+const isEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+function populatePrefixes(){
+  const sel=$("#su_prefix"); if(!sel||sel.options.length) return;
+  COUNTRY_PREFIXES.forEach(([cc,pre])=>{const o=document.createElement("option");o.value=pre;o.textContent=`${cc} ${pre}`;sel.appendChild(o);});
+  sel.value="+40";
+}
+function renderAuthArea(){
+  const area=$("#authArea"); if(!area) return;
+  const raw=localStorage.getItem(LS_USER);
+  if(raw){
+    let u={}; try{u=JSON.parse(raw);}catch(e){}
+    const initial=(u.username||u.name||"?").trim().charAt(0).toUpperCase();
+    area.innerHTML=`<span class="user-chip"><span class="av">${esc(initial)}</span>${esc(u.username||u.name||"Account")}<button class="signout" id="signoutBtn">Sign out</button></span>`;
+    $("#signoutBtn").addEventListener("click",()=>{localStorage.removeItem(LS_USER);renderAuthArea();});
+  }else{
+    area.innerHTML=`<button class="tbtn" id="signinBtn">Sign in</button><button class="tbtn tbtn-accent" id="signupBtn">Sign up</button>`;
+    $("#signinBtn").addEventListener("click",()=>openModal("signinModal"));
+    $("#signupBtn").addEventListener("click",()=>openModal("signupModal"));
+  }
+}
+function validateSignup(){
+  let ok=true;
+  ["su_name","su_email","su_phone","su_user","su_pw","su_pw2"].forEach(clearErr);
+  const name=$("#su_name").value.trim(),email=$("#su_email").value.trim(),phone=$("#su_phone").value.trim();
+  const user=$("#su_user").value.trim(),pw=$("#su_pw").value,pw2=$("#su_pw2").value;
+  if(name.length<2){setErr("su_name","Please enter your name.");ok=false;}
+  if(!isEmail(email)){setErr("su_email","Enter a valid email address.");ok=false;}
+  if(!/^\d{5,15}$/.test(phone.replace(/[\s-]/g,""))){setErr("su_phone","Enter a valid phone number (digits only).");ok=false;}
+  if(!/^[a-zA-Z0-9_.]{3,20}$/.test(user)){setErr("su_user","3–20 chars: letters, numbers, _ or .");ok=false;}
+  if(pw.length<8){setErr("su_pw","Use at least 8 characters.");ok=false;}
+  if(pw2!==pw){setErr("su_pw2","Passwords don't match.");ok=false;}
+  return ok?{name,email,phone:$("#su_prefix").value+" "+phone,username:user}:null;
+}
+function validateSignin(){
+  let ok=true;
+  ["si_id","si_pw"].forEach(clearErr);
+  const id=$("#si_id").value.trim(),pw=$("#si_pw").value;
+  if(!id){setErr("si_id","Enter your username or email.");ok=false;}
+  if(!pw){setErr("si_pw","Enter your password.");ok=false;}
+  return ok?{id,pw}:null;
+}
+function showCheckEmail(email){
+  // Replace the sign-up form body with a "check your inbox" confirmation state.
+  const body=document.querySelector("#signupModal .modal-body");
+  const foot=document.querySelector("#signupModal .modal-foot");
+  if(body) body.innerHTML=`
+    <div style="text-align:center;padding:8px 4px 4px">
+      <div style="font-size:40px;line-height:1;margin-bottom:14px">📧</div>
+      <h3 style="font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:20px;letter-spacing:.02em;margin-bottom:10px">Check your inbox</h3>
+      <p style="color:var(--ink-dim);font-size:14px;line-height:1.6;margin-bottom:6px">
+        We sent a confirmation link to <b style="color:var(--ink)">${esc(email)}</b>.
+        Click it to activate your account, then you'll be brought back here to sign in.
+      </p>
+      <p style="color:var(--ink-faint);font-size:12px;line-height:1.6;margin-top:12px">
+        The email activates once the backend is connected. Didn't get it? Check spam, or try again.
+      </p>
+    </div>`;
+  if(foot) foot.innerHTML=`
+    <button class="btn btn-ghost" id="resendBtn" style="display:flex;width:100%;justify-content:center;padding:11px">Resend email</button>
+    <div class="modal-alt">Already confirmed? <button data-switch="signin">Sign in</button></div>`;
+  // re-wire the switch + resend (they were just re-created)
+  document.querySelectorAll("#signupModal [data-switch]").forEach(b=>b.addEventListener("click",()=>openModal("signinModal")));
+  const rb=$("#resendBtn"); if(rb) rb.addEventListener("click",()=>{rb.textContent="Email re-sent";rb.disabled=true;});
+}
+
+// When the user returns from clicking the email link (?confirmed=1), show a
+// success note and open Sign in. The backend should redirect to ...?confirmed=1.
+function handleConfirmationLanding(){
+  const params=new URLSearchParams(location.search);
+  if(params.get("confirmed")!=="1") return;
+  // promote any pending signup to a known account so sign-in recognizes them
+  const pending=localStorage.getItem(LS_PENDING);
+  let prefillId="";
+  if(pending){try{const d=JSON.parse(pending);prefillId=d.email||d.username||"";localStorage.removeItem(LS_PENDING);}catch(e){}}
+  // clean the URL so a refresh doesn't re-trigger
+  history.replaceState(null,"",location.pathname);
+  openModal("signinModal");
+  const ok=$("#signinOk");
+  if(ok){ok.classList.add("show");ok.textContent="Email confirmed. Sign in to continue.";}
+  if(prefillId && $("#si_id")) $("#si_id").value=prefillId;
+}
+
+function wireAuth(){
+  populatePrefixes();
+  renderAuthArea();
+  document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeModals()));
+  document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)closeModals();}));
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModals();});
+  document.querySelectorAll(".pw-toggle").forEach(b=>b.addEventListener("click",()=>{
+    const inp=$("#"+b.getAttribute("data-pw")); if(!inp)return;
+    const show=inp.type==="password"; inp.type=show?"text":"password"; b.textContent=show?"HIDE":"SHOW";
+  }));
+  document.querySelectorAll("[data-switch]").forEach(b=>b.addEventListener("click",()=>{
+    openModal(b.getAttribute("data-switch")==="signup"?"signupModal":"signinModal");
+  }));
+  $("#signupSubmit").addEventListener("click",()=>{
+    const data=validateSignup(); if(!data)return;
+    // In a real build: POST to your auth API, which creates a pending account
+    // and emails a tokenized confirmation link (see email_confirmation_template.html).
+    // Until the backend exists, we store a "pending" record and show the
+    // check-your-inbox state so the flow is complete end to end.
+    localStorage.setItem(LS_PENDING,JSON.stringify(data));
+    showCheckEmail(data.email);
+  });
+  $("#signinSubmit").addEventListener("click",()=>{
+    const data=validateSignin(); if(!data)return;
+    const ok=$("#signinOk"); ok.classList.add("show");
+    ok.textContent="Signed in. (Demo session — real verification connects with the backend.)";
+    const existing=localStorage.getItem(LS_USER); let u=existing?JSON.parse(existing):{};
+    u.username=u.username||(data.id.includes("@")?data.id.split("@")[0]:data.id);
+    if(data.id.includes("@")) u.email=data.id;
+    localStorage.setItem(LS_USER,JSON.stringify(u));
+    setTimeout(()=>{closeModals();renderAuthArea();},1100);
+  });
+  handleConfirmationLanding();
+}
+/* ----------------------------- League (predictions) ----------------------------- */
+// Front-end + localStorage only. A real shared league (friends on other devices
+// seeing the same leaderboard) needs a backend; this is structured for that swap.
+const LS_LEAGUE="ti2026_league";
+const DEFAULT_RULES={
+  // per-match
+  winner:        {on:true,  pts:10},
+  exactScore:    {on:true,  pts:15},
+  correctMargin: {on:true,  pts:5},
+  cleanSweep:    {on:false, pts:8},
+  upsetBonus:    {on:false, pts:10},
+  confidence:    {on:false, pts:0},   // multiplier toggle (×1–3), pts unused
+  firstGame:     {on:false, pts:5},   // win game 1 of the series
+  reverseSweep:  {on:false, pts:12},  // comeback from 0-1/0-2 down
+  sweepOverUnder:{on:false, pts:6},   // min games vs goes the distance
+  gameCountOU:   {on:false, pts:6},   // total games over/under
+  closestScore:  {on:false, pts:3},   // tiebreak edge among correct-winner picks
+  perfectDay:    {on:false, pts:25},  // all matches on a day correct
+  // tournament-long
+  champion:      {on:true,  pts:50},
+  grandFinalists:{on:true,  pts:25},
+  topFour:       {on:true,  pts:20},
+  topEight:      {on:false, pts:10},
+  lastPlace:     {on:false, pts:15},
+  groupWinner:   {on:false, pts:20},
+  regionPerf:    {on:false, pts:15},
+  bottomFour:    {on:false, pts:10},  // eliminated-first from groups
+  breakoutTeam:  {on:false, pts:25},  // low-seed reaches a milestone
+  regionHero:    {on:false, pts:15},  // best team from a chosen region
+  finalsRematch: {on:false, pts:30},  // a past final repeats
+  exactFinal:    {on:false, pts:40},  // both finalists, correct final
+  champFromLB:   {on:false, pts:20},  // champion wins from lower bracket
+  // spicy / fun
+  cinderella:    {on:false, pts:30},
+  perfectBracket:{on:false, pts:200},
+  streakBonus:   {on:false, pts:5},   // per extra correct in a streak
+  lockOfDay:     {on:false, pts:0},   // doubles that pick's points
+  survivorPool:  {on:false, pts:0},   // side-game, no points
+  headToHead:    {on:false, pts:0},   // friend duels, pot of points
+  weeklyMVP:     {on:false, pts:20},  // most points in a week
+  comebackBonus: {on:false, pts:10},  // climb the rankings week-over-week
+  jokerCard:     {on:false, pts:0},   // one-time doubler token
+  wildcardWeek:  {on:false, pts:0},   // admin doubles a round
+  mulligan:      {on:false, pts:0},   // one undo before deadline
+  // scoring style (radio-like; we store the chosen mode)
+  scoreMode:     "flat",              // flat | weighted | odds
+  negativePoints:{on:false, pts:5},   // wrong picks subtract this
+  earlyLockBonus:{on:false, pts:2},
+  diminishing:   {on:false, pts:0},   // repeated favorite picks earn less
+  stageGates:    {on:false, pts:0},   // lock all of a round before reveal
+  percentile:    {on:false, pts:0},   // beat-the-field scoring
+  bonusPool:     {on:false, pts:50},  // split pot for a hard prediction
+  // tie-breakers (ordered priority list; on/off)
+  tbExactHits:   {on:true},
+  tbChampion:    {on:true},
+  tbFinalH2H:    {on:false},
+  tbThreshold:   {on:false},
+  // timing
+  lockLeadMs: 60*60*1000
+};
+let _lgTab="home";
+
+function lgLoad(){ try{return JSON.parse(localStorage.getItem(LS_LEAGUE)||"null");}catch(e){return null;} }
+function lgSave(s){ localStorage.setItem(LS_LEAGUE,JSON.stringify(s)); }
+// Safe rule accessors: rules can be {on,pts} objects or (legacy) plain numbers.
+function rPts(r,key){ const v=r&&r[key]; if(v==null)return 0; if(typeof v==="number")return v; return (v.on!==false)?(v.pts||0):0; }
+function rOn(r,key){ const v=r&&r[key]; if(v==null)return false; if(typeof v==="number")return v>0; return !!v.on; }
+function lgCurrentUser(){
+  const raw=localStorage.getItem(LS_USER);
+  if(raw){try{const u=JSON.parse(raw);return u.username||u.name||null;}catch(e){}}
+  return null;
+}
+function lgCurrentEmail(){
+  const raw=localStorage.getItem(LS_USER);
+  if(raw){try{const u=JSON.parse(raw);return u.email||null;}catch(e){}}
+  return null;
+}
+function lgCode(){ return Math.random().toString(36).slice(2,7).toUpperCase(); }
+function avatarColor(name){let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%360;return `hsl(${h} 45% 38%)`;}
+
+function openLeague(){
+  document.body.classList.add("league-open");
+  window.scrollTo(0,0);
+  renderLeague();
+}
+function closeLeague(){ document.body.classList.remove("league-open"); }
+
+function renderLeague(){
+  document.querySelectorAll(".lg-tab").forEach(t=>t.classList.toggle("on",t.getAttribute("data-lgtab")===_lgTab));
+  const panel=$("#lgPanel"); if(!panel) return;
+  const lg=lgLoad();
+  if(!lg){ panel.innerHTML=lgCreateOrJoin(); wireLeaguePanel(); return; }
+  if(_lgTab==="home") panel.innerHTML=lgHome(lg);
+  else if(_lgTab==="predict") panel.innerHTML=lgPredictions(lg);
+  else if(_lgTab==="leaderboard") panel.innerHTML=lgLeaderboard(lg);
+  else if(_lgTab==="rules") panel.innerHTML=lgRulesView(lg);
+  wireLeaguePanel();
+}
+
+function lgCreateOrJoin(){
+  const user=lgCurrentUser();
+  if(!user){
+    return `<div class="lg-empty"><div class="big">🔐</div><h3>Sign in to use leagues</h3>
+      <div class="hint">Leagues are tied to your account — your username is your display name, and your join code is sent to your email. Sign in or create an account to continue.</div>
+      <button class="lg-btn" id="lgGoSignin" style="margin-top:18px">Sign in</button>
+      <button class="lg-btn-ghost" id="lgGoSignup" style="margin-top:10px">Create account</button></div>`;
+  }
+  return `<div class="lg-grid2">
+    <div class="lg-card">
+      <h3>Create a league</h3>
+      <div class="hint">Start a league and invite friends. You'll be the admin and set the scoring rules. Your join code is emailed to you so you can share it.</div>
+      <div class="lg-field"><label>League name</label><input id="lgNewName" placeholder="The Aegis Office Pool" maxlength="40"></div>
+      <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
+      <button class="lg-btn" id="lgCreateBtn">Create league</button>
+    </div>
+    <div class="lg-card">
+      <h3>Join a league</h3>
+      <div class="hint">Got a code from a friend? Enter it to join. You'll appear under your username.</div>
+      <div class="lg-field"><label>Join code</label><input id="lgJoinCode" placeholder="ABC12" maxlength="5" style="text-transform:uppercase;letter-spacing:.2em"></div>
+      <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
+      <button class="lg-btn-ghost" id="lgJoinBtn">Join league</button>
+      <div class="hint" style="margin-top:12px">Cross-device joining activates with the backend. Locally you can create your own league to explore.</div>
+    </div>
+  </div>`;
+}
+
+function lgHome(lg){
+  const me=lg.me;
+  const members=lg.members.map(m=>`<div class="lg-member"><span class="av" style="background:${avatarColor(m)}">${esc(m.charAt(0).toUpperCase())}</span>${esc(m)}${m===me?'<span class="you">You · Admin</span>':''}</div>`).join("");
+  return `<div class="lg-grid2">
+    <div class="lg-card">
+      <h3>${esc(lg.name)}</h3>
+      <div class="hint">Share this code so friends can join your league.</div>
+      <div class="lg-code">${esc(lg.code)}<button id="lgCopyCode">Copy</button></div>
+      <div style="margin-top:20px"><h3 style="font-size:14px">Members (${lg.members.length})</h3></div>
+      ${members}
+    </div>
+    <div class="lg-card">
+      <h3>How it works</h3>
+      <div class="hint" style="line-height:1.7">
+        • Predict each match: pick the winner (+${rPts(lg.rules,'winner')} pts) and the exact score (+${rPts(lg.rules,'exactScore')} bonus).<br>
+        • Predict tournament outcomes: champion (+${rPts(lg.rules,'champion')}), top 4 (+${rPts(lg.rules,'topFour')}).<br>
+        • Lock your pick at least ${Math.round(lg.rules.lockLeadMs/60000)} min before a match. Once locked, it's final.<br>
+        • You can only see others' picks for a match after you've locked yours.
+      </div>
+      <button class="lg-btn" id="lgGoPredict" style="margin-top:8px">Make predictions →</button>
+    </div>
+  </div>`;
+}
+
+function lgUpcomingPredictable(){
+  // matches that are upcoming/live across qualifiers + bracket
+  const out=[];
+  (DATA.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>{ if(m.status==="upcoming"||m.status==="live"||m.status==="scheduled") out.push({...m,group:q.region}); }));
+  allMatches(DATA).forEach(m=>{ if(m.status==="upcoming"||m.status==="live"||m.status==="scheduled") out.push({...m,group:m.stage}); });
+  // only matches with two real teams
+  return out.filter(m=>(m.teamA&&m.teamA.name&&m.teamA.name!=="TBD")&&(m.teamB&&m.teamB.name&&m.teamB.name!=="TBD"));
+}
+
+function lgPredictions(lg){
+  const matches=lgUpcomingPredictable();
+  if(!matches.length) return `<div class="lg-empty"><div class="big">🔮</div><h3>No open matches to predict</h3><div class="hint">Predictions open when upcoming matches have two confirmed teams.</div></div>`;
+  const now=Date.now();
+  const cards=matches.map(m=>{
+    const myPred=(lg.predictions||{})[m.id];
+    const locked=myPred&&myPred.locked;
+    const sched=m.scheduled?new Date(m.scheduled).getTime():null;
+    const lockBy=sched?sched-lg.rules.lockLeadMs:null;
+    const lockPassed=lockBy?now>lockBy:false;
+    const a=m.teamA.name,b=m.teamB.name;
+    const selA=myPred&&myPred.pick===a, selB=myPred&&myPred.pick===b;
+    const deadlineTxt=lockBy?(lockPassed?"Locking deadline passed":"Lock by "+new Date(lockBy).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"})):"";
+    let body;
+    if(locked){
+      body=`<div class="pred-locked-tag">🔒 Locked: ${esc(myPred.pick)} · ${myPred.sa}–${myPred.sb}</div>${lgOthersBlock(lg,m,true)}`;
+    }else if(lockPassed){
+      body=`<div class="pred-hidden">Predictions closed for this match.</div>${lgOthersBlock(lg,m,(lg.predictions||{})[m.id]&&(lg.predictions||{})[m.id].locked)}`;
+    }else{
+      body=`<div class="pred-pick">
+          <div class="pred-team ${selA?'sel':''}" data-pick="${esc(a)}" data-mid="${esc(m.id)}">${teamLogo(a,22)}<span>${esc(a)}</span></div>
+          <div class="pred-team ${selB?'sel':''}" data-pick="${esc(b)}" data-mid="${esc(m.id)}">${teamLogo(b,22)}<span>${esc(b)}</span></div>
+        </div>
+        <div class="pred-score">
+          <span>${esc(a)}</span>
+          <input type="number" min="0" max="5" id="sa_${esc(m.id)}" value="${myPred?myPred.sa:''}" placeholder="0">
+          <span class="vs">vs</span>
+          <input type="number" min="0" max="5" id="sb_${esc(m.id)}" value="${myPred?myPred.sb:''}" placeholder="0">
+          <span>${esc(b)}</span>
+        </div>
+        <div class="pred-actions"><button class="pred-lock" data-lock="${esc(m.id)}">🔒 Lock prediction</button></div>`;
+    }
+    return `<div class="pred-match ${locked?'locked':''}">
+      <div class="pred-head"><span class="pred-stage">${esc(m.group||m.stage||'Match')} · Bo${esc(m.bestOf||3)}</span>
+        <span class="pred-deadline ${lockPassed?'passed':''}">${esc(deadlineTxt)}</span></div>
+      <div class="pred-body">${body}</div>
+    </div>`;
+  }).join("");
+  const outcomes=lgOutcomesHTML(lg);
+  return `<div class="lg-card" style="padding:18px 20px"><div class="hint" style="margin:0">Predict tournament outcomes and individual matches. Pick a winner, enter the exact score, then lock — locking is final and reveals others' picks for that match.</div></div>
+    ${outcomes}
+    <div class="td-section-label" style="margin-top:8px">Match predictions</div>
+    ${cards}`;
+}
+
+function lgOutcomesHTML(lg){
+  // Tournament-long predictions: champion + top 4. Teams come from the 16-team field.
+  const teams=(DATA.teams||[]).map(t=>t.name);
+  if(!teams.length) return "";
+  const o=lg.outcomes||{};
+  const opt=(sel)=>['<option value="">— select —</option>'].concat(teams.map(t=>`<option ${sel===t?'selected':''}>${esc(t)}</option>`)).join("");
+  const champLocked=o.champion&&o.champion.locked;
+  const t4=o.topFour||{teams:[],locked:false};
+  const champBlock=champLocked
+    ? `<div class="pred-locked-tag">🔒 Champion: ${esc(o.champion.pick)}</div>`
+    : `<select id="lgChampSel">${opt(o.champion&&o.champion.pick)}</select>
+       <div class="pred-actions" style="margin-top:10px"><button class="pred-lock" id="lgLockChamp">🔒 Lock champion pick</button></div>`;
+  const t4Block=t4.locked
+    ? `<div class="pred-locked-tag">🔒 Top 4: ${esc((t4.teams||[]).join(", "))}</div>`
+    : `<div class="pred-multi">
+        ${[0,1,2,3].map(i=>`<select class="lg-t4" data-i="${i}">${opt((t4.teams||[])[i])}</select>`).join("")}
+       </div>
+       <div class="pred-actions" style="margin-top:10px"><button class="pred-lock" id="lgLockT4">🔒 Lock top 4</button></div>`;
+  return `<div class="td-section-label">Tournament outcomes</div>
+    <div class="lg-grid2">
+      <div class="pred-outcome ${champLocked?'locked':''}">
+        <h4>🏆 Champion <span style="font-family:JetBrains Mono;font-size:11px;color:var(--aegis);font-weight:400">+${rPts(lg.rules,'champion')} pts</span></h4>
+        <div class="sub">Who lifts the Aegis?</div>
+        ${champBlock}
+      </div>
+      <div class="pred-outcome ${t4.locked?'locked':''}">
+        <h4>🎖️ Top 4 <span style="font-family:JetBrains Mono;font-size:11px;color:var(--aegis);font-weight:400">+${rPts(lg.rules,'topFour')} each</span></h4>
+        <div class="sub">Pick the four teams that finish top 4 (order doesn't matter).</div>
+        ${t4Block}
+      </div>
+    </div>`;
+}
+
+function lgOthersBlock(lg,m,unlockedToSee){
+  if(!unlockedToSee) return `<div class="pred-others"><h5>Other players</h5><div class="pred-hidden">Lock your prediction to reveal everyone else's picks.</div></div>`;
+  const others=(lg.otherPredictions&&lg.otherPredictions[m.id])||[];
+  if(!others.length) return `<div class="pred-others"><h5>Other players</h5><div class="pred-hidden">No one else has locked this match yet.</div></div>`;
+  const rows=others.map(o=>`<div class="pred-other-row"><span class="av" style="width:22px;height:22px;border-radius:50%;background:${avatarColor(o.name)};display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-family:Oswald">${esc(o.name.charAt(0).toUpperCase())}</span><span class="nm">${esc(o.name)}</span><span class="pk">${esc(o.pick)} · ${o.sa}–${o.sb}</span></div>`).join("");
+  return `<div class="pred-others"><h5>Other players' picks</h5>${rows}</div>`;
+}
+
+function lgLeaderboard(lg){
+  const board=lgComputeLeaderboard(lg);
+  if(!board.length) return `<div class="lg-empty"><div class="big">🏆</div><h3>Leaderboard is empty</h3><div class="hint">Points appear here as matches finish and predictions are scored.</div></div>`;
+  const rows=board.map((p,i)=>`<tr class="lb-row ${i===0?'top1':''} ${p.name===lg.me?'lb-you':''}">
+    <td class="lb-rank"><span class="lb-place">${i+1}</span>${i===0?' 🥇':i===1?' 🥈':i===2?' 🥉':''}</td>
+    <td><div class="lb-name"><span class="av" style="background:${avatarColor(p.name)}">${esc(p.name.charAt(0).toUpperCase())}</span>${esc(p.name)}${p.name===lg.me?'<span class="lb-youtag">You</span>':''}${p.name===lg.admin?'<span class="lb-admintag">Admin</span>':''}</div></td>
+    <td class="lb-acc">${p.correct}/${p.scored} correct</td>
+    <td class="lb-pts">${p.points}</td>
+  </tr>`).join("");
+  return `<div class="lg-card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div><h3 style="margin:0">Standings</h3><div class="hint" style="margin:4px 0 0">${board.length} players · updates automatically after each result</div></div>
+      <span class="lb-live"><span class="lb-livedot"></span>Live</span>
+    </div>
+    <div class="lg-card" style="padding:0;overflow:hidden">
+    <table class="lb-table"><thead><tr><th>#</th><th>Player</th><th style="text-align:right">Accuracy</th><th style="text-align:right">Points</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>
+  <div class="hint" style="margin-top:14px">Scored from finished matches: +${rPts(lg.rules,'winner')} correct winner, +${rPts(lg.rules,'exactScore')} exact-score bonus. Tournament outcome bonuses (champion +${rPts(lg.rules,'champion')}, top 4 +${rPts(lg.rules,'topFour')}) apply once the event ends.</div>`;
+}
+
+function lgComputeLeaderboard(lg){
+  // Build per-player points from locked predictions vs finished results.
+  const results={}; allMatches(DATA).forEach(m=>{ if(m.status==="completed"||m.status==="done"){const w=matchWinner(m);results[m.id]={winner:w==="A"?m.teamA.name:w==="B"?m.teamB.name:null,sa:m.teamA.score,sb:m.teamB.score};}});
+  (DATA.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>{ if(m.status==="completed"||m.status==="done"){const aw=m.teamA.score>m.teamB.score;results[m.id]={winner:aw?m.teamA.name:m.teamB.name,sa:m.teamA.score,sb:m.teamB.score};}}));
+  const players={};
+  const ensure=n=>players[n]||(players[n]={name:n,points:0,correct:0,scored:0});
+  // me
+  Object.entries(lg.predictions||{}).forEach(([mid,p])=>{
+    if(!p.locked) return; const r=results[mid]; if(!r) return;
+    const me=ensure(lg.me); me.scored++;
+    if(r.winner&&p.pick===r.winner){me.points+=rPts(lg.rules,'winner');me.correct++;if(p.sa==r.sa&&p.sb==r.sb)me.points+=rPts(lg.rules,'exactScore');}
+  });
+  // others (demo/seeded)
+  Object.entries(lg.otherPredictions||{}).forEach(([mid,arr])=>{
+    const r=results[mid]; if(!r) return;
+    arr.forEach(o=>{const pl=ensure(o.name);pl.scored++;if(r.winner&&o.pick===r.winner){pl.points+=rPts(lg.rules,'winner');pl.correct++;if(o.sa==r.sa&&o.sb==r.sb)pl.points+=rPts(lg.rules,'exactScore');}});
+  });
+  // include members with 0
+  lg.members.forEach(m=>ensure(m));
+  return Object.values(players).sort((a,b)=>b.points-a.points||b.correct-a.correct);
+}
+
+function lgRulesView(lg){
+  const editable=lg.me===lg.admin;
+  const r=lg.rules;
+  const dis=editable?"":"disabled";
+  // a rule row: toggle + label + (optional) points input
+  const row=(key,label,desc,unit,hasPts)=>{
+    const v=r[key]||{};
+    const isOn=(typeof v==="object")?!!v.on:!!v;
+    const pts=(typeof v==="object")?(v.pts??0):v;
+    return `<div class="rule-row ${isOn?'on':''}">
+      <label class="rule-toggle"><input type="checkbox" data-ruleon="${key}" ${isOn?'checked':''} ${dis}><span class="rs-track"></span></label>
+      <div class="rule-info"><div class="rule-name">${esc(label)}</div><div class="rule-desc">${esc(desc)}</div></div>
+      ${hasPts?`<div class="rule-pts"><input type="number" min="0" data-rulepts="${key}" value="${pts}" ${dis}><span>${esc(unit||'pts')}</span></div>`:'<div class="rule-pts rule-nopts">side-game</div>'}
+    </div>`;
+  };
+  const modeBtn=(val,label)=>`<button class="rule-mode ${r.scoreMode===val?'on':''}" data-mode="${val}" ${dis}>${esc(label)}</button>`;
+  const tb=(key,label)=>{const on=(typeof r[key]==="object")?!!r[key].on:!!r[key];return `<label class="tb-item"><input type="checkbox" data-ruleon="${key}" ${on?'checked':''} ${dis}> ${esc(label)}</label>`;};
+  return `<div class="lg-card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div><h3 style="margin:0">League rules</h3><div class="hint" style="margin:4px 0 0">${editable?'As admin, toggle what counts and set the points. Everything is on the table for now; trim later.':'Only the admin can change these.'}</div></div>
+      ${editable?'<button class="lg-btn" id="lgSaveRules">Save rules</button>':''}
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Per-match predictions</div>
+      ${row("winner","Correct winner","Pick who wins the series.","pts",true)}
+      ${row("exactScore","Exact series score","Nail the exact result (2–1, 2–0, 3–2…).","pts",true)}
+      ${row("correctMargin","Correct margin only","Right about sweep vs. went-the-distance, without the exact numbers.","pts",true)}
+      ${row("cleanSweep","Clean sweep call","Bonus for correctly calling a 2–0 / 3–0.","pts",true)}
+      ${row("upsetBonus","Upset bonus","Extra when your correct winner was the underdog/lower seed.","pts",true)}
+      ${row("confidence","Confidence multiplier","Assign 1–3★ per match; correct = pts×★, wrong high-confidence can cost you.","",false)}
+      ${row("firstGame","Win game 1","Predict which team takes the first game of the series.","pts",true)}
+      ${row("reverseSweep","Reverse sweep call","Bonus for calling a comeback from 0–1 (or 0–2) down.","pts",true)}
+      ${row("sweepOverUnder","Sweep or not (O/U)","Just predict: minimum games, or goes the distance.","pts",true)}
+      ${row("gameCountOU","Game-count over/under","Predict total games played in a series.","pts",true)}
+      ${row("closestScore","Closest-score tiebreak","Among correct-winner picks, closest score gets an edge.","pts",true)}
+      ${row("perfectDay","Perfect day","Bonus for calling every match on a given day.","pts",true)}
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Tournament-long (lock before the event)</div>
+      ${row("champion","Champion","Who lifts the Aegis.","pts",true)}
+      ${row("grandFinalists","Grand finalists","Both teams that reach the final.","pts",true)}
+      ${row("topFour","Top 4","The four semifinalists (order-independent).","each",true)}
+      ${row("topEight","Top 8","Who makes the playoff bracket.","each",true)}
+      ${row("lastPlace","Last place","Wooden spoon — who finishes dead last.","pts",true)}
+      ${row("groupWinner","Group-stage winner","Team that tops the group/Swiss stage.","pts",true)}
+      ${row("regionPerf","Best region","Which region's teams do best overall.","pts",true)}
+      ${row("bottomFour","Bottom 4 (out first)","Predict who exits the group stage first.","each",true)}
+      ${row("breakoutTeam","Breakout team","A low-seed pick that pays if it reaches a milestone.","pts",true)}
+      ${row("regionHero","Region hero","Best-performing team from a region you choose.","pts",true)}
+      ${row("finalsRematch","Finals rematch","Two specific teams meet again from a past final.","pts",true)}
+      ${row("exactFinal","Exact final matchup","Both finalists, in the correct final.","pts",true)}
+      ${row("champFromLB","Champion from lower bracket","Bonus if your champion wins from the lower bracket.","pts",true)}
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Spicy / fun bonuses</div>
+      ${row("cinderella","Cinderella run","Name an overperformer; points scale with how far they go.","pts",true)}
+      ${row("perfectBracket","Perfect bracket","Jackpot for nailing the entire playoff bracket.","pts",true)}
+      ${row("streakBonus","Streak bonus","Extra per consecutive correct match pick.","per",true)}
+      ${row("lockOfDay","Lock of the day","One banker pick per day — double points if right.","",false)}
+      ${row("survivorPool","Survivor pool","Pick one winner each day; a loss knocks you out. Last standing wins.","",false)}
+      ${row("headToHead","Head-to-head duels","Challenge a friend on a single match for a pot of points.","",false)}
+      ${row("weeklyMVP","Weekly MVP","Most points in a week earns a badge and bonus.","pts",true)}
+      ${row("comebackBonus","Comeback bonus","Points for climbing the rankings week-over-week.","pts",true)}
+      ${row("jokerCard","Joker card","One-time token that doubles the points on a pick of your choice.","",false)}
+      ${row("wildcardWeek","Wildcard week","Admin designates a round where all points are doubled.","",false)}
+      ${row("mulligan","Mulligan","Each player gets one undo to change a locked pick before its deadline.","",false)}
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Scoring style</div>
+      <div class="rule-modes">${modeBtn("flat","Flat — every match equal")}${modeBtn("weighted","Round-weighted — finals worth more")}${modeBtn("odds","Odds-based — underdogs worth more")}</div>
+      ${row("negativePoints","Negative points","Wrong picks subtract — guessing blindly hurts.","pts",true)}
+      ${row("earlyLockBonus","Early-lock bonus","Small bonus for locking well before the deadline.","pts",true)}
+      ${row("diminishing","Diminishing returns","Repeatedly picking the favorite earns slightly less over time.","",false)}
+      ${row("stageGates","Bracket-stage gates","Lock all of a round's picks before any are revealed.","",false)}
+      ${row("percentile","Percentile scoring","Points based on how many players you beat per match.","",false)}
+      ${row("bonusPool","Bonus pool","A fixed pot split among everyone who nails a hard prediction.","pts",true)}
+      <div class="rule-row on"><div class="rule-info"><div class="rule-name">Lock lead time</div><div class="rule-desc">How long before a match predictions must be locked.</div></div>
+        <div class="rule-pts"><input type="number" min="1" data-rulemin="lockMin" value="${Math.round(r.lockLeadMs/60000)}" ${dis}><span>min</span></div></div>
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Tie-breakers (in priority order)</div>
+      <div class="tb-list">${tb("tbExactHits","Most exact-score hits")}${tb("tbChampion","Best champion/final prediction")}${tb("tbFinalH2H","Head-to-head on the final match")}${tb("tbThreshold","Earliest to reach a points threshold")}</div>
+    </div>
+    ${editable?'<button class="lg-btn" id="lgSaveRules2" style="margin-top:6px">Save rules</button>':''}`;
+}
+
+function wireLeaguePanel(){
+  const lg=lgLoad();
+  // sign-in prompts (when not signed in)
+  const gsi=$("#lgGoSignin"); if(gsi) gsi.onclick=()=>{closeLeague();openModal("signinModal");};
+  const gsu=$("#lgGoSignup"); if(gsu) gsu.onclick=()=>{closeLeague();openModal("signupModal");};
+  // create / join
+  const cb=$("#lgCreateBtn"); if(cb) cb.onclick=()=>{
+    const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to create a league.");return;}
+    const name=($("#lgNewName").value||"").trim()||"My League";
+    const code=lgCode();
+    const seeded=lgSeedOthers();
+    lgSave({name,code,me,admin:me,members:[me,...seeded.names],rules:{...DEFAULT_RULES},predictions:{},otherPredictions:seeded.preds,outcomes:{}});
+    const email=lgCurrentEmail();
+    toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
+    _lgTab="home"; renderLeague();
+  };
+  const jb=$("#lgJoinBtn"); if(jb) jb.onclick=()=>{
+    const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to join a league.");return;}
+    const code=($("#lgJoinCode").value||"").trim().toUpperCase();
+    if(code.length<4){toast("Invalid code","Enter the 5-character code your friend shared.");return;}
+    const seeded=lgSeedOthers();
+    lgSave({name:"Joined League ("+code+")",code,me,admin:seeded.names[0]||me,members:[seeded.names[0]||"Host",me,...seeded.names.slice(1)],rules:{...DEFAULT_RULES},predictions:{},otherPredictions:seeded.preds,outcomes:{}});
+    _lgTab="home"; renderLeague();
+    toast("Joined (local)","Real cross-device joining activates with the backend.");
+  };
+  const cc=$("#lgCopyCode"); if(cc) cc.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(lg.code);cc.textContent="Copied!";setTimeout(()=>cc.textContent="Copy",1200);};
+  const gp=$("#lgGoPredict"); if(gp) gp.onclick=()=>{_lgTab="predict";renderLeague();};
+  // predictions: select winner
+  document.querySelectorAll(".pred-team").forEach(t=>t.onclick=()=>{
+    const mid=t.getAttribute("data-mid");
+    document.querySelectorAll(`.pred-team[data-mid="${cssEscape(mid)}"]`).forEach(x=>x.classList.remove("sel"));
+    t.classList.add("sel");
+  });
+  // lock prediction
+  document.querySelectorAll("[data-lock]").forEach(btn=>btn.onclick=()=>{
+    const mid=btn.getAttribute("data-lock");
+    const sel=document.querySelector(`.pred-team.sel[data-mid="${cssEscape(mid)}"]`);
+    const sa=$("#sa_"+CSS.escape(mid)).value, sb=$("#sb_"+CSS.escape(mid)).value;
+    if(!sel){toast("Pick a winner","Choose which team you think will win.");return;}
+    if(sa===""||sb===""){toast("Enter a score","Add your predicted exact score, e.g. 2–1.");return;}
+    const s=lgLoad();
+    s.predictions=s.predictions||{};
+    s.predictions[mid]={pick:sel.getAttribute("data-pick"),sa:+sa,sb:+sb,locked:true,at:Date.now()};
+    lgSave(s);
+    toast("Prediction locked","It's final now — and you can see others' picks for this match.");
+    renderLeague();
+  });
+  // lock champion pick
+  const lc=$("#lgLockChamp"); if(lc) lc.onclick=()=>{
+    const pick=($("#lgChampSel").value||"").trim();
+    if(!pick){toast("Pick a team","Choose who you think wins the whole thing.");return;}
+    const s=lgLoad(); s.outcomes=s.outcomes||{};
+    s.outcomes.champion={pick,locked:true,at:Date.now()};
+    lgSave(s); toast("Champion locked",`${pick} for the Aegis — final pick.`); renderLeague();
+  };
+  // lock top 4
+  const lt=$("#lgLockT4"); if(lt) lt.onclick=()=>{
+    const picks=[...document.querySelectorAll(".lg-t4")].map(s=>s.value).filter(Boolean);
+    const uniq=[...new Set(picks)];
+    if(uniq.length<4){toast("Pick four teams","Select four different teams for the top 4.");return;}
+    const s=lgLoad(); s.outcomes=s.outcomes||{};
+    s.outcomes.topFour={teams:uniq,locked:true,at:Date.now()};
+    lgSave(s); toast("Top 4 locked","Your top-4 picks are final."); renderLeague();
+  };
+  // save rules (new nested structure: toggles, points, mode, lock time, tie-breakers)
+  const saveRules=()=>{
+    const s=lgLoad();
+    // toggles
+    document.querySelectorAll("[data-ruleon]").forEach(inp=>{
+      const k=inp.getAttribute("data-ruleon");
+      if(typeof s.rules[k]!=="object"||s.rules[k]===null) s.rules[k]={on:false,pts:(typeof s.rules[k]==="number"?s.rules[k]:0)};
+      s.rules[k].on=inp.checked;
+    });
+    // points
+    document.querySelectorAll("[data-rulepts]").forEach(inp=>{
+      const k=inp.getAttribute("data-rulepts");
+      if(typeof s.rules[k]!=="object"||s.rules[k]===null) s.rules[k]={on:true,pts:0};
+      s.rules[k].pts=+inp.value||0;
+    });
+    // lock minutes
+    const lm=document.querySelector("[data-rulemin]"); if(lm) s.rules.lockLeadMs=Math.max(1,+lm.value||60)*60000;
+    // scoring mode is set on click (below); just persist whatever's current
+    lgSave(s); toast("Rules saved","Your league rules are updated."); renderLeague();
+  };
+  const sr=$("#lgSaveRules"); if(sr) sr.onclick=saveRules;
+  const sr2=$("#lgSaveRules2"); if(sr2) sr2.onclick=saveRules;
+  // scoring mode buttons
+  document.querySelectorAll(".rule-mode").forEach(btn=>btn.onclick=()=>{
+    if(btn.disabled)return;
+    const s=lgLoad(); s.rules.scoreMode=btn.getAttribute("data-mode"); lgSave(s);
+    document.querySelectorAll(".rule-mode").forEach(x=>x.classList.toggle("on",x===btn));
+  });
+  // live toggle visual feedback
+  document.querySelectorAll("[data-ruleon]").forEach(inp=>inp.addEventListener("change",()=>{
+    const rowEl=inp.closest(".rule-row"); if(rowEl) rowEl.classList.toggle("on",inp.checked);
+  }));
+}
+
+// Seed a few fake friends with locked predictions so the leaderboard + "others"
+// have content to show in the demo. Backend will replace this with real data.
+function lgSeedOthers(){
+  const names=["Alex","Mia","Dragos","Sam"];
+  const preds={};
+  const finished=[];
+  allMatches(DATA).forEach(m=>{if(m.status==="completed")finished.push(m);});
+  (DATA.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>{if(m.status==="completed")finished.push(m);}));
+  finished.forEach(m=>{
+    preds[m.id]=names.map(n=>{
+      // random-ish but deterministic pick
+      const pickA=((n.charCodeAt(0)+m.id.length)%2)===0;
+      return {name:n,pick:pickA?m.teamA.name:m.teamB.name,sa:pickA?2:1,sb:pickA?1:2};
+    });
+  });
+  return {names,preds};
+}
+
+function wireLeague(){
+  const lb=$("#leagueBtn"); if(lb) lb.onclick=openLeague;
+  const back=$("#leagueBack"); if(back) back.onclick=closeLeague;
+  document.querySelectorAll(".lg-tab").forEach(t=>t.onclick=()=>{_lgTab=t.getAttribute("data-lgtab");renderLeague();});
+}
+
+async function init(){
+  wireEditor();
+  wireAuth();
+  wireLeague();
+  const data=await loadData();
+  if(!data){$("#app").innerHTML=`<div class="wrap"><div class="loading">Couldn't load <b>data.json</b>.<br>If opening the file directly, run a local server (browsers block fetch on file://).</div></div>`;return;}
+  if(!localStorage.getItem(LS_SEEN)){const base={};allMatches(data).forEach(m=>{const a=m.teamA||{},b=m.teamB||{};base[m.id]=`${a.score}-${b.score}-${m.status}`;});localStorage.setItem(LS_SEEN,JSON.stringify(base));}
+  render(data);
+  setupAutoRefresh();
+}
+
+/* ----------------------------- auto-refresh (Live & Upcoming) ----------------------------- */
+let _refreshTimer=null;
+const REFRESH_MS=30000;
+function liveSignature(d){
+  // A compact signature of live/upcoming matches so we can detect changes cheaply.
+  return liveMatchesOf(d).map(m=>{const a=m.teamA||{},b=m.teamB||{};return `${m.id}:${a.score}-${b.score}:${m.status}`;}).join("|");
+}
+function setLiveStatus(state,when){
+  const el=$("#liveStatus"); if(!el) return;
+  el.classList.remove("updating","offline");
+  const txt=el.querySelector(".ls-text");
+  if(state==="updating"){el.classList.add("updating");if(txt)txt.textContent="Updating…";}
+  else if(state==="offline"){el.classList.add("offline");if(txt)txt.textContent="Offline — will retry";}
+  else{const t=when?new Date(when).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"";if(txt)txt.textContent=t?`Updated ${t}`:"Auto-updating";}
+}
+function updateLiveRail(newData,oldSig){
+  // Refresh only the rail's DOM so the rest of the page (scroll, bracket) is untouched.
+  const rail=$("#liveRail"); if(!rail) return;
+  const newCards=liveMatchesOf(newData);
+  const prevById={};
+  rail.querySelectorAll(".lcard").forEach(c=>{const id=c.getAttribute("data-mid");if(id)prevById[id]=c;});
+  rail.innerHTML=liveRailInner(newData);
+  // flash cards whose score/status changed
+  const oldMap={};
+  (oldSig||"").split("|").forEach(s=>{const id=s.split(":")[0];oldMap[id]=s;});
+  newCards.forEach(m=>{
+    const a=m.teamA||{},b=m.teamB||{};const sig=`${m.id}:${a.score}-${b.score}:${m.status}`;
+    if(oldMap[m.id]!==undefined && oldMap[m.id]!==sig){
+      const card=rail.querySelector(`.lcard[data-mid="${cssEscape(m.id)}"]`);
+      if(card){card.classList.add("flash");}
+    }
+  });
+  // re-bind the bell + watch handlers inside the rail
+  rail.querySelectorAll("[data-notif]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleNotif(b.getAttribute("data-notif"));}));
+  applySearchFilter();
+}
+function cssEscape(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&");}
+async function refreshNow(){
+  if(localStorage.getItem(LS_DATA)) return; // don't override manual edits
+  if(typeof navigator!=="undefined" && navigator.onLine===false){setLiveStatus("offline");return;}
+  setLiveStatus("updating");
+  const fresh=await loadData(true);
+  if(!fresh){setLiveStatus("offline");return;}
+  const changes=checkForResultChanges(fresh); // fires notifications for watched matches
+  const structuralChange = JSON.stringify(stripVolatile(fresh))!==JSON.stringify(stripVolatile(DATA));
+  const liveChanged = liveSignature(fresh)!==liveSignature(DATA);
+  const oldSig=liveSignature(DATA);
+  if(structuralChange){
+    render(fresh); // full rebuild only when non-live structure changed
+  }else if(liveChanged){
+    DATA=fresh;
+    updateLiveRail(fresh,oldSig); // lightweight: just the rail
+  }else{
+    DATA=fresh;
+  }
+  refreshOpenView(fresh); // keep an open team/region detail in sync
+  if(document.body.classList.contains("league-open") && (_lgTab==="leaderboard"||_lgTab==="home")) renderLeague(); // live leaderboard, won't disrupt in-progress picks
+  setLiveStatus("idle",Date.now());
+  if(changes) console.log(`${changes} watched result(s) updated`);
+}
+function stripVolatile(d){
+  // Compare everything EXCEPT the live/upcoming match scores+status and the
+  // updated timestamp, so pure live-score ticks don't force a full re-render.
+  try{
+    const c=JSON.parse(JSON.stringify(d));
+    if(c.meta) delete c.meta.lastUpdated;
+    const liveIds=new Set(liveMatchesOf(d).map(m=>m.id));
+    allMatches(c).forEach(()=>{});
+    const scrub=arr=>arr&&arr.forEach(rd=>(rd.matches||[]).forEach(m=>{if(liveIds.has(m.id)){if(m.teamA)m.teamA.score=null;if(m.teamB)m.teamB.score=null;m.status="x";}}));
+    if(c.bracket&&c.bracket.rounds){scrub(c.bracket.rounds.upper);scrub(c.bracket.rounds.lower);}
+    if(c.bracket&&c.bracket.grandFinal&&liveIds.has(c.bracket.grandFinal.id)){const g=c.bracket.grandFinal;if(g.teamA)g.teamA.score=null;if(g.teamB)g.teamB.score=null;g.status="x";}
+    return c;
+  }catch(e){return d;}
+}
+function setupAutoRefresh(){
+  if(_refreshTimer) clearInterval(_refreshTimer);
+  _refreshTimer=setInterval(()=>{ if(document.visibilityState==="visible") refreshNow(); },REFRESH_MS);
+  // refresh immediately when the tab becomes visible or the network reconnects
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") refreshNow(); });
+  window.addEventListener("online",()=>{ setLiveStatus("idle"); refreshNow(); });
+  window.addEventListener("offline",()=>setLiveStatus("offline"));
+}
+init();
+</script>
+</body>
+</html>
