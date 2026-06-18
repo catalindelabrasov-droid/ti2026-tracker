@@ -10,7 +10,7 @@
   Placeholders to fill in from your backend / email service:
     {{name}}            -> recipient's name (e.g. "Jane")
     {{username}}        -> their chosen username
-    {{confirm_url}}     -> the tokenized confirmation link, which should
+    {{ .ConfirmationURL }}     -> the tokenized confirmation link, which should
                            point back to your site, e.g.
                            https://your-site.example/?confirmed=1&token=XYZ
     {{expiry_hours}}    -> how long the link is valid (e.g. "48")
