@@ -742,8 +742,8 @@ const $=s=>document.querySelector(s);
 function saveNotif(){localStorage.setItem(LS_NOTIF,JSON.stringify([...notifIds]));}
 function matchWinner(m){if(!m)return null;const a=m.teamA||{},b=m.teamB||{};if(a.score==null||b.score==null)return null;if(a.score>b.score)return"A";if(b.score>a.score)return"B";return null;}
 function watchButton(m,mini){
-  // Shows a "Watch" link only when the match has a streamUrl and isn't finished.
-  const url=m.streamUrl||m.stream||"";
+  // Shows a "Watch" link when the match has a stream/watch URL and isn't finished.
+  const url=m.streamUrl||m.stream||m.watch||"";
   if(!url) return "";
   if(m.status==="completed"||m.status==="done") return "";
   const label=m.status==="live"?"Watch live":"Watch";
@@ -906,13 +906,20 @@ function statusBadge(s){
   if(s==="completed"||s==="done")return`<span class="badge completed">Final</span>`;
   return"";
 }
+let LIVE_FEED={liveMatches:[],events:[]};
 function liveMatchesOf(d){
   const matches=allMatches(d);
-  // also include regional qualifier matches (they have their own match arrays)
+  // regional qualifier matches from curated data
   (d.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>matches.push({...m,stage:(m.stage?m.stage+" · ":"")+q.region+" Qualifier",side:"qual"})));
   const out=matches.filter(m=>m.status==="live"||m.status==="upcoming"||m.status==="scheduled"||m.status==="ongoing");
+  // live pro matches from STRATZ (any event being played right now) — prepended
+  const livePro=(LIVE_FEED.liveMatches||[]).map(m=>({
+    id:"stz_"+m.id, stage:(m.event||"Pro Match"), side:"live",
+    status:"live", scheduled:null,
+    teamA:m.teamA, teamB:m.teamB, watch:m.watch, gameMinute:m.gameMinute, fromStratz:true
+  }));
   out.sort((a,b)=>{const r=((a.status==="live"||a.status==="ongoing")?0:1)-((b.status==="live"||b.status==="ongoing")?0:1);if(r)return r;return new Date(a.scheduled||0)-new Date(b.scheduled||0);});
-  return out;
+  return [...livePro, ...out];
 }
 function liveRailInner(d){
   const matches=liveMatchesOf(d);
@@ -935,8 +942,8 @@ function liveCard(m){
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
     <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24)}<span class="lc-score">${a.score??'–'}</span></div>
     <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24)}<span class="lc-score">${b.score??'–'}</span></div>
-    <div class="lc-foot"><span class="lc-time">${m.status==='live'?'● LIVE NOW':esc(time)} · Bo${esc(m.bestOf||3)}</span>
-      <span class="lc-actions">${watchButton(m,false)}<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button></span></div>
+    <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${m.fromStratz?'':' · Bo'+esc(m.bestOf||3)}</span>
+      <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
 }
 function renderPrize(d,champion){
@@ -1288,6 +1295,17 @@ function wireEditor(){
     localStorage.removeItem(LS_DATA);const msg=$("#editorMsg");msg.className="editor-msg ok";msg.textContent="Reloading original file…";
     const fresh=await loadData(true);if(fresh){render(fresh);openEditor();}
   });
+}
+const LIVE_FN_URL="https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/live-matches";
+async function fetchLiveFeed(){
+  // Pull live pro matches from our Supabase function (STRATZ-backed).
+  // Returns [] on any failure so the site still works from curated data.
+  try{
+    const res=await fetch(LIVE_FN_URL,{cache:"no-store"});
+    if(!res.ok) return {liveMatches:[],events:[]};
+    const j=await res.json();
+    return {liveMatches:j.liveMatches||[], events:j.events||[], updatedAt:j.updatedAt};
+  }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
   if(!skipOverride){const ov=localStorage.getItem(LS_DATA);if(ov){try{return JSON.parse(ov);}catch(e){}}}
@@ -2241,6 +2259,8 @@ async function init(){
   wireLeague();
   const data=await loadData();
   if(!data){$("#app").innerHTML=`<div class="wrap"><div class="loading">Couldn't load <b>data.json</b>.<br>If opening the file directly, run a local server (browsers block fetch on file://).</div></div>`;return;}
+  // pull the live pro-match feed (STRATZ) in parallel; non-blocking on failure
+  try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
   if(!localStorage.getItem(LS_SEEN)){const base={};allMatches(data).forEach(m=>{const a=m.teamA||{},b=m.teamB||{};base[m.id]=`${a.score}-${b.score}-${m.status}`;});localStorage.setItem(LS_SEEN,JSON.stringify(base));}
   render(data);
   setupAutoRefresh();
@@ -2284,15 +2304,23 @@ function updateLiveRail(newData,oldSig){
 }
 function cssEscape(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&");}
 async function refreshNow(){
-  if(localStorage.getItem(LS_DATA)) return; // don't override manual edits
   if(typeof navigator!=="undefined" && navigator.onLine===false){setLiveStatus("offline");return;}
   setLiveStatus("updating");
+  // refresh the live pro-match feed every cycle (this is the always-live part)
+  const oldLiveSig=liveSignature(DATA);
+  try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
+  if(localStorage.getItem(LS_DATA)){
+    // manual data override in effect: still refresh the live rail from STRATZ
+    updateLiveRail(DATA,oldLiveSig); setLiveStatus("ok",Date.now()); return;
+  }
   const fresh=await loadData(true);
-  if(!fresh){setLiveStatus("offline");return;}
+  if(!fresh){ // curated data unreachable, but live feed may still have updated
+    updateLiveRail(DATA,oldLiveSig); setLiveStatus("ok",Date.now()); return;
+  }
   const changes=checkForResultChanges(fresh); // fires notifications for watched matches
   const structuralChange = JSON.stringify(stripVolatile(fresh))!==JSON.stringify(stripVolatile(DATA));
-  const liveChanged = liveSignature(fresh)!==liveSignature(DATA);
-  const oldSig=liveSignature(DATA);
+  const liveChanged = liveSignature(fresh)!==oldLiveSig;
+  const oldSig=oldLiveSig;
   if(structuralChange){
     render(fresh); // full rebuild only when non-live structure changed
   }else if(liveChanged){
