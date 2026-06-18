@@ -1,0 +1,51 @@
+name: Update TI 2026 data
+
+# Runs the updater on a schedule and commits any data.json changes.
+# Also runnable on demand from the Actions tab (workflow_dispatch).
+
+on:
+  schedule:
+    # Every 3 hours. During the live event (mid-Aug) you can lower this,
+    # but stay polite to Liquipedia — don't go below ~30 min.
+    - cron: "0 */3 * * *"
+  workflow_dispatch: {}
+
+# Allow the workflow to push the updated data.json back to the repo.
+permissions:
+  contents: write
+
+concurrency:
+  group: ti-data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run updater
+        env:
+          LIQUIPEDIA_CONTACT: ${{ vars.LIQUIPEDIA_CONTACT || 'set-your-contact@example.com' }}
+          OPENDOTA_LEAGUE_ID: ${{ vars.OPENDOTA_LEAGUE_ID || '' }}
+          OPENDOTA_API_KEY: ${{ secrets.OPENDOTA_API_KEY || '' }}
+        run: python update_data.py
+
+      - name: Commit changes if data changed
+        run: |
+          git config user.name  "ti-data-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet -- data.json; then
+            git add data.json
+            git commit -m "data: auto-update $(date -u +'%Y-%m-%dT%H:%MZ')"
+            git push
+            echo "Pushed updated data.json"
+          else
+            echo "No data changes."
+          fi
