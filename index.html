@@ -242,7 +242,7 @@
   .tbtn-league{background:rgba(217,164,65,.14);color:var(--aegis);border-color:rgba(217,164,65,.4)}
   .tbtn-league:hover{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
   .lg-menu-wrap{z-index:200}
-  .lg-dropdown{position:absolute;top:calc(100% + 6px);right:0;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 32px rgba(0,0,0,.55);padding:6px;z-index:9999;display:none}
+  .lg-dropdown{position:fixed;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 32px rgba(0,0,0,.55);padding:6px;z-index:100000;display:none;max-height:70vh;overflow-y:auto}
   .lg-dropdown.show{display:block}
   .lg-dropdown .lgd-head{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:8px 10px 6px}
   .lgd-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:10px;border-radius:6px;color:var(--ink);font-size:14px;font-weight:600;transition:.12s}
@@ -865,7 +865,7 @@ async function wireMyLeaguesMenu(){
   if(!SB_READY() || !lgCurrentUser()){ wrap.style.display="none"; return; }
   wrap.style.display="";  // show whenever signed in; menu content fetched below
   // toggle handler works immediately, even before the list loads
-  btn.onclick=(e)=>{ e.stopPropagation(); menu.classList.toggle("show"); };
+  btn.onclick=(e)=>{ e.stopPropagation(); const opening=!menu.classList.contains("show"); menu.classList.toggle("show"); if(opening) positionLeaguesMenu(); };
   menu.innerHTML=`<div class="lgd-head">Your leagues</div><div class="lgd-empty">Loading…</div>
      <div class="lgd-sep"></div>
      <button class="lgd-action" id="lgdJoin">＋ Join a league</button>
@@ -882,7 +882,7 @@ async function wireMyLeaguesMenu(){
      <button class="lgd-action" id="lgdJoin">＋ Join a league</button>
      <button class="lgd-action" id="lgdCreate">＋ Create a league</button>`;
   // re-bind toggle (button element is unchanged, but be safe) + item/actions
-  btn.onclick=(e)=>{ e.stopPropagation(); menu.classList.toggle("show"); };
+  btn.onclick=(e)=>{ e.stopPropagation(); const opening=!menu.classList.contains("show"); menu.classList.toggle("show"); if(opening) positionLeaguesMenu(); };
   menu.querySelectorAll("[data-go-league]").forEach(b=>b.onclick=async(e)=>{
     e.stopPropagation();
     menu.classList.remove("show");
@@ -896,7 +896,23 @@ async function wireMyLeaguesMenu(){
   // close on outside click (registered once)
   if(!window.__lgMenuOutside){ window.__lgMenuOutside=true;
     document.addEventListener("click",(e)=>{ const m=$("#myLeaguesMenu"); const w=$("#myLeaguesWrap"); if(m&&w&&!w.contains(e.target)) m.classList.remove("show"); });
+    window.addEventListener("resize",()=>{ const m=$("#myLeaguesMenu"); if(m&&m.classList.contains("show")) positionLeaguesMenu(); });
+    window.addEventListener("scroll",()=>{ const m=$("#myLeaguesMenu"); if(m&&m.classList.contains("show")) positionLeaguesMenu(); },true);
   }
+}
+// Position the fixed dropdown directly under the button (right-aligned) so it
+// floats above the sticky nav bar regardless of stacking contexts.
+function positionLeaguesMenu(){
+  const btn=$("#myLeaguesBtn"), menu=$("#myLeaguesMenu");
+  if(!btn||!menu) return;
+  const r=btn.getBoundingClientRect();
+  menu.style.top=(r.bottom+6)+"px";
+  // right-align to the button, but keep on screen
+  const width=Math.max(menu.offsetWidth,240);
+  let left=r.right-width;
+  if(left<8) left=8;
+  menu.style.left=left+"px";
+  menu.style.right="auto";
 }
 function wireMyLeaguesActions(menu){
   const j=menu.querySelector("#lgdJoin");
