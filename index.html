@@ -77,6 +77,63 @@
   nav a{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--ink-dim);text-decoration:none;padding:15px 15px 13px;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
   nav a:hover{color:var(--ink)}
   nav a.active{color:var(--aegis);border-bottom-color:var(--aegis)}
+  /* ---- top-level hub tabs ---- */
+  .hubtabs{position:sticky;top:0;z-index:40;background:rgba(8,11,15,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .hubtabs .wrap{display:flex;gap:4px;overflow-x:auto;align-items:center}
+  .hubtab{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:14px;color:var(--ink-dim);background:none;border:none;cursor:pointer;padding:16px 18px 14px;border-bottom:2.5px solid transparent;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:8px}
+  .hubtab:hover{color:var(--ink)}
+  .hubtab.on{color:var(--aegis-bright);border-bottom-color:var(--aegis-bright)}
+  .hubtab .ht-ico{font-size:15px;opacity:.9}
+  .hubtab-spacer{flex:1}
+  /* ---- global live-now strip ---- */
+  .livestrip{background:linear-gradient(90deg,rgba(239,83,80,.12),transparent);border-bottom:1px solid var(--line-soft);overflow:hidden}
+  .livestrip-inner{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:12.5px}
+  .livestrip .ls-tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--live);flex:0 0 auto}
+  .livestrip .ls-tag .pulse{width:6px;height:6px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+  .livestrip-scroll{display:flex;gap:22px;overflow-x:auto;flex:1;scrollbar-width:none}
+  .livestrip-scroll::-webkit-scrollbar{display:none}
+  .ls-game{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:var(--ink-dim);flex:0 0 auto}
+  .ls-game b{color:var(--ink);font-weight:600}
+  .ls-game .ls-sc{font-family:'Oswald',sans-serif;color:var(--aegis-bright);font-weight:600}
+  .ls-game .ls-min{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
+  .ls-empty{color:var(--ink-faint);font-size:12px}
+  /* ---- tab views ---- */
+  .tabview{display:none}
+  .tabview.on{display:block;animation:fadein .25s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  /* ---- tournaments grid ---- */
+  .trn-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:38px 0 8px}
+  .trn-head h2{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:clamp(26px,4vw,40px);letter-spacing:.01em;line-height:1}
+  .trn-head .trn-sub{color:var(--ink-dim);font-size:13.5px;margin-top:6px}
+  .trn-filters{display:flex;gap:6px}
+  .trn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:22px}
+  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;transition:.15s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+  .tcard:hover{border-color:var(--aegis);transform:translateY(-2px)}
+  .tcard.is-live{border-color:rgba(239,83,80,.45)}
+  .tcard-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .tcard-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:17px;line-height:1.2}
+  .tcard-tier{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:20px;flex:0 0 auto}
+  .tier-int{background:rgba(217,164,65,.18);color:var(--aegis-bright)}
+  .tier-major{background:rgba(155,120,225,.18);color:#bba0f0}
+  .tier-pro{background:rgba(91,155,213,.15);color:var(--upcoming)}
+  .tier-prem{background:rgba(78,201,143,.14);color:var(--win)}
+  .tcard-meta{display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--ink-dim);flex-wrap:wrap}
+  .tcard-prize{font-family:'Oswald',sans-serif;font-weight:600;font-size:18px;color:var(--aegis-bright)}
+  .tcard-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line-soft);padding-top:11px;margin-top:auto}
+  .tcard-when{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint)}
+  .tcard-live{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--live)}
+  .tcard-live .pulse{width:6px;height:6px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+  /* ---- meta widget ---- */
+  .meta-strip{background:linear-gradient(135deg,rgba(155,120,225,.08),rgba(91,155,213,.03));border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-top:24px}
+  .meta-strip h3{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:14px;letter-spacing:.04em;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .meta-strip .meta-sub{font-size:12px;color:var(--ink-faint);margin-bottom:14px}
+  .meta-heroes{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+  .mhero{flex:0 0 auto;width:84px;text-align:center}
+  .mhero img{width:84px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+  .mhero .mh-name{font-size:11px;color:var(--ink-dim);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mhero .mh-stat{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
+  .mhero .mh-wr{color:var(--win)}
+  .flag{font-size:13px;margin-right:5px}
   section{padding:44px 0;border-bottom:1px solid var(--line);scroll-margin-top:54px}
   .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;flex-wrap:wrap}
   .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--aegis);border:1px solid var(--line);border-radius:2px;padding:3px 8px}
@@ -860,14 +917,30 @@ function render(d){
     <a href="#live" class="active">Live</a><a href="#prize">Prize</a><a href="#qualifiers">Qualifiers</a>
     <a href="#teams">Teams</a><a href="#groups">Groups</a><a href="#bracket">Playoffs</a>
   </div></nav>
+  <div class="hubtabs"><div class="wrap">
+    <button class="hubtab on" data-hubtab="ti"><span class="ht-ico">🏆</span>TI 2026</button>
+    <button class="hubtab" data-hubtab="tournaments"><span class="ht-ico">🌐</span>Tournaments</button>
+    <button class="hubtab" data-hubtab="teams"><span class="ht-ico">🛡️</span>Teams</button>
+    <button class="hubtab" data-hubtab="players"><span class="ht-ico">⭐</span>Players</button>
+  </div></div>
+  <div class="livestrip"><div class="wrap"><div class="livestrip-inner" id="liveStrip">
+    <span class="ls-tag"><span class="pulse"></span>Live</span>
+    <div class="livestrip-scroll" id="liveStripScroll"><span class="ls-empty">No pro matches live right now</span></div>
+  </div></div></div>
   <div class="wrap">
-    ${renderLive(d)}${renderPrize(d,champion)}${renderQualifiers(d)}${renderTeams(d)}${renderGroups(d)}${renderBracket(d)}
-    <footer>${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA), auto-updated by scheduled job.<br>
-      Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
-      Fan-made tracker, not affiliated with Valve.</footer>
+    <div class="tabview on" id="view-ti">
+      ${renderLive(d)}${renderPrize(d,champion)}${renderQualifiers(d)}${renderTeams(d)}${renderGroups(d)}${renderBracket(d)}
+      <footer>${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA) &amp; OpenDota.<br>
+        Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
+        Fan-made tracker, not affiliated with Valve.</footer>
+    </div>
+    <div class="tabview" id="view-tournaments">${renderTournaments()}</div>
+    <div class="tabview" id="view-teams"><div class="trn-head"><div><h2>Teams</h2><div class="trn-sub">Coming soon — pro team rosters, ratings, and recent results.</div></div></div></div>
+    <div class="tabview" id="view-players"><div class="trn-head"><div><h2>Top Players</h2><div class="trn-sub">Coming soon — the top 100 pro players in the world.</div></div></div></div>
   </div>`;
   $("#app").replaceWith(root);
   wireToolbar();wireNav();applySearchFilter();renderAuthArea();startCountdown(d);wireQualifiers(d);wireTeams(d);
+  wireHubTabs();renderLiveStrip();
   const _lb=$("#leagueBtn"); if(_lb) _lb.onclick=openLeague;
   wireMyLeaguesMenu();
 }
@@ -1007,6 +1080,109 @@ function renderPrize(d,champion){
       </div>
     </div></section>`;
 }
+
+/* ============ HUB: tabs, live strip, tournaments, meta ============ */
+function wireHubTabs(){
+  const tabs=[...document.querySelectorAll(".hubtab")];
+  const views={ti:$("#view-ti"),tournaments:$("#view-tournaments"),teams:$("#view-teams"),players:$("#view-players")};
+  const nav=document.querySelector("nav");
+  tabs.forEach(t=>t.onclick=()=>{
+    const k=t.getAttribute("data-hubtab");
+    tabs.forEach(x=>x.classList.toggle("on",x===t));
+    Object.entries(views).forEach(([key,el])=>{if(el)el.classList.toggle("on",key===k);});
+    // the in-page section nav only makes sense on the TI tab
+    if(nav) nav.style.display = (k==="ti")?"":"none";
+    window.scrollTo({top:0,behavior:"smooth"});
+    if(k==="tournaments") renderTournamentsInto();
+  });
+}
+
+// Country code -> flag emoji (ISO-3166 alpha-2)
+function flagEmoji(cc){
+  if(!cc||cc.length!==2) return "";
+  const A=0x1F1E6, base="A".charCodeAt(0);
+  const up=cc.toUpperCase();
+  return String.fromCodePoint(A+(up.charCodeAt(0)-base))+String.fromCodePoint(A+(up.charCodeAt(1)-base));
+}
+function tierBadge(tier){
+  const t=(tier||"").toLowerCase();
+  if(t==="international") return `<span class="tcard-tier tier-int">International</span>`;
+  if(t==="major") return `<span class="tcard-tier tier-major">Major</span>`;
+  if(t==="premium"||t==="premier") return `<span class="tcard-tier tier-prem">Premier</span>`;
+  if(t==="professional"||t==="pro") return `<span class="tcard-tier tier-pro">Pro</span>`;
+  return tier?`<span class="tcard-tier tier-pro">${esc(tier)}</span>`:"";
+}
+function timeAgo(unixSec){
+  if(!unixSec) return "";
+  const diff=Date.now()/1000-unixSec;
+  if(diff<3600) return Math.max(1,Math.floor(diff/60))+"m ago";
+  if(diff<86400) return Math.floor(diff/3600)+"h ago";
+  return Math.floor(diff/86400)+"d ago";
+}
+
+// The global live-now strip (shown across all tabs)
+function renderLiveStrip(){
+  const el=$("#liveStripScroll"); if(!el) return;
+  const live=(LIVE_FEED.liveMatches||[]);
+  if(!live.length){ el.innerHTML=`<span class="ls-empty">No pro matches live right now</span>`; return; }
+  el.innerHTML=live.slice(0,12).map(m=>{
+    const a=m.teamA||{},b=m.teamB||{};
+    return `<a class="ls-game" href="${esc(m.watch||'#')}" target="_blank" rel="noopener" title="${esc(m.event||'')}">
+      <b>${esc(a.name||'?')}</b> <span class="ls-sc">${a.score??0}–${b.score??0}</span> <b>${esc(b.name||'?')}</b>
+      ${m.gameMinute!=null?`<span class="ls-min">${m.gameMinute}'</span>`:''}</a>`;
+  }).join("");
+}
+
+// Tournaments tab
+let _tournamentFilter="all";
+function renderTournaments(){
+  return `<div class="trn-head">
+      <div><h2>Tournaments</h2><div class="trn-sub" id="trnSub">Live & recent pro Dota events worldwide</div></div>
+      <div class="trn-filters">
+        <button class="tbtn filt on" data-trn="all">All</button>
+        <button class="tbtn filt" data-trn="live">Live</button>
+        <button class="tbtn filt" data-trn="big">Big events</button>
+      </div>
+    </div>
+    <div id="metaStrip"></div>
+    <div class="trn-grid" id="trnGrid"><div class="loading" style="padding:30px">Loading tournaments…</div></div>`;
+}
+function renderTournamentsInto(){
+  // meta widget
+  const ms=$("#metaStrip");
+  if(ms){
+    const meta=LIVE_FEED.meta||[];
+    ms.innerHTML = meta.length?`<div class="meta-strip">
+      <h3>🔥 Current Meta <span style="font-weight:400;color:var(--ink-faint);font-size:11px">· most contested heroes in pro play</span></h3>
+      <div class="meta-sub">Pick + ban priority across recent professional matches</div>
+      <div class="meta-heroes">${meta.map(h=>`<div class="mhero">
+        ${h.img?`<img src="${esc(h.img)}" alt="" loading="lazy">`:`<div style="width:84px;height:48px;border-radius:6px;background:var(--line)"></div>`}
+        <div class="mh-name">${esc(h.name)}</div>
+        <div class="mh-stat">${(h.picks||0)+(h.bans||0)} games · <span class="mh-wr">${h.winRate}%</span></div>
+      </div>`).join("")}</div></div>`:"";
+  }
+  // grid
+  const grid=$("#trnGrid"); if(!grid) return;
+  let list=(LIVE_FEED.tournaments||[]).slice();
+  if(_tournamentFilter==="live") list=list.filter(t=>t.live);
+  else if(_tournamentFilter==="big") list=list.filter(t=>["international","major","premium","premier"].includes((t.tier||"").toLowerCase())||t.prizePool>=100000);
+  if(!list.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>No tournaments to show</b>${LIVE_FEED.tournaments&&LIVE_FEED.tournaments.length?'Try a different filter.':'Check back soon — events populate from live pro play.'}</div>`; return; }
+  grid.innerHTML=list.map(t=>`<div class="tcard ${t.live?'is-live':''}" onclick="window.open('${esc(t.watch)}','_blank')">
+    <div class="tcard-top"><div class="tcard-name">${esc(t.name)}</div>${tierBadge(t.tier)}</div>
+    <div class="tcard-meta">${t.prizePool?`<span class="tcard-prize">${fmt(t.prizePool)}</span>`:'<span style="color:var(--ink-faint)">Prize TBD</span>'}<span>${t.recentGames} recent games</span></div>
+    <div class="tcard-foot">
+      ${t.live?`<span class="tcard-live"><span class="pulse"></span>Live now</span>`:`<span class="tcard-when">${t.lastMatch?'Last match '+timeAgo(t.lastMatch):''}</span>`}
+      <span class="tcard-when">View →</span>
+    </div>
+  </div>`).join("");
+  // wire filter buttons
+  document.querySelectorAll("[data-trn]").forEach(b=>b.onclick=()=>{
+    _tournamentFilter=b.getAttribute("data-trn");
+    document.querySelectorAll("[data-trn]").forEach(x=>x.classList.toggle("on",x===b));
+    renderTournamentsInto();
+  });
+}
+
 function renderQualifiers(d){
   const q=d.qualifiers||[];if(!q.length)return secEmpty("02","Qualifiers","qualifiers","No qualifier data yet.");
   const arrow=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
@@ -1337,7 +1513,7 @@ async function fetchLiveFeed(){
     const live=j.liveMatches||[];
     // register any team logos the feed provides, so teamWithLogo picks them up
     try{ live.forEach(m=>{ [m.teamA,m.teamB].forEach(t=>{ if(t&&t.name&&t.logo&&!_logoMap[t.name.toLowerCase()]) _logoMap[t.name.toLowerCase()]=t.logo; }); }); }catch(e){}
-    return {liveMatches:live, events:j.events||[], tiPrize:j.tiPrize||null, updatedAt:j.updatedAt};
+    return {liveMatches:live, events:j.events||[], tournaments:j.tournaments||[], meta:j.meta||[], tiPrize:j.tiPrize||null, updatedAt:j.updatedAt};
   }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
@@ -2342,6 +2518,8 @@ async function refreshNow(){
   // refresh the live pro-match feed every cycle (this is the always-live part)
   const oldLiveSig=liveSignature(DATA);
   try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
+  renderLiveStrip();
+  const _tv=$("#view-tournaments"); if(_tv&&_tv.classList.contains("on")) renderTournamentsInto();
   if(localStorage.getItem(LS_DATA)){
     // manual data override in effect: still refresh the live rail from STRATZ
     updateLiveRail(DATA,oldLiveSig); setLiveStatus("ok",Date.now()); return;
