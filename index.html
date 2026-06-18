@@ -83,6 +83,12 @@
   .sec-head h2{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:clamp(22px,3.4vw,32px);letter-spacing:.01em}
   .sec-note{color:var(--ink-dim);font-size:14px;margin-bottom:22px;max-width:64ch}
   .live-rail{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+  .rail-group{margin-bottom:18px}
+  .rail-group:last-child{margin-bottom:0}
+  .rail-label{display:flex;align-items:center;gap:9px;font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:13px;letter-spacing:.08em;color:var(--ink-dim);margin:0 0 10px}
+  .rail-label .rl-live{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(224,90,90,.5);animation:rlpulse 1.6s infinite}
+  @keyframes rlpulse{0%{box-shadow:0 0 0 0 rgba(224,90,90,.5)}70%{box-shadow:0 0 0 7px rgba(224,90,90,0)}100%{box-shadow:0 0 0 0 rgba(224,90,90,0)}}
+  .rail-label .rl-count{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(224,90,90,.15);color:var(--live);border-radius:10px;padding:2px 8px;letter-spacing:0}
   .live-status{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
   .live-status .ls-dot{width:7px;height:7px;border-radius:50%;background:var(--win);box-shadow:0 0 0 3px rgba(78,201,143,.16)}
   .live-status.updating .ls-dot{animation:pulse .9s infinite}
@@ -738,6 +744,7 @@ function teamWithLogo(name,size){
   // logo + name as an inline unit (logo on the left)
   return `<span class="team-wl">${teamLogo(name,size)}<span class="twl-name">${esc(name||'TBD')}</span></span>`;
 }
+function formatSpectators(n){ n=+n||0; if(n>=1000) return (n/1000).toFixed(n>=10000?0:1)+"k"; return ""+n; }
 const $=s=>document.querySelector(s);
 function saveNotif(){localStorage.setItem(LS_NOTIF,JSON.stringify([...notifIds]));}
 function matchWinner(m){if(!m)return null;const a=m.teamA||{},b=m.teamB||{};if(a.score==null||b.score==null)return null;if(a.score>b.score)return"A";if(b.score>a.score)return"B";return null;}
@@ -916,14 +923,26 @@ function liveMatchesOf(d){
   const livePro=(LIVE_FEED.liveMatches||[]).map(m=>({
     id:"stz_"+m.id, stage:(m.event||"Pro Match"), side:"live",
     status:"live", scheduled:null,
-    teamA:m.teamA, teamB:m.teamB, watch:m.watch, gameMinute:m.gameMinute, fromStratz:true
+    teamA:m.teamA, teamB:m.teamB, watch:m.watch, stats:m.stats, gameMinute:m.gameMinute, spectators:m.spectators, fromStratz:true
   }));
   out.sort((a,b)=>{const r=((a.status==="live"||a.status==="ongoing")?0:1)-((b.status==="live"||b.status==="ongoing")?0:1);if(r)return r;return new Date(a.scheduled||0)-new Date(b.scheduled||0);});
   return [...livePro, ...out];
 }
 function liveRailInner(d){
   const matches=liveMatchesOf(d);
-  return matches.length?`<div class="live-rail">${matches.map(liveCard).join("")}</div>`:`<div class="empty"><b>No live or upcoming matches</b>Check back when the playoffs are underway.</div>`;
+  if(!matches.length) return `<div class="empty"><b>No live or upcoming matches</b>Check back when the playoffs are underway.</div>`;
+  const feed=matches.filter(m=>m.fromStratz);
+  const curated=matches.filter(m=>!m.fromStratz);
+  let html="";
+  if(feed.length){
+    html+=`<div class="rail-group"><div class="rail-label"><span class="rl-live"></span>Live across Dota <span class="rl-count">${feed.length}</span></div>
+      <div class="live-rail">${feed.map(liveCard).join("")}</div></div>`;
+  }
+  if(curated.length){
+    html+=`<div class="rail-group"><div class="rail-label">The International 2026</div>
+      <div class="live-rail">${curated.map(liveCard).join("")}</div></div>`;
+  }
+  return html;
 }
 function renderLive(d){
   return`<section id="live">
@@ -942,7 +961,7 @@ function liveCard(m){
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
     <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24)}<span class="lc-score">${a.score??'–'}</span></div>
     <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24)}<span class="lc-score">${b.score??'–'}</span></div>
-    <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${m.fromStratz?'':' · Bo'+esc(m.bestOf||3)}</span>
+    <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):' · Bo'+esc(m.bestOf||3)}</span>
       <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
 }
@@ -1298,13 +1317,16 @@ function wireEditor(){
 }
 const LIVE_FN_URL="https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/live-matches";
 async function fetchLiveFeed(){
-  // Pull live pro matches from our Supabase function (STRATZ-backed).
+  // Pull live pro matches from our Supabase function (OpenDota-backed).
   // Returns [] on any failure so the site still works from curated data.
   try{
     const res=await fetch(LIVE_FN_URL,{cache:"no-store"});
     if(!res.ok) return {liveMatches:[],events:[]};
     const j=await res.json();
-    return {liveMatches:j.liveMatches||[], events:j.events||[], updatedAt:j.updatedAt};
+    const live=j.liveMatches||[];
+    // register any team logos the feed provides, so teamWithLogo picks them up
+    try{ live.forEach(m=>{ [m.teamA,m.teamB].forEach(t=>{ if(t&&t.name&&t.logo&&!_logoMap[t.name.toLowerCase()]) _logoMap[t.name.toLowerCase()]=t.logo; }); }); }catch(e){}
+    return {liveMatches:live, events:j.events||[], updatedAt:j.updatedAt};
   }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
