@@ -241,19 +241,18 @@
   /* league */
   .tbtn-league{background:rgba(217,164,65,.14);color:var(--aegis);border-color:rgba(217,164,65,.4)}
   .tbtn-league:hover{background:var(--aegis);color:#0b0e13;border-color:var(--aegis)}
-  .lg-menu-wrap{z-index:200}
-  .lg-dropdown{position:fixed;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 32px rgba(0,0,0,.55);padding:6px;z-index:100000;display:none;max-height:70vh;overflow-y:auto}
-  .lg-dropdown.show{display:block}
-  .lg-dropdown .lgd-head{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:8px 10px 6px}
-  .lgd-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:10px;border-radius:6px;color:var(--ink);font-size:14px;font-weight:600;transition:.12s}
-  .lgd-item:hover{background:var(--panel-2)}
-  .lgd-item.on{color:var(--aegis)}
-  .lgd-item .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);flex:0 0 auto}
-  .lgd-item.on .dot{background:var(--aegis)}
-  .lgd-sep{height:1px;background:var(--line);margin:6px 4px}
-  .lgd-action{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 10px;border-radius:6px;color:var(--ink-dim);font-size:13px;font-family:'JetBrains Mono',monospace}
-  .lgd-action:hover{background:var(--panel-2);color:var(--aegis)}
-  .lgd-empty{padding:10px;color:var(--ink-faint);font-size:13px}
+  .lgm-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .lgm-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);font-size:15px;font-weight:600;transition:.12s}
+  .lgm-item:hover{border-color:var(--aegis);background:var(--panel-2)}
+  .lgm-item.on{border-color:var(--aegis);background:rgba(217,164,65,.08)}
+  .lgm-item .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-faint);flex:0 0 auto}
+  .lgm-item.on .dot{background:var(--aegis)}
+  .lgm-item .nm{flex:1}
+  .lgm-item .cur{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--aegis)}
+  .lgm-item .go{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim)}
+  .lgm-item:hover .go{color:var(--aegis)}
+  .lgm-actions{display:flex;gap:10px}
+  .lgd-empty{color:var(--ink-faint);font-size:14px;text-align:center}
   body.league-open #app,body.league-open #regionPage,body.league-open #teamPage{display:none}
   .league-page{display:none}
   body.league-open .league-page{display:block}
@@ -652,6 +651,17 @@
     </div>
   </div>
 
+  <!-- My Leagues modal -->
+  <div class="modal" id="myLeaguesModal">
+    <div class="modal-card" style="max-width:460px">
+      <div class="modal-head">
+        <div><h3>My Leagues</h3></div>
+        <button class="x" data-close="myLeaguesModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="myLeaguesModalBody"></div>
+    </div>
+  </div>
+
   <!-- League page -->
   <div class="league-page" id="leaguePage">
     <div class="wrap">
@@ -830,10 +840,7 @@ function render(d){
       <button class="tbtn filt ${activeFilter==='live'?'on':''}" data-filter="live">Live</button>
       <button class="tbtn filt ${activeFilter==='upcoming'?'on':''}" data-filter="upcoming">Upcoming</button>
       <button class="tbtn" id="notifBtn">🔔 Notifications ${notifIds.size?`(${notifIds.size})`:""}</button>
-      <span class="lg-menu-wrap" id="myLeaguesWrap" style="display:none;position:relative">
-        <button class="tbtn tbtn-league" id="myLeaguesBtn">📋 My Leagues ▾</button>
-        <div class="lg-dropdown" id="myLeaguesMenu"></div>
-      </span>
+      <button class="tbtn tbtn-league" id="myLeaguesBtn" style="display:none">📋 My Leagues</button>
       <button class="tbtn tbtn-league" id="leagueBtn">🏆 Create League</button>
       <span class="toolbar-spacer"></span>
       <span class="auth-area" id="authArea">
@@ -858,67 +865,40 @@ function render(d){
   wireMyLeaguesMenu();
 }
 
-// "My Leagues" toolbar dropdown: lists the leagues you're in and jumps to one.
+// "My Leagues" — toolbar button opens a popup listing all leagues you're in.
 async function wireMyLeaguesMenu(){
-  const wrap=$("#myLeaguesWrap"), btn=$("#myLeaguesBtn"), menu=$("#myLeaguesMenu");
-  if(!wrap||!btn||!menu) return;
-  if(!SB_READY() || !lgCurrentUser()){ wrap.style.display="none"; return; }
-  wrap.style.display="";  // show whenever signed in; menu content fetched below
-  // toggle handler works immediately, even before the list loads
-  btn.onclick=(e)=>{ e.stopPropagation(); const opening=!menu.classList.contains("show"); menu.classList.toggle("show"); if(opening) positionLeaguesMenu(); };
-  menu.innerHTML=`<div class="lgd-head">Your leagues</div><div class="lgd-empty">Loading…</div>
-     <div class="lgd-sep"></div>
-     <button class="lgd-action" id="lgdJoin">＋ Join a league</button>
-     <button class="lgd-action" id="lgdCreate">＋ Create a league</button>`;
-  wireMyLeaguesActions(menu);
+  const btn=$("#myLeaguesBtn");
+  if(!btn) return;
+  if(!SB_READY() || !lgCurrentUser()){ btn.style.display="none"; return; }
+  btn.style.display="";
+  btn.onclick=openMyLeaguesModal;
+}
+async function openMyLeaguesModal(){
+  const body=$("#myLeaguesModalBody");
+  if(!body) return;
+  body.innerHTML=`<div class="lgd-empty" style="padding:18px 4px">Loading your leagues…</div>`;
+  openModal("myLeaguesModal");
   let list=[];
   try{ list=await lgFetchList(); }catch(e){ console.warn("fetchList failed",e); }
   const activeId=lgActiveId();
   const listHtml = list.length
-    ? list.map(l=>`<button class="lgd-item ${l.id===activeId?'on':''}" data-go-league="${esc(l.id)}"><span class="dot"></span>${esc(l.name)}</button>`).join("")
-    : `<div class="lgd-empty">You're not in any league yet.</div>`;
-  menu.innerHTML=`<div class="lgd-head">Your leagues</div>${listHtml}
-     <div class="lgd-sep"></div>
-     <button class="lgd-action" id="lgdJoin">＋ Join a league</button>
-     <button class="lgd-action" id="lgdCreate">＋ Create a league</button>`;
-  // re-bind toggle (button element is unchanged, but be safe) + item/actions
-  btn.onclick=(e)=>{ e.stopPropagation(); const opening=!menu.classList.contains("show"); menu.classList.toggle("show"); if(opening) positionLeaguesMenu(); };
-  menu.querySelectorAll("[data-go-league]").forEach(b=>b.onclick=async(e)=>{
-    e.stopPropagation();
-    menu.classList.remove("show");
+    ? `<div class="lgm-list">`+list.map(l=>`<button class="lgm-item ${l.id===activeId?'on':''}" data-go-league="${esc(l.id)}"><span class="dot"></span><span class="nm">${esc(l.name)}</span>${l.id===activeId?'<span class="cur">Active</span>':'<span class="go">Open →</span>'}</button>`).join("")+`</div>`
+    : `<div class="lgd-empty" style="padding:18px 4px">You're not in any league yet. Join one with a code, or create your own.</div>`;
+  body.innerHTML=`${listHtml}
+    <div class="lgm-actions">
+      <button class="lg-btn-ghost" id="lgmModalJoin" style="flex:1">＋ Join a league</button>
+      <button class="lg-btn" id="lgmModalCreate" style="flex:1">＋ Create a league</button>
+    </div>`;
+  body.querySelectorAll("[data-go-league]").forEach(b=>b.onclick=async()=>{
     const id=b.getAttribute("data-go-league");
+    closeModals();
     lgSetActive(id);
     document.body.classList.add("league-open"); window.scrollTo(0,0);
     _lgTab="home"; renderLeague();
     if(SB_READY()){ try{ await lgFetchActive(); renderLeague(); }catch(err){} }
   });
-  wireMyLeaguesActions(menu);
-  // close on outside click (registered once)
-  if(!window.__lgMenuOutside){ window.__lgMenuOutside=true;
-    document.addEventListener("click",(e)=>{ const m=$("#myLeaguesMenu"); const w=$("#myLeaguesWrap"); if(m&&w&&!w.contains(e.target)) m.classList.remove("show"); });
-    window.addEventListener("resize",()=>{ const m=$("#myLeaguesMenu"); if(m&&m.classList.contains("show")) positionLeaguesMenu(); });
-    window.addEventListener("scroll",()=>{ const m=$("#myLeaguesMenu"); if(m&&m.classList.contains("show")) positionLeaguesMenu(); },true);
-  }
-}
-// Position the fixed dropdown directly under the button (right-aligned) so it
-// floats above the sticky nav bar regardless of stacking contexts.
-function positionLeaguesMenu(){
-  const btn=$("#myLeaguesBtn"), menu=$("#myLeaguesMenu");
-  if(!btn||!menu) return;
-  const r=btn.getBoundingClientRect();
-  menu.style.top=(r.bottom+6)+"px";
-  // right-align to the button, but keep on screen
-  const width=Math.max(menu.offsetWidth,240);
-  let left=r.right-width;
-  if(left<8) left=8;
-  menu.style.left=left+"px";
-  menu.style.right="auto";
-}
-function wireMyLeaguesActions(menu){
-  const j=menu.querySelector("#lgdJoin");
-  if(j) j.onclick=(e)=>{ e.stopPropagation(); menu.classList.remove("show"); document.body.classList.add("league-open"); window.scrollTo(0,0); renderLeague(); lgOpenJoinModal(); };
-  const c=menu.querySelector("#lgdCreate");
-  if(c) c.onclick=(e)=>{ e.stopPropagation(); menu.classList.remove("show"); document.body.classList.add("league-open"); window.scrollTo(0,0); renderLeague(); lgOpenCreateModal(); };
+  const j=$("#lgmModalJoin"); if(j) j.onclick=()=>{ closeModals(); document.body.classList.add("league-open"); window.scrollTo(0,0); renderLeague(); lgOpenJoinModal(); };
+  const c=$("#lgmModalCreate"); if(c) c.onclick=()=>{ closeModals(); document.body.classList.add("league-open"); window.scrollTo(0,0); renderLeague(); lgOpenCreateModal(); };
 }
 function statusBadge(s){
   if(s==="live"||s==="ongoing")return`<span class="badge live"><span class="pulse"></span>Live</span>`;
