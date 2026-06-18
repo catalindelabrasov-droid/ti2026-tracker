@@ -14,14 +14,17 @@
       "openQualifiers": "2026-06-09 to 2026-06-12",
       "regionalQualifiers": "2026-06-15 to 2026-06-28",
       "groupStage": "2026-08-13 to 2026-08-16",
+      "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-06-13T00:00:00+00:00",
-    "dataSource": "Seed data — pending auto-update from Liquipedia",
-    "officialUrl": "https://www.dota2.com/esports"
+    "lastUpdated": "2026-06-18T14:10:47.055834+00:00",
+    "dataSource": "Curated from official Valve announcements & PGL qualifier brackets",
+    "officialUrl": "https://www.dota2.com/esports",
+    "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
     "total": 1600000,
+    "note": "Base $1.6M; grows with TI 2026 Compendium sales. Full distribution announced closer to the event.",
     "distribution": [
       {
         "place": "1st",
@@ -65,72 +68,242 @@
       }
     ]
   },
+  "teams": [
+    {
+      "name": "Team Falcons",
+      "region": "Western Europe",
+      "qualification": "Direct Invite",
+      "note": "Defending TI champions"
+    },
+    {
+      "name": "Team Liquid",
+      "region": "Western Europe",
+      "qualification": "Direct Invite"
+    },
+    {
+      "name": "Tundra Esports",
+      "region": "Western Europe",
+      "qualification": "Direct Invite"
+    },
+    {
+      "name": "Aurora Gaming",
+      "region": "Eastern Europe",
+      "qualification": "Direct Invite"
+    },
+    {
+      "name": "Team Yandex",
+      "region": "Eastern Europe",
+      "qualification": "Direct Invite"
+    },
+    {
+      "name": "BoomBoys",
+      "region": "Eastern Europe",
+      "qualification": "Direct Invite",
+      "note": "BetBoom Team (renamed for TI)"
+    },
+    {
+      "name": "Xtreme Gaming",
+      "region": "China",
+      "qualification": "Direct Invite"
+    }
+  ],
   "qualifiers": [
     {
-      "region": "Western Europe",
-      "status": "pending",
-      "winners": [],
-      "dates": "2026-06-15 to 2026-06-28",
-      "slots": 2,
-      "teams": [],
-      "matches": []
-    },
-    {
-      "region": "Eastern Europe",
-      "status": "pending",
-      "winners": [],
-      "dates": "2026-06-15 to 2026-06-28",
-      "slots": 2,
-      "teams": [],
-      "matches": []
-    },
-    {
       "region": "China",
-      "status": "pending",
-      "winners": [],
-      "dates": "2026-06-15 to 2026-06-28",
+      "status": "live",
       "slots": 2,
-      "teams": [],
-      "matches": []
-    },
-    {
-      "region": "Southeast Asia",
-      "status": "pending",
+      "dates": "2026-06-15 to 2026-06-18",
+      "format": "8 teams · Double-elimination · Bo3 (GF Bo5)",
       "winners": [],
-      "dates": "2026-06-15 to 2026-06-28",
-      "slots": 2,
-      "teams": [],
-      "matches": []
-    },
-    {
-      "region": "North America",
-      "status": "pending",
-      "winners": [],
-      "dates": "2026-06-15 to 2026-06-28",
-      "slots": 2,
-      "teams": [],
-      "matches": []
+      "teams": [
+        "Vici Gaming",
+        "Yakutou Brothers",
+        "Team Resilience",
+        "Game Master",
+        "Cloud Rising",
+        "Grey Trac",
+        "Roar Gaming",
+        "Team Refuser"
+      ],
+      "matches": [
+        {
+          "id": "cn_ubf",
+          "stage": "Upper Bracket Final",
+          "bestOf": 3,
+          "status": "live",
+          "scheduled": "2026-06-18T06:00:00+00:00",
+          "teamA": {
+            "name": "Team Resilience",
+            "score": null
+          },
+          "teamB": {
+            "name": "Yakutou Brothers",
+            "score": null
+          }
+        },
+        {
+          "id": "cn_lbf",
+          "stage": "Lower Bracket Final",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-18T09:00:00+00:00",
+          "teamA": {
+            "name": "TBD",
+            "score": null
+          },
+          "teamB": {
+            "name": "Vici Gaming",
+            "score": null
+          }
+        }
+      ]
     },
     {
       "region": "South America",
-      "status": "pending",
+      "status": "live",
+      "slots": 1,
+      "dates": "2026-06-15 to 2026-06-19",
+      "format": "10 teams · Double-elimination · Bo3 (GF Bo5)",
       "winners": [],
-      "dates": "2026-06-15 to 2026-06-28",
-      "slots": 2,
-      "teams": [],
+      "teams": [
+        "LGD Gaming",
+        "PlayTime",
+        "Hokori",
+        "Red Hot Chili Pibble",
+        "Amaru Gaming",
+        "Team Nemesis",
+        "Estar Backs",
+        "Lindorfitos",
+        "RisingRage",
+        "x5 Gaming"
+      ],
+      "matches": [
+        {
+          "id": "sa_ubf",
+          "stage": "Upper Bracket Final",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-18T20:00:00+00:00",
+          "teamA": {
+            "name": "LGD Gaming",
+            "score": null
+          },
+          "teamB": {
+            "name": "PlayTime",
+            "score": null
+          }
+        },
+        {
+          "id": "sa_lbqf1",
+          "stage": "Lower Bracket Quarterfinal",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-18T14:00:00+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": null
+          },
+          "teamB": {
+            "name": "Estar Backs",
+            "score": null
+          }
+        }
+      ]
+    },
+    {
+      "region": "Southeast Asia",
+      "status": "upcoming",
+      "slots": 1,
+      "dates": "2026-06-19 to 2026-06-23",
+      "format": "Double-elimination · Bo3 (GF Bo5)",
+      "winners": [],
+      "teams": [
+        "REKONIX",
+        "OG",
+        "BOOM Esports",
+        "Talon Esports",
+        "Team SMG"
+      ],
+      "matches": []
+    },
+    {
+      "region": "Europe",
+      "status": "upcoming",
+      "slots": 4,
+      "dates": "2026-06-21 to 2026-06-28",
+      "format": "16 teams · Double-elimination · merged EU qualifier",
+      "winners": [],
+      "teams": [
+        "Team Spirit",
+        "PARIVISION",
+        "Natus Vincere",
+        "MOUZ",
+        "Virtus.pro",
+        "Nigma Galaxy",
+        "Gaimin Gladiators",
+        "Team Tickles"
+      ],
+      "matches": [
+        {
+          "id": "eu_ub1_1",
+          "stage": "Upper Bracket Round 1",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-21T08:00:00+00:00",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": null
+          },
+          "teamB": {
+            "name": "Virtus.pro",
+            "score": null
+          }
+        },
+        {
+          "id": "eu_ub1_2",
+          "stage": "Upper Bracket Round 1",
+          "bestOf": 3,
+          "status": "upcoming",
+          "scheduled": "2026-06-21T17:00:00+00:00",
+          "teamA": {
+            "name": "Natus Vincere",
+            "score": null
+          },
+          "teamB": {
+            "name": "MOUZ",
+            "score": null
+          }
+        }
+      ]
+    },
+    {
+      "region": "North America",
+      "status": "upcoming",
+      "slots": 1,
+      "dates": "2026-06-24 to 2026-06-26",
+      "format": "Double-elimination · Bo3 (GF Bo5)",
+      "winners": [],
+      "teams": [
+        "Shopify Rebellion",
+        "TSM",
+        "GamerLegion",
+        "Wildcard"
+      ],
       "matches": []
     }
   ],
-  "teams": [],
   "groupStage": {
-    "format": "Swiss-system (16 teams)",
-    "note": "Top 8 advance to the Main Event playoffs.",
+    "format": "Swiss-system (16 teams) · Aug 13-16",
+    "note": "Top 8 advance to the Main Event playoffs. Field finalized after qualifiers (June 28).",
     "standings": []
   },
   "bracket": {
-    "format": "Double elimination",
-    "upper": [],
-    "lower": [],
+    "format": "Double elimination — top 8 from the group stage · Aug 20-23",
+    "note": "Bracket fills in once the group stage seeds the top 8.",
+    "rounds": {
+      "upper": [],
+      "lower": []
+    },
     "grandFinal": null
   }
 }

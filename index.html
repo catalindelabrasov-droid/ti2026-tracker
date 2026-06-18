@@ -907,9 +907,12 @@ function statusBadge(s){
   return"";
 }
 function liveMatchesOf(d){
-  const matches=allMatches(d).filter(m=>m.status==="live"||m.status==="upcoming");
-  matches.sort((a,b)=>{const r=(a.status==="live"?0:1)-(b.status==="live"?0:1);if(r)return r;return new Date(a.scheduled||0)-new Date(b.scheduled||0);});
-  return matches;
+  const matches=allMatches(d);
+  // also include regional qualifier matches (they have their own match arrays)
+  (d.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>matches.push({...m,stage:(m.stage?m.stage+" · ":"")+q.region+" Qualifier",side:"qual"})));
+  const out=matches.filter(m=>m.status==="live"||m.status==="upcoming"||m.status==="scheduled"||m.status==="ongoing");
+  out.sort((a,b)=>{const r=((a.status==="live"||a.status==="ongoing")?0:1)-((b.status==="live"||b.status==="ongoing")?0:1);if(r)return r;return new Date(a.scheduled||0)-new Date(b.scheduled||0);});
+  return out;
 }
 function liveRailInner(d){
   const matches=liveMatchesOf(d);
