@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0045)file:///C:/Users/Azog/Downloads/index_16.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The International 2026 — Results Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./index_files/css2" rel="stylesheet">
 <style>
   :root{
     --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
@@ -287,6 +287,13 @@
   .lg-member:last-child{border-bottom:none}
   .lg-member .av{width:30px;height:30px;border-radius:50%;background:var(--aegis);color:#0b0e13;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;flex:0 0 auto}
   .lg-member .you{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--aegis);letter-spacing:.1em;text-transform:uppercase}
+  .mem-ctrls{margin-left:auto;display:flex;gap:6px}
+  .mem-ctrls + .you,.lg-member .you + .mem-ctrls{margin-left:8px}
+  .mem-btn{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:5px;padding:5px 9px;transition:.12s}
+  .mem-btn.kick{color:var(--live);border-color:rgba(224,90,90,.4)}
+  .mem-btn.kick:hover{background:var(--live);color:#fff;border-color:var(--live)}
+  .mem-btn.make{color:var(--ink-dim)}
+  .mem-btn.make:hover{color:var(--aegis);border-color:var(--aegis)}
   /* predictions */
   .pred-match{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
   .pred-match.locked{border-color:rgba(78,201,143,.35)}
@@ -490,11 +497,11 @@
 </style>
 </head>
 <body>
-  <div id="app"><div class="loading">Loading tournament data…</div></div>
+  <div id="app"><div class="wrap"><div class="loading">Couldn't load <b>data.json</b>.<br>If opening the file directly, run a local server (browsers block fetch on file://).</div></div></div>
   <div class="toast-host" id="toastHost"></div>
   <div class="editor" id="editor">
     <div class="editor-panel">
-      <div class="editor-head"><h3>Edit results</h3><button class="x" id="editorClose" aria-label="Close editor">&times;</button></div>
+      <div class="editor-head"><h3>Edit results</h3><button class="x" id="editorClose" aria-label="Close editor">×</button></div>
       <div class="editor-body">
         <div class="editor-tip">Edit the tournament data below as JSON, then <b>Apply</b> to preview instantly. Changes save in this browser only. Use <b>Download data.json</b> to export and commit it to your repo so everyone sees it. <b>Reset</b> reloads the original file.</div>
         <textarea id="editorText" spellcheck="false"></textarea>
@@ -513,7 +520,7 @@
     <div class="modal-card">
       <div class="modal-head">
         <div><h3>Sign in</h3><p>Use the username or email and password from your sign-up email.</p></div>
-        <button class="x" data-close="signinModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="signinModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="form-ok" id="signinOk"></div>
@@ -543,7 +550,7 @@
     <div class="modal-card">
       <div class="modal-head">
         <div><h3>Create account</h3><p>Sign up to follow matches and get result alerts.</p></div>
-        <button class="x" data-close="signupModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="signupModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="form-note">After you sign up, your login details will be sent to your email. (Email delivery activates once the backend is connected.)</div>
@@ -561,7 +568,7 @@
         <div class="field">
           <label for="su_phone">Phone number</label>
           <div class="phone-row">
-            <select id="su_prefix" aria-label="Country prefix"></select>
+            <select id="su_prefix" aria-label="Country prefix"><option value="+40">RO +40</option><option value="+1">US +1</option><option value="+44">GB +44</option><option value="+49">DE +49</option><option value="+33">FR +33</option><option value="+34">ES +34</option><option value="+39">IT +39</option><option value="+31">NL +31</option><option value="+46">SE +46</option><option value="+48">PL +48</option><option value="+380">UA +380</option><option value="+7">RU +7</option><option value="+86">CN +86</option><option value="+65">SG +65</option><option value="+63">PH +63</option><option value="+62">ID +62</option><option value="+60">MY +60</option><option value="+91">IN +91</option><option value="+55">BR +55</option><option value="+54">AR +54</option><option value="+51">PE +51</option><option value="+61">AU +61</option><option value="+1">CA +1</option><option value="+81">JP +81</option><option value="+82">KR +82</option><option value="+971">AE +971</option><option value="+966">SA +966</option><option value="+90">TR +90</option></select>
             <input id="su_phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="712 345 678">
           </div>
           <div class="err" id="su_phone_err"></div>
@@ -600,7 +607,7 @@
     <div class="modal-card" style="max-width:680px">
       <div class="modal-head">
         <div style="flex:1"></div>
-        <button class="x" data-close="regionModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="regionModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="regionModalBody" style="padding-top:0"></div>
     </div>
@@ -609,7 +616,7 @@
   <!-- Region detail: PAGE version (full in-app view) -->
   <div class="region-page" id="regionPage">
     <div class="wrap">
-      <button class="rp-back" id="regionBack">&larr; Back to all regions</button>
+      <button class="rp-back" id="regionBack">← Back to all regions</button>
       <div id="regionPageBody" style="padding-bottom:60px"></div>
     </div>
   </div>
@@ -619,7 +626,7 @@
     <div class="modal-card" style="max-width:560px">
       <div class="modal-head">
         <div style="flex:1"></div>
-        <button class="x" data-close="teamModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="teamModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="teamModalBody" style="padding-top:0"></div>
     </div>
@@ -628,7 +635,7 @@
   <!-- Team detail: PAGE version -->
   <div class="region-page" id="teamPage">
     <div class="wrap">
-      <button class="rp-back" id="teamBack">&larr; Back</button>
+      <button class="rp-back" id="teamBack">← Back</button>
       <div id="teamPageBody" style="padding-bottom:60px"></div>
     </div>
   </div>
@@ -638,7 +645,7 @@
     <div class="modal-card" style="max-width:460px">
       <div class="modal-head">
         <div><h3 id="lgModalTitle">Join a league</h3></div>
-        <button class="x" data-close="leagueModal" aria-label="Close">&times;</button>
+        <button class="x" data-close="leagueModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="leagueModalBody"></div>
     </div>
@@ -647,7 +654,7 @@
   <!-- League page -->
   <div class="league-page" id="leaguePage">
     <div class="wrap">
-      <button class="rp-back" id="leagueBack">&larr; Back to tracker</button>
+      <button class="rp-back" id="leagueBack">← Back to tracker</button>
       <div class="lg-hero">
         <div class="eyebrow">Friends · Predictions · Bragging rights</div>
         <h2>Prediction <span class="acc">League</span></h2>
@@ -662,7 +669,7 @@
       <div class="lg-panel" id="lgPanel"></div>
     </div>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./index_files/supabase-js@2"></script>
 <script>
 // ----- Supabase backend (accounts + shared league) ------------------------
 const SUPABASE_URL = "https://hqpynfzatnmwvlxdfhsw.supabase.co";
@@ -1549,6 +1556,9 @@ async function lgFetchActive(){
     const {data:lg}=await SB.from("leagues").select("*").eq("id",leagueId).maybeSingle();
     if(!lg) return null;
     const {data:members}=await SB.from("league_members").select("username,user_id").eq("league_id",leagueId);
+    // richer member list (ids + admin flag) for admin controls
+    let memberRows=[];
+    try{ const {data:ml}=await SB.rpc("league_members_list",{ p_league:leagueId }); memberRows=ml||[]; }catch(e){ memberRows=(members||[]).map(m=>({user_id:m.user_id,username:m.username,is_admin:m.user_id===lg.admin_id})); }
     const {data:myPreds}=await SB.from("predictions").select("*").eq("league_id",leagueId).eq("user_id",uid);
     const {data:myOut}=await SB.from("outcome_predictions").select("*").eq("league_id",leagueId).eq("user_id",uid);
     let board=[];
@@ -1561,7 +1571,7 @@ async function lgFetchActive(){
       members:(members||[]).map(m=>m.username),
       rules:Object.keys(lg.rules||{}).length?lg.rules:{...DEFAULT_RULES},
       predictions, outcomes, _uid:uid, otherPredictions:{}, board:board,
-      leagueList:list };
+      leagueList:list, memberRows:memberRows, isAdmin:(lg.admin_id===uid) };
     lgSave(state);
     return state;
   }catch(e){ console.warn("league fetch failed",e); return lgLoad(); }
@@ -1671,16 +1681,37 @@ function lgLeagueSwitcher(lg){
 }
 function lgHome(lg){
   const me=lg.me;
-  const members=lg.members.map(m=>{const isAdmin=(m===lg.admin);return `<div class="lg-member"><span class="av" style="background:${avatarColor(m)}">${esc(m.charAt(0).toUpperCase())}</span>${esc(m)}${m===me?'<span class="you">You</span>':''}${isAdmin?'<span class="you" style="color:var(--ink-faint)">Admin</span>':''}</div>`;}).join("");
-  return `${lgLeagueSwitcher(lg)}
-  <div class="lg-grid2">
+  const isAdmin=lg.isAdmin;
+  const rows=(lg.memberRows&&lg.memberRows.length)?lg.memberRows:lg.members.map(n=>({username:n,user_id:null,is_admin:(n===lg.admin)}));
+  const members=rows.map(m=>{
+    const isMeRow=(m.username===me);
+    const tags=`${isMeRow?'<span class="you">You</span>':''}${m.is_admin?'<span class="you" style="color:var(--ink-faint)">Admin</span>':''}`;
+    const adminCtrls=(isAdmin && !isMeRow && m.user_id)
+      ? `<span class="mem-ctrls">
+           ${!m.is_admin?`<button class="mem-btn make" data-makeadmin="${esc(m.user_id)}" data-name="${esc(m.username)}">Make admin</button>`:''}
+           <button class="mem-btn kick" data-kick="${esc(m.user_id)}" data-name="${esc(m.username)}">Remove</button>
+         </span>` : "";
+    return `<div class="lg-member"><span class="av" style="background:${avatarColor(m.username)}">${esc(m.username.charAt(0).toUpperCase())}</span>${esc(m.username)}${tags}${adminCtrls}</div>`;
+  }).join("");
+
+  const codeCard = isAdmin ? `
     <div class="lg-card">
       <h3>${esc(lg.name)}</h3>
-      <div class="hint">Share this code so friends can join your league.</div>
+      <div class="hint">You're the admin. Share this code so friends can join — only you can see it.</div>
       <div class="lg-code">${esc(lg.code)}<button id="lgCopyCode">Copy</button></div>
-      <div style="margin-top:20px"><h3 style="font-size:14px">Members (${lg.members.length})</h3></div>
+      <div style="margin-top:20px"><h3 style="font-size:14px">Members (${rows.length})</h3></div>
       ${members}
-    </div>
+    </div>` : `
+    <div class="lg-card">
+      <h3>${esc(lg.name)}</h3>
+      <div class="hint">Only the league admin can invite new members.</div>
+      <div style="margin-top:14px"><h3 style="font-size:14px">Members (${rows.length})</h3></div>
+      ${members}
+    </div>`;
+
+  return `${lgLeagueSwitcher(lg)}
+  <div class="lg-grid2">
+    ${codeCard}
     <div class="lg-card">
       <h3>How it works</h3>
       <div class="hint" style="line-height:1.7">
@@ -1975,6 +2006,30 @@ function wireLeaguePanel(){
   };
   const cc=$("#lgCopyCode"); if(cc) cc.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(lg.code);cc.textContent="Copied!";setTimeout(()=>cc.textContent="Copy",1200);};
   const gp=$("#lgGoPredict"); if(gp) gp.onclick=()=>{_lgTab="predict";renderLeague();};
+  // admin: remove a member
+  document.querySelectorAll("[data-kick]").forEach(b=>b.onclick=async()=>{
+    const uid=b.getAttribute("data-kick"), name=b.getAttribute("data-name");
+    if(!confirm(`Remove ${name} from the league?`)) return;
+    const s=lgLoad(); if(!s||!SB_READY()) return;
+    b.disabled=true;
+    try{
+      const {error}=await SB.from("league_members").delete().eq("league_id",s.id).eq("user_id",uid);
+      if(error) throw error;
+      await lgFetchActive(); toast("Member removed",`${name} is no longer in the league.`); renderLeague();
+    }catch(e){ console.warn(e); toast("Couldn't remove", e.message||"Try again."); b.disabled=false; }
+  });
+  // admin: transfer admin role
+  document.querySelectorAll("[data-makeadmin]").forEach(b=>b.onclick=async()=>{
+    const uid=b.getAttribute("data-makeadmin"), name=b.getAttribute("data-name");
+    if(!confirm(`Make ${name} the admin? You'll become a regular member and lose admin controls.`)) return;
+    const s=lgLoad(); if(!s||!SB_READY()) return;
+    b.disabled=true;
+    try{
+      const {error}=await SB.from("leagues").update({admin_id:uid}).eq("id",s.id);
+      if(error) throw error;
+      await lgFetchActive(); toast("Admin transferred",`${name} is now the league admin.`); renderLeague();
+    }catch(e){ console.warn(e); toast("Couldn't transfer", e.message||"Try again."); b.disabled=false; }
+  });
   // league switcher chips + join/create entry points
   document.querySelectorAll("[data-switch-league]").forEach(b=>b.onclick=()=>lgSwitchTo(b.getAttribute("data-switch-league")));
   const oj=$("#lgOpenJoin"); if(oj) oj.onclick=lgOpenJoinModal;
@@ -2261,5 +2316,6 @@ function setupAutoRefresh(){
 }
 init();
 </script>
-</body>
-</html>
+
+
+</body></html>
