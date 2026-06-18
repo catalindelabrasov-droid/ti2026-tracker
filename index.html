@@ -966,8 +966,19 @@ function liveCard(m){
   </div>`;
 }
 function renderPrize(d,champion){
-  const pp=d.prizePool||{};const dist=pp.distribution||[];
-  const total=pp.total||d.meta.basePrizePool||0;
+  const pp=d.prizePool||{};let dist=pp.distribution||[];
+  let total=pp.total||d.meta.basePrizePool||0;
+  let liveNote=false;
+  // If the live feed gave us TI 2026's current prize pool, use it and compute
+  // each placement from the standard TI percentage split.
+  if(LIVE_FEED.tiPrize && LIVE_FEED.tiPrize.prizePool){
+    total=LIVE_FEED.tiPrize.prizePool; liveNote=true;
+    const SPLIT=[ // standard TI distribution (per placement group)
+      {place:"1st",pct:0.455},{place:"2nd",pct:0.165},{place:"3rd",pct:0.105},
+      {place:"4th",pct:0.065},{place:"5th-6th",pct:0.045},{place:"7th-8th",pct:0.025},
+      {place:"9th-12th",pct:0.01},{place:"13th-16th",pct:0.005}];
+    dist=SPLIT.map((s,i)=>({place:s.place,amount:Math.round(total*s.pct),team:(dist[i]&&dist[i].team)||null}));
+  }
   const maxAmt=dist.reduce((mx,r)=>Math.max(mx,r.amount||0),0)||1;
   const rows=dist.map((r,i)=>{
     const amt=r.amount||0;
@@ -987,8 +998,8 @@ function renderPrize(d,champion){
     <div class="pz-wrap">
       <div class="pz-hero">
         <div class="pz-hero-amt">${fmt(total)}</div>
-        <div class="pz-hero-lab">Total prize pool${pp.total?"":" — base, grows with the event"}</div>
-        <div class="pz-hero-meta">${dist.length} placements · ${esc(d.meta.teamCount||16)} teams</div>
+        <div class="pz-hero-lab">Total prize pool${liveNote?' · live':(pp.total?"":" — base, grows with the event")}</div>
+        <div class="pz-hero-meta">${dist.length} placements · ${esc(d.meta.teamCount||16)} teams${liveNote?' · projected split':''}</div>
       </div>
       <div class="pz-ladder">
         <div class="pz-ladder-head"><span>Placement</span><span class="pz-h-share">Share of pool</span><span class="pz-h-amt">Prize</span></div>
@@ -1326,7 +1337,7 @@ async function fetchLiveFeed(){
     const live=j.liveMatches||[];
     // register any team logos the feed provides, so teamWithLogo picks them up
     try{ live.forEach(m=>{ [m.teamA,m.teamB].forEach(t=>{ if(t&&t.name&&t.logo&&!_logoMap[t.name.toLowerCase()]) _logoMap[t.name.toLowerCase()]=t.logo; }); }); }catch(e){}
-    return {liveMatches:live, events:j.events||[], updatedAt:j.updatedAt};
+    return {liveMatches:live, events:j.events||[], tiPrize:j.tiPrize||null, updatedAt:j.updatedAt};
   }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
