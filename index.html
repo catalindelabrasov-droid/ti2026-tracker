@@ -134,6 +134,46 @@
   .mhero .mh-stat{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
   .mhero .mh-wr{color:var(--win)}
   .flag{font-size:13px;margin-right:5px}
+  /* ---- teams grid ---- */
+  .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:22px}
+  .tmcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:.15s}
+  .tmcard:hover{border-color:var(--aegis);transform:translateY(-2px)}
+  .tmcard .tm-rank{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint);width:24px;flex:0 0 auto}
+  .tmcard .tlogo{--s:40px;flex:0 0 auto}
+  .tmcard .tm-info{min-width:0;flex:1}
+  .tmcard .tm-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tmcard .tm-stat{font-size:11.5px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;margin-top:2px}
+  .tmcard .tm-rating{font-family:'Oswald',sans-serif;font-weight:600;color:var(--aegis-bright);font-size:15px;flex:0 0 auto}
+  /* ---- players table ---- */
+  .ply-table{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .ply-row{display:grid;grid-template-columns:46px 1fr 1fr 60px;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line-soft);transition:.12s;cursor:pointer;text-decoration:none;color:inherit}
+  .ply-row:last-child{border-bottom:none}
+  .ply-row:hover{background:var(--panel-2)}
+  .ply-row.head{background:var(--panel);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:var(--ink-faint);cursor:default;position:sticky;top:54px}
+  .ply-row.head:hover{background:var(--panel)}
+  .ply-rank{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:var(--ink-faint);text-align:center}
+  .ply-rank.top{color:var(--aegis-bright)}
+  .ply-name{display:flex;align-items:center;gap:10px;min-width:0}
+  .ply-name img{width:30px;height:30px;border-radius:50%;background:var(--line);object-fit:cover;flex:0 0 auto}
+  .ply-name .pn-nick{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ply-team{color:var(--ink-dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ply-country{text-align:center;font-size:17px}
+  /* ---- roster modal ---- */
+  .roster-back{position:fixed;inset:0;background:rgba(4,6,9,.78);backdrop-filter:blur(5px);z-index:120;display:none;align-items:center;justify-content:center;padding:20px}
+  .roster-back.show{display:flex;animation:fadein .2s}
+  .roster-box{background:var(--bg-soft,#0f141b);border:1px solid var(--line);border-radius:16px;max-width:520px;width:100%;max-height:84vh;overflow:auto;padding:0}
+  .roster-hd{display:flex;align-items:center;gap:16px;padding:22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-soft,#0f141b)}
+  .roster-hd .tlogo{--s:54px}
+  .roster-hd h3{font-family:'Oswald',sans-serif;font-weight:700;font-size:22px}
+  .roster-hd .rh-stat{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);margin-top:3px}
+  .roster-hd .rh-close{margin-left:auto;background:none;border:none;color:var(--ink-dim);font-size:24px;cursor:pointer;align-self:flex-start}
+  .roster-body{padding:14px 22px 24px}
+  .roster-body .rb-lab{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:12px;letter-spacing:.06em;color:var(--ink-faint);margin:6px 0 12px}
+  .rmember{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .rmember:last-child{border-bottom:none}
+  .rmember .rm-av{width:38px;height:38px;border-radius:50%;background:var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;color:var(--ink-dim)}
+  .rmember .rm-name{font-weight:600}
+  .rmember .rm-stat{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin-left:auto}
   section{padding:44px 0;border-bottom:1px solid var(--line);scroll-margin-top:54px}
   .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;flex-wrap:wrap}
   .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--aegis);border:1px solid var(--line);border-radius:2px;padding:3px 8px}
@@ -786,10 +826,10 @@ function teamInitials(name){
   if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
   return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
 }
-function teamLogo(name,size){
+function teamLogo(name,size,directUrl){
   const n=(name||"").trim();
   if(!n||n==="TBD"||n.toUpperCase()==="TBD") return `<span class="tlogo tlogo-tbd" style="--s:${size||20}px">?</span>`;
-  const url=_logoMap[n.toLowerCase()];
+  const url=directUrl||_logoMap[n.toLowerCase()];
   if(url) return `<img class="tlogo" style="--s:${size||20}px" src="${esc(url)}" alt="" loading="lazy" onerror="this.outerHTML=window.__logoFallback(${JSON.stringify(n).replace(/"/g,'&quot;')},${size||20})">`;
   return logoFallback(n,size||20);
 }
@@ -797,9 +837,9 @@ function logoFallback(name,size){
   return `<span class="tlogo tlogo-badge" style="--s:${size||20}px;background:${teamColor(name)}">${esc(teamInitials(name))}</span>`;
 }
 window.__logoFallback=(n,s)=>logoFallback(n,s); // used by <img onerror>
-function teamWithLogo(name,size){
-  // logo + name as an inline unit (logo on the left)
-  return `<span class="team-wl">${teamLogo(name,size)}<span class="twl-name">${esc(name||'TBD')}</span></span>`;
+function teamWithLogo(name,size,directUrl){
+  // logo + name as an inline unit (logo on the left). directUrl wins over the map.
+  return `<span class="team-wl">${teamLogo(name,size,directUrl)}<span class="twl-name">${esc(name||'TBD')}</span></span>`;
 }
 function formatSpectators(n){ n=+n||0; if(n>=1000) return (n/1000).toFixed(n>=10000?0:1)+"k"; return ""+n; }
 const $=s=>document.querySelector(s);
@@ -935,9 +975,16 @@ function render(d){
         Fan-made tracker, not affiliated with Valve.</footer>
     </div>
     <div class="tabview" id="view-tournaments">${renderTournaments()}</div>
-    <div class="tabview" id="view-teams"><div class="trn-head"><div><h2>Teams</h2><div class="trn-sub">Coming soon — pro team rosters, ratings, and recent results.</div></div></div></div>
-    <div class="tabview" id="view-players"><div class="trn-head"><div><h2>Top Players</h2><div class="trn-sub">Coming soon — the top 100 pro players in the world.</div></div></div></div>
-  </div>`;
+    <div class="tabview" id="view-teams">
+      <div class="trn-head"><div><h2>Teams</h2><div class="trn-sub">Top professional teams by rating · tap a team to see its roster</div></div></div>
+      <div class="team-grid" id="teamGrid"><div class="loading" style="padding:30px">Loading teams…</div></div>
+    </div>
+    <div class="tabview" id="view-players">
+      <div class="trn-head"><div><h2>Top Players</h2><div class="trn-sub">Notable pros in recent competitive play</div></div></div>
+      <div id="playerList"><div class="loading" style="padding:30px">Loading players…</div></div>
+    </div>
+  </div>
+  <div class="roster-back" id="rosterBack"><div class="roster-box" id="rosterBox"></div></div>`;
   $("#app").replaceWith(root);
   wireToolbar();wireNav();applySearchFilter();renderAuthArea();startCountdown(d);wireQualifiers(d);wireTeams(d);
   wireHubTabs();renderLiveStrip();
@@ -1032,8 +1079,8 @@ function liveCard(m){
   const on=notifIds.has(m.id);
   return`<div class="lcard ${m.status==='live'?'is-live':''}" data-mid="${esc(m.id)}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status)}">
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
-    <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24)}<span class="lc-score">${a.score??'–'}</span></div>
-    <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24)}<span class="lc-score">${b.score??'–'}</span></div>
+    <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${a.score??'–'}</span></div>
+    <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24,b.logo)}<span class="lc-score">${b.score??'–'}</span></div>
     <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):' · Bo'+esc(m.bestOf||3)}</span>
       <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
@@ -1086,15 +1133,27 @@ function wireHubTabs(){
   const tabs=[...document.querySelectorAll(".hubtab")];
   const views={ti:$("#view-ti"),tournaments:$("#view-tournaments"),teams:$("#view-teams"),players:$("#view-players")};
   const nav=document.querySelector("nav");
-  tabs.forEach(t=>t.onclick=()=>{
-    const k=t.getAttribute("data-hubtab");
-    tabs.forEach(x=>x.classList.toggle("on",x===t));
+  const valid=Object.keys(views);
+  function activate(k,push){
+    if(!valid.includes(k)) k="ti";
+    tabs.forEach(x=>x.classList.toggle("on",x.getAttribute("data-hubtab")===k));
     Object.entries(views).forEach(([key,el])=>{if(el)el.classList.toggle("on",key===k);});
-    // the in-page section nav only makes sense on the TI tab
-    if(nav) nav.style.display = (k==="ti")?"":"none";
-    window.scrollTo({top:0,behavior:"smooth"});
+    if(nav) nav.style.display=(k==="ti")?"":"none";
+    if(push){ const h="#tab="+k; if(location.hash!==h) history.pushState({tab:k},"",h); }
     if(k==="tournaments") renderTournamentsInto();
-  });
+    if(k==="teams") renderTeamsTabInto();
+    if(k==="players") renderPlayersTabInto();
+  }
+  tabs.forEach(t=>t.onclick=()=>{ activate(t.getAttribute("data-hubtab"),true); window.scrollTo({top:0,behavior:"smooth"}); });
+  // respond to back/forward and direct links (#tab=tournaments)
+  window.addEventListener("popstate",()=>{ activate(currentTabFromHash(),false); });
+  window.addEventListener("hashchange",()=>{ activate(currentTabFromHash(),false); });
+  // initial: honor the hash if present
+  activate(currentTabFromHash(),false);
+}
+function currentTabFromHash(){
+  const m=(location.hash||"").match(/tab=([a-z]+)/i);
+  return m?m[1].toLowerCase():"ti";
 }
 
 // Country code -> flag emoji (ISO-3166 alpha-2)
@@ -1182,6 +1241,65 @@ function renderTournamentsInto(){
     renderTournamentsInto();
   });
 }
+
+/* ---- Teams tab ---- */
+function renderTeamsTabInto(){
+  const grid=$("#teamGrid"); if(!grid) return;
+  const teams=LIVE_FEED.topTeams||[];
+  if(!teams.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>No team data yet</b>Teams load from OpenDota — check back shortly.</div>`; return; }
+  grid.innerHTML=teams.map((t,i)=>`<div class="tmcard" data-team="${t.id}" data-tname="${esc(t.name)}" data-tlogo="${esc(t.logo||'')}">
+    <span class="tm-rank">${i+1}</span>
+    ${teamLogo(t.name,40,t.logo)}
+    <div class="tm-info"><div class="tm-name">${esc(t.name)}</div>
+      <div class="tm-stat">${t.wins}W ${t.losses}L · ${t.winRate}% WR</div></div>
+    <span class="tm-rating">${t.rating}</span>
+  </div>`).join("");
+  grid.querySelectorAll(".tmcard").forEach(c=>c.onclick=()=>openRoster(c.getAttribute("data-team"),c.getAttribute("data-tname"),c.getAttribute("data-tlogo")));
+}
+
+/* ---- Players tab ---- */
+function renderPlayersTabInto(){
+  const wrap=$("#playerList"); if(!wrap) return;
+  const players=LIVE_FEED.topPlayers||[];
+  if(!players.length){ wrap.innerHTML=`<div class="empty"><b>No player data yet</b>Players load from OpenDota — check back shortly.</div>`; return; }
+  wrap.innerHTML=`<div class="ply-table">
+    <div class="ply-row head"><span>#</span><span>Player</span><span>Team</span><span style="text-align:center">Nat.</span></div>
+    ${players.map(p=>`<a class="ply-row" href="${esc(p.profile||'#')}" target="_blank" rel="noopener">
+      <span class="ply-rank ${p.rank<=10?'top':''}">${p.rank}</span>
+      <span class="ply-name">${p.avatar?`<img src="${esc(p.avatar)}" alt="" loading="lazy">`:`<span style="width:30px;height:30px;border-radius:50%;background:var(--line);display:inline-block"></span>`}<span class="pn-nick">${esc(p.name)}</span></span>
+      <span class="ply-team">${esc(p.team||'—')}</span>
+      <span class="ply-country">${p.country?flagEmoji(p.country):''}</span>
+    </a>`).join("")}
+  </div>`;
+}
+
+/* ---- Roster modal (on-demand fetch) ---- */
+async function openRoster(teamId,teamName,teamLogoUrl){
+  const back=$("#rosterBack"),box=$("#rosterBox"); if(!back||!box) return;
+  box.innerHTML=`<div class="roster-hd">${teamLogo(teamName,54,teamLogoUrl)}<div><h3>${esc(teamName)}</h3><div class="rh-stat">Loading roster…</div></div><button class="rh-close" onclick="closeRoster()">×</button></div><div class="roster-body"><div class="loading">Fetching players…</div></div>`;
+  back.classList.add("show");
+  back.onclick=(e)=>{ if(e.target===back) closeRoster(); };
+  try{
+    const res=await fetch(LIVE_FN_URL+"?roster="+encodeURIComponent(teamId),{cache:"no-store"});
+    const j=await res.json();
+    const players=(j.players||[]);
+    const tm=(LIVE_FEED.topTeams||[]).find(t=>String(t.id)===String(teamId))||{};
+    box.innerHTML=`<div class="roster-hd">${teamLogo(teamName,54,teamLogoUrl)}
+      <div><h3>${esc(teamName)}</h3><div class="rh-stat">${tm.rating?('Rating '+tm.rating+' · '):''}${tm.wins!=null?(tm.wins+'W '+tm.losses+'L · '+tm.winRate+'% WR'):''}</div></div>
+      <button class="rh-close" onclick="closeRoster()">×</button></div>
+      <div class="roster-body"><div class="rb-lab">Current Roster</div>
+      ${players.length?players.map(p=>`<div class="rmember">
+        <div class="rm-av">${esc((p.name||'?').slice(0,2).toUpperCase())}</div>
+        <div><div class="rm-name">${p.profile?`<a href="${esc(p.profile)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(p.name)}</a>`:esc(p.name)}</div></div>
+        <div class="rm-stat">${p.games?(p.games+' games'):''}</div>
+      </div>`).join(""):`<div class="empty" style="padding:18px"><b>No current roster listed</b>OpenDota doesn't have active members for this team.</div>`}
+      </div>`;
+  }catch(e){
+    box.innerHTML=`<div class="roster-hd">${teamLogo(teamName,54,teamLogoUrl)}<div><h3>${esc(teamName)}</h3></div><button class="rh-close" onclick="closeRoster()">×</button></div><div class="roster-body"><div class="empty" style="padding:18px"><b>Couldn't load roster</b>Try again in a moment.</div></div>`;
+  }
+}
+function closeRoster(){ const b=$("#rosterBack"); if(b) b.classList.remove("show"); }
+window.closeRoster=closeRoster;
 
 function renderQualifiers(d){
   const q=d.qualifiers||[];if(!q.length)return secEmpty("02","Qualifiers","qualifiers","No qualifier data yet.");
@@ -1513,7 +1631,7 @@ async function fetchLiveFeed(){
     const live=j.liveMatches||[];
     // register any team logos the feed provides, so teamWithLogo picks them up
     try{ live.forEach(m=>{ [m.teamA,m.teamB].forEach(t=>{ if(t&&t.name&&t.logo&&!_logoMap[t.name.toLowerCase()]) _logoMap[t.name.toLowerCase()]=t.logo; }); }); }catch(e){}
-    return {liveMatches:live, events:j.events||[], tournaments:j.tournaments||[], meta:j.meta||[], tiPrize:j.tiPrize||null, updatedAt:j.updatedAt};
+    return {liveMatches:live, events:j.events||[], tournaments:j.tournaments||[], meta:j.meta||[], topTeams:j.topTeams||[], topPlayers:j.topPlayers||[], tiPrize:j.tiPrize||null, updatedAt:j.updatedAt};
   }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
