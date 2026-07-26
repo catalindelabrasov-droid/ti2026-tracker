@@ -42,11 +42,35 @@ REQUEST_GAP = 2.2                        # seconds between requests (>2s rule)
 # the tournament STRUCTURE (prize ladder, bracket shape, qualifiers, logos,
 # rosters); OpenDota gives us reliable live match RESULTS without scraping.
 #
-# Set the TI 2026 league id once it's known (find it via OpenDota /leagues or
-# the match page). Until it's set, the OpenDota step is skipped cleanly.
+# OPENDOTA_LEAGUE_ID accepts a comma-separated list of league ids. Ids that
+# appear in OPENDOTA_QUALIFIER_REGIONS are treated as regional qualifiers and
+# their series are synthesized into qualifiers[].matches; every other id (the
+# main event) only merges scores into existing bracket/grand-final matches.
+# Until it's set, the OpenDota step is skipped cleanly.
 OPENDOTA_API = "https://api.opendota.com/api"
-OPENDOTA_LEAGUE_ID = os.environ.get("OPENDOTA_LEAGUE_ID", "").strip()  # e.g. "17126"
+OPENDOTA_LEAGUE_IDS = [s.strip() for s in
+                       os.environ.get("OPENDOTA_LEAGUE_ID", "").replace(";", ",").split(",")
+                       if s.strip()]
 OPENDOTA_KEY = os.environ.get("OPENDOTA_API_KEY", "").strip()          # optional, higher limits
+
+# OpenDota league id -> region name as it appears in data.json qualifiers[].
+# TI 2026 regional qualifiers (OpenDota /leagues, verified 2026-07-26).
+OPENDOTA_QUALIFIER_REGIONS = {
+    "19890": "North America",
+    "19891": "South America",
+    "19892": "Europe",
+    "19893": "China",
+    "19894": "Southeast Asia",
+}
+
+# --- Supabase (league backend) ---------------------------------------------
+# Finished results are upserted into the match_results table, which the
+# league_leaderboard() RPC scores locked predictions against. The URL is the
+# public project URL (same one shipped in index.html); the service-role key is
+# secret and comes only from the environment (GitHub Action secret). Without
+# the key the push step is skipped cleanly.
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://hqpynfzatnmwvlxdfhsw.supabase.co").strip().rstrip("/")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
 _last_request = 0.0
 
@@ -304,54 +328,199 @@ def opendota_get(path):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def fetch_opendota_results():
-    """
-    Pull finished pro matches for the TI 2026 league from OpenDota and return a
-    map keyed by a normalized "TeamA|TeamB" plus a list of raw series rows.
-
-    OpenDota's /proMatches returns individual GAMES (one row per game in a
-    series), each with radiant/dire names + which side won. We aggregate games
-    into series scores per opposing-team pair.
-
-    Returns: { "team_a_lower|team_b_lower": {"a": name, "b": name,
-                                             "sa": int, "sb": int} }
-    or {} if the league id isn't set / the call fails.
-    """
-    if not OPENDOTA_LEAGUE_ID:
-        print("  · OpenDota league id not set — skipping results merge.")
-        return {}
+def fetch_opendota_league_games(league_id):
+    """All game rows for one OpenDota league, or [] on any failure."""
     try:
-        # /proMatches is a recent feed; filter to our league client-side.
-        # (For a single tournament this is enough; for history use
-        #  /leagues/{id}/matches once available.)
-        rows = opendota_get(f"/leagues/{OPENDOTA_LEAGUE_ID}/matches")
+        rows = opendota_get(f"/leagues/{league_id}/matches")
     except Exception as e:
-        print(f"  ! OpenDota unreachable: {e}", file=sys.stderr)
-        return {}
-    if not isinstance(rows, list) or not rows:
-        print("  · OpenDota returned no matches for this league yet.")
-        return {}
+        print(f"  ! OpenDota league {league_id} unreachable: {e}", file=sys.stderr)
+        return []
+    return rows if isinstance(rows, list) else []
 
+
+def fetch_opendota_league_teams(league_id):
+    """
+    {team_id: {"name": ..., "logo": ...}} for one league's participants.
+    Needed because /leagues/{id}/matches carries only team_ids (its
+    radiant_team_name/dire_team_name fields come back null).
+    """
+    try:
+        rows = opendota_get(f"/leagues/{league_id}/teams")
+    except Exception as e:
+        print(f"  ! OpenDota league {league_id} teams unreachable: {e}", file=sys.stderr)
+        return {}
+    out = {}
+    for t in rows if isinstance(rows, list) else []:
+        tid = t.get("team_id")
+        name = (t.get("name") or "").strip()
+        if tid and name:
+            out[tid] = {"name": name, "logo": t.get("logo_url") or None}
+    return out
+
+
+_BEST_OF = {0: 1, 1: 3, 2: 5}  # OpenDota series_type -> Bo-N
+
+
+def aggregate_series(rows, team_names):
+    """
+    Group OpenDota game rows (one row per GAME) into series.
+
+    team_names maps team_id -> display name (from the league's /teams call);
+    rows' own name fields are used when present, ids resolve the rest.
+
+    Keyed by OpenDota's own series_id when present — that id is stable across
+    runs, which matters because predictions and notifications key on the match
+    ids we derive from it. Games without a series_id (Bo1s, older rows) fall
+    back to team-pair + day, so two Bo1s between the same teams on different
+    days stay separate.
+    """
     series = {}
     for g in rows:
-        rad = (g.get("radiant_name") or "").strip()
-        dire = (g.get("dire_name") or "").strip()
+        rad = (g.get("radiant_team_name") or g.get("radiant_name") or "").strip() \
+            or team_names.get(g.get("radiant_team_id"), "")
+        dire = (g.get("dire_team_name") or g.get("dire_name") or "").strip() \
+            or team_names.get(g.get("dire_team_id"), "")
         if not rad or not dire:
             continue
-        # stable key independent of side/order
         a, b = sorted([rad, dire], key=str.lower)
-        key = f"{a.lower()}|{b.lower()}"
-        s = series.setdefault(key, {"a": a, "b": b, "sa": 0, "sb": 0})
-        radiant_win = g.get("radiant_win")
-        if radiant_win is None:
+        start = g.get("start_time") or 0
+        sid = g.get("series_id") or 0
+        key = str(sid) if sid else f"{a.lower()}-{b.lower()}-{start // 86400}"
+        s = series.setdefault(key, {
+            "sid": key, "a": a, "b": b, "sa": 0, "sb": 0,
+            "best_of": _BEST_OF.get(g.get("series_type") or 0, 3),
+            "start": start, "last": 0,
+        })
+        if start:
+            s["start"] = min(s["start"] or start, start)
+        s["last"] = max(s["last"], start + (g.get("duration") or 0))
+        if g.get("radiant_win") is None:
             continue
-        winner = rad if radiant_win else dire
+        winner = rad if g["radiant_win"] else dire
         if winner.lower() == s["a"].lower():
             s["sa"] += 1
         else:
             s["sb"] += 1
-    print(f"  · OpenDota: aggregated {len(series)} series from {len(rows)} games.")
-    return series
+    return list(series.values())
+
+
+def build_series_pair_map(rows, team_names):
+    """
+    Aggregate game rows into { "team_a_lower|team_b_lower": {a,b,sa,sb} } for
+    merging scores into existing bracket/grand-final matches by team names.
+    """
+    out = {}
+    for s in aggregate_series(rows, team_names):
+        out[f"{s['a'].lower()}|{s['b'].lower()}"] = s
+    if out:
+        print(f"  · OpenDota: aggregated {len(out)} main-event series.")
+    return out
+
+
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", str(s).lower()).strip("-")
+
+
+def synth_qualifier_matches(league_id, rows, now_ts, team_names):
+    """
+    Build qualifiers[].matches entries from one qualifier league's OpenDota
+    games. Ids look like "q19893-841923" (league + series id) and stay stable
+    across runs so notifications and locked predictions keep tracking the same
+    series.
+    """
+    matches = []
+    for s in sorted(aggregate_series(rows, team_names), key=lambda x: x["start"]):
+        need = s["best_of"] // 2 + 1
+        clinched = max(s["sa"], s["sb"]) >= need
+        recent = (now_ts - s["last"]) < 3 * 3600
+        status = "completed" if clinched else ("live" if recent else "completed")
+        matches.append({
+            "id": f"q{league_id}-{_slug(s['sid'])}",
+            "bestOf": s["best_of"],
+            "status": status,
+            "scheduled": datetime.datetime.fromtimestamp(
+                s["start"], datetime.timezone.utc).isoformat() if s["start"] else None,
+            "teamA": {"name": s["a"], "score": s["sa"]},
+            "teamB": {"name": s["b"], "score": s["sb"]},
+        })
+    return matches
+
+
+def merge_opendota_qualifiers(data, per_league, now_ts):
+    """
+    Fill qualifiers[].matches (and teams/status) for every region whose
+    OpenDota qualifier league returned games. Liquipedia stays authoritative
+    for winners; OpenDota provides the live series list. Returns match count.
+
+    per_league: {league_id: {"games": [...], "teams": {tid: {name, logo}}}}
+    """
+    count = 0
+    quals = data.setdefault("qualifiers", [])
+    by_region = {q.get("region"): q for q in quals}
+    for lid, region in OPENDOTA_QUALIFIER_REGIONS.items():
+        bundle = per_league.get(lid) or {}
+        rows = bundle.get("games") or []
+        if not rows:
+            continue
+        names = {tid: t["name"] for tid, t in (bundle.get("teams") or {}).items()}
+        matches = synth_qualifier_matches(lid, rows, now_ts, names)
+        if not matches:
+            continue
+        q = by_region.get(region)
+        if q is None:
+            q = {"region": region, "status": "upcoming", "winners": [], "slots": 2}
+            quals.append(q)
+            by_region[region] = q
+        q["matches"] = matches
+        # Prefer the league's full participant list; fall back to match teams.
+        q["teams"] = sorted(names.values(), key=str.lower) if names else sorted(
+            {m["teamA"]["name"] for m in matches} | {m["teamB"]["name"] for m in matches},
+            key=str.lower)
+        if any(m["status"] == "live" for m in matches):
+            q["status"] = "live"
+        elif q.get("status") in (None, "", "pending", "upcoming"):
+            q["status"] = "live"  # games exist, no winner declared yet
+        count += len(matches)
+    return count
+
+
+def run_opendota(data):
+    """
+    Fetch every configured OpenDota league and fold results into data:
+    qualifier leagues -> synthesized qualifiers[].matches; main event ->
+    score merge into existing bracket matches. Team logos OpenDota knows and
+    Liquipedia hasn't provided yet are added to the top-level logos map.
+    Returns (qual_matches, merged_scores).
+    """
+    if not OPENDOTA_LEAGUE_IDS:
+        print("  · OpenDota league id not set — skipping results merge.")
+        return (0, 0)
+    now_ts = int(time.time())
+    per_league = {}
+    for lid in OPENDOTA_LEAGUE_IDS:
+        games = fetch_opendota_league_games(lid)
+        teams = fetch_opendota_league_teams(lid) if games else {}
+        per_league[lid] = {"games": games, "teams": teams}
+        print(f"  · OpenDota league {lid}: {len(games)} games, {len(teams)} teams.")
+    nq = merge_opendota_qualifiers(data, per_league, now_ts)
+    main_games, main_names = [], {}
+    for lid, bundle in per_league.items():
+        if lid in OPENDOTA_QUALIFIER_REGIONS:
+            continue
+        main_games.extend(bundle["games"])
+        main_names.update({tid: t["name"] for tid, t in bundle["teams"].items()})
+    nb = merge_opendota_scores(data, build_series_pair_map(main_games, main_names))
+    # Logos: only fill names Liquipedia hasn't resolved (it stays authoritative).
+    logos = data.setdefault("logos", {})
+    added = 0
+    for bundle in per_league.values():
+        for t in bundle["teams"].values():
+            if t.get("logo") and t["name"] not in logos:
+                logos[t["name"]] = t["logo"]
+                added += 1
+    if added:
+        print(f"  · Added {added} team logo(s) from OpenDota.")
+    return (nq, nb)
 
 
 def _match_key(name_a, name_b):
@@ -405,6 +574,76 @@ def merge_opendota_scores(data, series):
     return updated
 
 
+# ---------------------------------------------------------------------------
+# League backend: push finished results to Supabase match_results.
+# The league_leaderboard() RPC scores locked predictions against this table,
+# so without these rows every leaderboard would stay at zero.
+# ---------------------------------------------------------------------------
+
+def collect_completed_results(data):
+    """
+    Every decided match in data.json as {match_id, winner, score_a, score_b}.
+    Only clinched series count (max score reaches the Bo-N threshold) — a
+    stale 1-1 Bo3 has no winner and must not be scored.
+    """
+    rows = []
+
+    def take(m):
+        if not isinstance(m, dict) or m.get("status") != "completed" or not m.get("id"):
+            return
+        ta, tb = m.get("teamA") or {}, m.get("teamB") or {}
+        na, nb = ta.get("name"), tb.get("name")
+        sa, sb = ta.get("score"), tb.get("score")
+        if not na or not nb or na == "TBD" or nb == "TBD":
+            return
+        if not isinstance(sa, int) or not isinstance(sb, int) or sa == sb:
+            return
+        if max(sa, sb) < ((m.get("bestOf") or 3) // 2 + 1):
+            return
+        rows.append({"match_id": m["id"], "winner": na if sa > sb else nb,
+                     "score_a": sa, "score_b": sb})
+
+    for q in data.get("qualifiers") or []:
+        for m in q.get("matches") or []:
+            take(m)
+    br = data.get("bracket") or {}
+    for side in ("upper", "lower"):
+        for rnd in (br.get("rounds") or {}).get(side) or []:
+            for m in rnd.get("matches") or []:
+                take(m)
+    if br.get("grandFinal"):
+        take(br["grandFinal"])
+    return rows
+
+
+def push_match_results(data):
+    """
+    Upsert decided matches into match_results via PostgREST. Skips cleanly
+    when the service-role key isn't in the environment (e.g. local runs).
+    """
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        print("  · Supabase service key not set — skipping match_results push.")
+        return 0
+    rows = collect_completed_results(data)
+    if not rows:
+        print("  · No decided matches to push to the league backend.")
+        return 0
+    req = urllib.request.Request(
+        f"{SUPABASE_URL}/rest/v1/match_results?on_conflict=match_id",
+        data=json.dumps(rows).encode("utf-8"),
+        headers={
+            "apikey": SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
+        method="POST")
+    with urllib.request.urlopen(req, timeout=30):
+        pass
+    print(f"  · Pushed {len(rows)} decided match result(s) to the league backend.")
+    return len(rows)
+
+
 def main():
     print(f"[{datetime.datetime.now(datetime.timezone.utc).isoformat()}] Updating TI 2026 data…")
     data = load_current()
@@ -416,14 +655,17 @@ def main():
         # Liquipedia is down, but OpenDota is an independent source — still try
         # to refresh live scores so the site keeps updating.
         try:
-            series = fetch_opendota_results()
-            n = merge_opendota_scores(data, series)
-            if n:
-                print(f"  · OpenDota updated {n} match score(s) despite Liquipedia outage.")
+            nq, nb = run_opendota(data)
+            if nq or nb:
+                print(f"  · OpenDota updated {nq} qualifier match(es) + {nb} score(s) despite Liquipedia outage.")
         except Exception as e2:
             print(f"  ! OpenDota merge failed: {e2}", file=sys.stderr)
         data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         save(data)
+        try:
+            push_match_results(data)
+        except Exception as e2:
+            print(f"  ! match_results push failed: {e2}", file=sys.stderr)
         return 0
 
     if not wt:
@@ -494,13 +736,15 @@ def main():
     # "Roster will fill in from Liquipedia" placeholder.
 
     # Live match results from OpenDota (independent secondary source).
-    # Liquipedia stays authoritative for structure; OpenDota fills/confirms the
-    # actual scores so the site updates even between Liquipedia parses.
+    # Liquipedia stays authoritative for structure; OpenDota fills the live
+    # qualifier series and confirms bracket scores so the site updates even
+    # between Liquipedia parses.
     try:
-        series = fetch_opendota_results()
-        n = merge_opendota_scores(data, series)
-        if n:
-            changed.append(f"scores(OpenDota:{n})")
+        nq, nb = run_opendota(data)
+        if nq:
+            changed.append(f"qualifierMatches(OpenDota:{nq})")
+        if nb:
+            changed.append(f"scores(OpenDota:{nb})")
     except Exception as e:
         print(f"  ! OpenDota step failed (continuing): {e}", file=sys.stderr)
 
@@ -512,6 +756,12 @@ def main():
 
     save(data)
     print("  Updated sections:", ", ".join(changed) if changed else "none (timestamp only)")
+
+    # Feed the prediction-league leaderboard (independent of the git commit).
+    try:
+        push_match_results(data)
+    except Exception as e:
+        print(f"  ! match_results push failed: {e}", file=sys.stderr)
     return 0
 
 

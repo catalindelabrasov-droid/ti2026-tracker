@@ -5,9 +5,10 @@ name: Update TI 2026 data
 
 on:
   schedule:
-    # Every 3 hours. During the live event (mid-Aug) you can lower this,
-    # but stay polite to Liquipedia — don't go below ~30 min.
-    - cron: "0 */3 * * *"
+    # Hourly while qualifiers/event are running. During the live event
+    # (mid-Aug) you can lower this, but stay polite to Liquipedia — don't go
+    # below ~30 min.
+    - cron: "0 * * * *"
   workflow_dispatch: {}
 
 # Allow the workflow to push the updated data.json back to the repo.
@@ -35,6 +36,9 @@ jobs:
           LIQUIPEDIA_CONTACT: ${{ vars.LIQUIPEDIA_CONTACT || 'set-your-contact@example.com' }}
           OPENDOTA_LEAGUE_ID: ${{ vars.OPENDOTA_LEAGUE_ID || '' }}
           OPENDOTA_API_KEY: ${{ secrets.OPENDOTA_API_KEY || '' }}
+          # League backend: finished results feed the prediction leaderboard.
+          SUPABASE_URL: https://hqpynfzatnmwvlxdfhsw.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
         run: python update_data.py
 
       - name: Commit changes if data changed

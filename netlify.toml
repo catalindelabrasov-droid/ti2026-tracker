@@ -1,0 +1,7 @@
+# Netlify deploy config for dota2tileague.com
+# The site is static (repo root). The build command only strips files that
+# must never be public: test_no_login.html bypasses the login screen and is
+# for local testing only (see docs 06/07).
+[build]
+  publish = "."
+  command = "rm -f test_no_login.html"

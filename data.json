@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-07-26T05:36:44.637497+00:00",
+    "lastUpdated": "2026-07-26T05:53:08.010443+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -126,44 +126,196 @@
       "format": "8 teams · Double-elimination · Bo3 (GF Bo5)",
       "winners": [],
       "teams": [
-        "Vici Gaming",
-        "Yakutou Brothers",
-        "Team Resilience",
-        "Game Master",
         "Cloud Rising",
-        "Grey Trac",
-        "Roar Gaming",
-        "Team Refuser"
+        "Game Master",
+        "Grey Track",
+        "Roar",
+        "Team Refuser",
+        "Team Resilience",
+        "Vici Gaming",
+        "Yakult Brothers"
       ],
       "matches": [
         {
-          "id": "cn_ubf",
-          "stage": "Upper Bracket Final",
+          "id": "q19893-1111036",
           "bestOf": 3,
-          "status": "live",
-          "scheduled": "2026-06-18T06:00:00+00:00",
+          "status": "completed",
+          "scheduled": "2026-06-15T04:03:40+00:00",
           "teamA": {
-            "name": "Team Resilience",
-            "score": null
+            "name": "Roar",
+            "score": 0
           },
           "teamB": {
-            "name": "Yakutou Brothers",
-            "score": null
+            "name": "Team Refuser",
+            "score": 2
           }
         },
         {
-          "id": "cn_lbf",
-          "stage": "Lower Bracket Final",
+          "id": "q19893-1111061",
           "bestOf": 3,
-          "status": "upcoming",
-          "scheduled": "2026-06-18T09:00:00+00:00",
+          "status": "completed",
+          "scheduled": "2026-06-15T06:35:50+00:00",
           "teamA": {
-            "name": "TBD",
-            "score": null
+            "name": "Cloud Rising",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Team Resilience",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111071",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T09:00:19+00:00",
+          "teamA": {
+            "name": "Game Master",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Yakult Brothers",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111084",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T10:59:50+00:00",
+          "teamA": {
+            "name": "Grey Track",
+            "score": 0
           },
           "teamB": {
             "name": "Vici Gaming",
-            "score": null
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111326",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T04:00:34+00:00",
+          "teamA": {
+            "name": "Cloud Rising",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Roar",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19893-1111355",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T07:54:50+00:00",
+          "teamA": {
+            "name": "Game Master",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Grey Track",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19893-1111363",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T09:50:58+00:00",
+          "teamA": {
+            "name": "Team Refuser",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Team Resilience",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111402",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T12:36:18+00:00",
+          "teamA": {
+            "name": "Vici Gaming",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Yakult Brothers",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111637",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T04:00:13+00:00",
+          "teamA": {
+            "name": "Game Master",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Team Refuser",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111656",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T06:38:04+00:00",
+          "teamA": {
+            "name": "Cloud Rising",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Vici Gaming",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111669",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T09:25:58+00:00",
+          "teamA": {
+            "name": "Team Refuser",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Vici Gaming",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19893-1111962",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T06:06:39+00:00",
+          "teamA": {
+            "name": "Team Resilience",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yakult Brothers",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19893-1111975",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T09:15:00+00:00",
+          "teamA": {
+            "name": "Vici Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yakult Brothers",
+            "score": 1
           }
         }
       ]
@@ -176,130 +328,1023 @@
       "format": "10 teams · Double-elimination · Bo3 (GF Bo5)",
       "winners": [],
       "teams": [
-        "LGD Gaming",
-        "PlayTime",
-        "Hokori",
-        "Red Hot Chili Pibble",
         "Amaru Gaming",
-        "Team Nemesis",
         "Estar Backs",
+        "Hokori",
+        "LGD Gaming",
         "Lindorfitos",
-        "RisingRage",
+        "PlayTime",
+        "Red Hot Chili Pibble",
+        "Rising Rage",
+        "Team Nemesis",
         "x5 Gaming"
       ],
       "matches": [
         {
-          "id": "sa_ubf",
-          "stage": "Upper Bracket Final",
+          "id": "q19891-1111142",
           "bestOf": 3,
-          "status": "upcoming",
-          "scheduled": "2026-06-18T20:00:00+00:00",
+          "status": "completed",
+          "scheduled": "2026-06-15T14:10:03+00:00",
           "teamA": {
-            "name": "LGD Gaming",
-            "score": null
+            "name": "Lindorfitos",
+            "score": 2
           },
           "teamB": {
-            "name": "PlayTime",
-            "score": null
+            "name": "x5 Gaming",
+            "score": 1
           }
         },
         {
-          "id": "sa_lbqf1",
-          "stage": "Lower Bracket Quarterfinal",
+          "id": "q19891-1111191",
           "bestOf": 3,
-          "status": "upcoming",
-          "scheduled": "2026-06-18T14:00:00+00:00",
+          "status": "completed",
+          "scheduled": "2026-06-15T17:46:01+00:00",
+          "teamA": {
+            "name": "Estar Backs",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rising Rage",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111245",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T20:39:16+00:00",
           "teamA": {
             "name": "Amaru Gaming",
-            "score": null
+            "score": 2
+          },
+          "teamB": {
+            "name": "Red Hot Chili Pibble",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111264",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T22:48:40+00:00",
+          "teamA": {
+            "name": "Hokori",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Team Nemesis",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111477",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T16:46:15+00:00",
+          "teamA": {
+            "name": "Hokori",
+            "score": 2
+          },
+          "teamB": {
+            "name": "x5 Gaming",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111539",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T19:32:31+00:00",
+          "teamA": {
+            "name": "LGD Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Lindorfitos",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111574",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T21:42:15+00:00",
+          "teamA": {
+            "name": "Estar Backs",
+            "score": 0
+          },
+          "teamB": {
+            "name": "PlayTime",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111737",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T14:01:11+00:00",
+          "teamA": {
+            "name": "Lindorfitos",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Red Hot Chili Pibble",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111767",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T16:07:22+00:00",
+          "teamA": {
+            "name": "Estar Backs",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Hokori",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111806",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T18:17:30+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": 0
+          },
+          "teamB": {
+            "name": "LGD Gaming",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111857",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T20:41:44+00:00",
+          "teamA": {
+            "name": "PlayTime",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Nemesis",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1112043",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T14:14:06+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": 2
           },
           "teamB": {
             "name": "Estar Backs",
-            "score": null
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1112115",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T18:09:37+00:00",
+          "teamA": {
+            "name": "Red Hot Chili Pibble",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Team Nemesis",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1112174",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T22:15:19+00:00",
+          "teamA": {
+            "name": "LGD Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "PlayTime",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1112267",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T02:27:07+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Nemesis",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1112434",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T16:01:28+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": 0
+          },
+          "teamB": {
+            "name": "PlayTime",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1112489",
+          "bestOf": 5,
+          "status": "completed",
+          "scheduled": "2026-06-19T18:47:04+00:00",
+          "teamA": {
+            "name": "LGD Gaming",
+            "score": 3
+          },
+          "teamB": {
+            "name": "PlayTime",
+            "score": 0
           }
         }
       ]
     },
     {
       "region": "Southeast Asia",
-      "status": "upcoming",
+      "status": "live",
       "slots": 1,
       "dates": "2026-06-19 to 2026-06-23",
       "format": "Double-elimination · Bo3 (GF Bo5)",
       "winners": [],
       "teams": [
-        "REKONIX",
+        "Carstensz Esports",
+        "DIREBORN",
+        "Execration",
+        "GLYPH",
+        "InterActive Philippines",
+        "Mentality Monsters",
         "OG",
-        "BOOM Esports",
-        "Talon Esports",
-        "Team SMG"
+        "REKONIX",
+        "TEAM GRIND",
+        "Yangon Galacticos"
       ],
-      "matches": []
+      "matches": [
+        {
+          "id": "q19894-1112250",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T02:08:17+00:00",
+          "teamA": {
+            "name": "Mentality Monsters",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1112307",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T04:56:30+00:00",
+          "teamA": {
+            "name": "InterActive Philippines",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yangon Galacticos",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19894-1112332",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T08:36:11+00:00",
+          "teamA": {
+            "name": "Carstensz Esports",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Execration",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1112345",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T10:45:38+00:00",
+          "teamA": {
+            "name": "DIREBORN",
+            "score": 0
+          },
+          "teamB": {
+            "name": "GLYPH",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1112581",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T02:00:38+00:00",
+          "teamA": {
+            "name": "Carstensz Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yangon Galacticos",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19894-1112625",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T05:34:22+00:00",
+          "teamA": {
+            "name": "DIREBORN",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Mentality Monsters",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1112662",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T07:56:52+00:00",
+          "teamA": {
+            "name": "REKONIX",
+            "score": 2
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19894-1112690",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T10:00:58+00:00",
+          "teamA": {
+            "name": "InterActive Philippines",
+            "score": 0
+          },
+          "teamB": {
+            "name": "OG",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113007",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T02:02:40+00:00",
+          "teamA": {
+            "name": "Carstensz Esports",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113036",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T04:06:43+00:00",
+          "teamA": {
+            "name": "InterActive Philippines",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Mentality Monsters",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113055",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T06:23:14+00:00",
+          "teamA": {
+            "name": "Execration",
+            "score": 1
+          },
+          "teamB": {
+            "name": "REKONIX",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113086",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T09:54:15+00:00",
+          "teamA": {
+            "name": "GLYPH",
+            "score": 0
+          },
+          "teamB": {
+            "name": "OG",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113401",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T02:04:41+00:00",
+          "teamA": {
+            "name": "Execration",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Mentality Monsters",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19894-1113435",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T06:05:10+00:00",
+          "teamA": {
+            "name": "GLYPH",
+            "score": 1
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113448",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T09:20:27+00:00",
+          "teamA": {
+            "name": "OG",
+            "score": 2
+          },
+          "teamB": {
+            "name": "REKONIX",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19894-1113493",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T13:51:22+00:00",
+          "teamA": {
+            "name": "Execration",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113682",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T04:00:04+00:00",
+          "teamA": {
+            "name": "REKONIX",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113699",
+          "bestOf": 5,
+          "status": "completed",
+          "scheduled": "2026-06-23T07:19:09+00:00",
+          "teamA": {
+            "name": "OG",
+            "score": 3
+          },
+          "teamB": {
+            "name": "TEAM GRIND",
+            "score": 1
+          }
+        }
+      ]
     },
     {
       "region": "Europe",
-      "status": "upcoming",
+      "status": "live",
       "slots": 4,
       "dates": "2026-06-21 to 2026-06-28",
       "format": "16 teams · Double-elimination · merged EU qualifier",
       "winners": [],
       "teams": [
-        "Team Spirit",
-        "PARIVISION",
-        "Natus Vincere",
+        "_PowerRangers",
+        "enjoy",
+        "HULIGANI",
+        "Inner Circle x Insanity",
+        "MODUS",
         "MOUZ",
-        "Virtus.pro",
+        "Natus Vincere",
         "Nigma Galaxy",
-        "Gaimin Gladiators",
-        "Team Tickles"
+        "RE ARISE",
+        "Rune Eaters",
+        "Team Bald",
+        "Team Spirit",
+        "TEAM VISION",
+        "Virtus.pro",
+        "VP.Prodigy",
+        "Yellow Submarine"
       ],
       "matches": [
         {
-          "id": "eu_ub1_1",
-          "stage": "Upper Bracket Round 1",
+          "id": "q19892-1113064",
           "bestOf": 3,
-          "status": "upcoming",
-          "scheduled": "2026-06-21T08:00:00+00:00",
+          "status": "completed",
+          "scheduled": "2026-06-21T08:02:16+00:00",
           "teamA": {
             "name": "Team Spirit",
-            "score": null
+            "score": 2
           },
           "teamB": {
-            "name": "Virtus.pro",
-            "score": null
+            "name": "VP.Prodigy",
+            "score": 0
           }
         },
         {
-          "id": "eu_ub1_2",
-          "stage": "Upper Bracket Round 1",
+          "id": "q19892-1113092",
           "bestOf": 3,
-          "status": "upcoming",
-          "scheduled": "2026-06-21T17:00:00+00:00",
+          "status": "completed",
+          "scheduled": "2026-06-21T10:17:28+00:00",
+          "teamA": {
+            "name": "enjoy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Bald",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113140",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T12:25:10+00:00",
+          "teamA": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rune Eaters",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113209",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T15:01:13+00:00",
+          "teamA": {
+            "name": "MODUS",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Natus Vincere",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113442",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T08:01:03+00:00",
+          "teamA": {
+            "name": "MOUZ",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113450",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T10:22:34+00:00",
+          "teamA": {
+            "name": "Inner Circle x Insanity",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Virtus.pro",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113497",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T14:02:43+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 2
+          },
+          "teamB": {
+            "name": "HULIGANI",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1113566",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T18:07:15+00:00",
+          "teamA": {
+            "name": "RE ARISE",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM VISION",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113703",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T08:19:14+00:00",
+          "teamA": {
+            "name": "Team Bald",
+            "score": 2
+          },
+          "teamB": {
+            "name": "VP.Prodigy",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113711",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T10:44:44+00:00",
+          "teamA": {
+            "name": "MODUS",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rune Eaters",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1113782",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T14:38:24+00:00",
+          "teamA": {
+            "name": "enjoy",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Team Spirit",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113827",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T17:06:12+00:00",
           "teamA": {
             "name": "Natus Vincere",
-            "score": null
+            "score": 0
+          },
+          "teamB": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113997",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T08:05:33+00:00",
+          "teamA": {
+            "name": "Inner Circle x Insanity",
+            "score": 0
           },
           "teamB": {
             "name": "MOUZ",
-            "score": null
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114007",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T10:03:29+00:00",
+          "teamA": {
+            "name": "HULIGANI",
+            "score": 2
+          },
+          "teamB": {
+            "name": "RE ARISE",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1114067",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T13:40:32+00:00",
+          "teamA": {
+            "name": "Virtus.pro",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1114127",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T17:07:33+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM VISION",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114331",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-25T11:00:47+00:00",
+          "teamA": {
+            "name": "Nigma Galaxy",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Team Spirit",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114407",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-25T15:00:16+00:00",
+          "teamA": {
+            "name": "TEAM VISION",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Virtus.pro",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1114607",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T08:01:39+00:00",
+          "teamA": {
+            "name": "enjoy",
+            "score": 0
+          },
+          "teamB": {
+            "name": "HULIGANI",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114615",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T10:20:12+00:00",
+          "teamA": {
+            "name": "MOUZ",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Natus Vincere",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114643",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T12:56:08+00:00",
+          "teamA": {
+            "name": "MODUS",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114716",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T16:55:50+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Bald",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1114946",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-27T11:00:04+00:00",
+          "teamA": {
+            "name": "HULIGANI",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Natus Vincere",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1115067",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-27T14:39:59+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1115295",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-28T10:59:43+00:00",
+          "teamA": {
+            "name": "HULIGANI",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Virtus.pro",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1115384",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-28T14:48:14+00:00",
+          "teamA": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 1
           }
         }
       ]
     },
     {
       "region": "North America",
-      "status": "upcoming",
+      "status": "live",
       "slots": 1,
       "dates": "2026-06-24 to 2026-06-26",
       "format": "Double-elimination · Bo3 (GF Bo5)",
       "winners": [],
       "teams": [
-        "Shopify Rebellion",
-        "TSM",
+        "4 Anchors + Ilmeria",
         "GamerLegion",
-        "Wildcard"
+        "ggboom",
+        "The Bug"
       ],
-      "matches": []
+      "matches": [
+        {
+          "id": "q19890-1114208",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T20:32:57+00:00",
+          "teamA": {
+            "name": "ggboom",
+            "score": 0
+          },
+          "teamB": {
+            "name": "The Bug",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19890-1114230",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T23:35:01+00:00",
+          "teamA": {
+            "name": "4 Anchors + Ilmeria",
+            "score": 0
+          },
+          "teamB": {
+            "name": "GamerLegion",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19890-1114488",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-25T20:38:14+00:00",
+          "teamA": {
+            "name": "4 Anchors + Ilmeria",
+            "score": 2
+          },
+          "teamB": {
+            "name": "ggboom",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19890-1114528",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T00:11:43+00:00",
+          "teamA": {
+            "name": "GamerLegion",
+            "score": 2
+          },
+          "teamB": {
+            "name": "The Bug",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19890-1114804",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T20:03:43+00:00",
+          "teamA": {
+            "name": "4 Anchors + Ilmeria",
+            "score": 2
+          },
+          "teamB": {
+            "name": "The Bug",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19890-1114833",
+          "bestOf": 5,
+          "status": "completed",
+          "scheduled": "2026-06-26T23:11:25+00:00",
+          "teamA": {
+            "name": "4 Anchors + Ilmeria",
+            "score": 0
+          },
+          "teamB": {
+            "name": "GamerLegion",
+            "score": 3
+          }
+        }
+      ]
     }
   ],
   "groupStage": {
@@ -315,5 +1360,55 @@
       "lower": []
     },
     "grandFinal": null
+  },
+  "logos": {
+    "GamerLegion": "https://cdn.steamusercontent.com/ugc/13245379764580870318/1048428BEFAC87EC1C64E15706A4758A173B5BFB/",
+    "4 Anchors + Ilmeria": "https://cdn.steamusercontent.com/ugc/12409139431600848047/5768670F7C63610A2DCAEA6BD2C8A2E93D13759C/",
+    "ggboom": "https://cdn.steamusercontent.com/ugc/18196709259293390615/2852E85B33A6D72BFF647AC4D7B75ACFA4BA339B/",
+    "The Bug": "https://cdn.steamusercontent.com/ugc/13750228740614964004/B551FEDDDE15341B337766383045A875DC42C47E/",
+    "Estar Backs": "https://cdn.steamusercontent.com/ugc/8546247575522013/0940BE82E218C71369C672C95943445AA450EF45/",
+    "LGD Gaming": "https://cdn.steamusercontent.com/ugc/10055782735581672481/2B2BCEA9CC05286D7164E4548A2EB64CDBC77F31/",
+    "Amaru Gaming": "https://cdn.steamusercontent.com/ugc/16655450785419366752/02929B63DBEA6EBE7FF68CBBF7E29A7130183072/",
+    "Hokori": "https://cdn.steamusercontent.com/ugc/12062873381398081912/39C3DB7C90FFC93BD8FE1A56E581E47EA27E3A66/",
+    "Red Hot Chili Pibble": "https://cdn.steamusercontent.com/ugc/17681501553408445752/91DAE38B113BD8BB8C4EB634F7D6D83CF0CDFBF9/",
+    "x5 Gaming": "https://cdn.steamusercontent.com/ugc/15382253660223640555/AEE503D1070680F0A8FED720B7D63FB464FDB9AD/",
+    "PlayTime": "https://cdn.steamusercontent.com/ugc/11668290585730417471/FB22B7ED74C1C73D4E27C0CBBBF47FC194611231/",
+    "Lindorfitos": "https://cdn.steamusercontent.com/ugc/15565571275722602393/3ED73D632716440589202446D99DC887E9C2AAD0/",
+    "Team Nemesis": "https://cdn.steamusercontent.com/ugc/16578975333650734744/040492179D9E0E83DA0559848D88CFC17A1EFCAC/",
+    "Rising Rage": "https://cdn.steamusercontent.com/ugc/11846175349148391811/3B828E03914ED7C1BB9F636A6F94DCE856FC9EFA/",
+    "MOUZ": "https://cdn.steamusercontent.com/ugc/14936784213521439739/3EA33A8516BDE538B7963F044CD1B7AB4B0BB60D/",
+    "enjoy": "https://cdn.steamusercontent.com/ugc/14410915104676115574/85F6E2C9BBB26A11B37E55AF05BE507E94B06863/",
+    "_PowerRangers": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/55.png",
+    "MODUS": "https://cdn.steamusercontent.com/ugc/14077644708670505334/36409D625C55D97991C01963AC36494B78953C5A/",
+    "HULIGANI": "https://cdn.steamusercontent.com/ugc/14844266645370842778/47230D9640A722EAF06548C2EEB813ED4296AE3F/",
+    "Virtus.pro": "https://cdn.steamusercontent.com/ugc/13061694558372404982/7AC363D410AC6F2F4B016EE7D73B7C266D0113F9/",
+    "Nigma Galaxy": "https://cdn.steamusercontent.com/ugc/16959999218725724364/1D334B91A52606CA3E0027832D6F646E2A094391/",
+    "Team Spirit": "https://cdn.steamusercontent.com/ugc/1839179120711951766/CD7E0885CB527334205CC7885E9C101B7BC17702/",
+    "Natus Vincere": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/36.png",
+    "Rune Eaters": "https://cdn.steamusercontent.com/ugc/11845515088670662060/69AF28B666A859915784A1FF3C77F23E29057C3F/",
+    "Yellow Submarine": "https://cdn.steamusercontent.com/ugc/2506900380361558769/01D7A1FC1156B0550B4EF9EA2A3A2AF84D9BF884/",
+    "RE ARISE": "https://cdn.steamusercontent.com/ugc/18340513393018323643/074CEC08ED4217D6B5606855FA27CD120C06D8C8/",
+    "Inner Circle x Insanity": "https://cdn.steamusercontent.com/ugc/9964979241844276783/64DDB27F8A50FEA6869CFD8392ED29CE674E26C1/",
+    "Team Bald": "https://cdn.steamusercontent.com/ugc/10103089601142700428/E8171E7A59C63DAD149EF899532CFE125209E982/",
+    "VP.Prodigy": "https://cdn.steamusercontent.com/ugc/14581250409270220011/5671D3A28C6BBBDFCF9962555BAF48D3EFFED120/",
+    "TEAM VISION": "https://cdn.steamusercontent.com/ugc/10380389074903512947/5D074799695A862D17D4205285315FE20399B28D/",
+    "Team Refuser": "https://cdn.steamusercontent.com/ugc/13167292190185607570/FE3D86EA91DCA49AF9D671BA3B8F340A4C966C04/",
+    "Cloud Rising": "https://cdn.steamusercontent.com/ugc/11588857874785581595/93D3B9C89923AEDE0CB786D02F37D718728B08C7/",
+    "Game Master": "https://cdn.steamusercontent.com/ugc/10502392439287170768/D351D750A5AA0D6627DD892E19978FB35216AF43/",
+    "Grey Track": "https://cdn.steamusercontent.com/ugc/13447454937986331509/B3AE65B7A8898416105CDDFCD0192EEA18460814/",
+    "Team Resilience": "https://cdn.steamusercontent.com/ugc/15907413066975203049/68C9F7C15D104837639C65B11E95D0DF81D268F2/",
+    "Roar": "https://cdn.steamusercontent.com/ugc/18408146465981986437/CCA9A02305890B647AD50B62CC974C83CC87B551/",
+    "Yakult Brothers": "https://cdn.steamusercontent.com/ugc/18179376480673513766/A3EDE6125A651D94E1DAAF0F3361ACEB9FB858C4/",
+    "Vici Gaming": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/726228.png",
+    "GLYPH": "https://cdn.steamusercontent.com/ugc/17521324169419112276/F3F4EBC942578E127594737DB79BF3087A18C1DF/",
+    "Carstensz Esports": "https://cdn.steamusercontent.com/ugc/18170046277262960383/ECC4AAB63228E40A72F5A25D4D8A2F1A9E8622F9/",
+    "Yangon Galacticos": "https://cdn.steamusercontent.com/ugc/2473119197018013407/9F54FB2ED4476EA67C55994F5FB7CDAC3B882809/",
+    "TEAM GRIND": "https://cdn.steamusercontent.com/ugc/18313019652320109896/09DE0090D6F99C3AF44DA97360CCDAEA1CA7D214/",
+    "DIREBORN": "https://cdn.steamusercontent.com/ugc/10218917442810084843/6714F1208C59C363E13191D9A5ACD0819EB7CADD/",
+    "Execration": "https://cdn.steamusercontent.com/ugc/2490004871924581269/9132E5E0903B2A368A00780415D69766292F5893/",
+    "OG": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/2586976.png",
+    "REKONIX": "https://cdn.steamusercontent.com/ugc/16170413258693955016/5ABDC787F5CF4BBDD603F15933D9F5B0F8EB0D8A/",
+    "Mentality Monsters": "https://cdn.steamusercontent.com/ugc/17321954060516939025/298416D591C688A447C7662D97997E20225D5916/",
+    "InterActive Philippines": "https://cdn.steamusercontent.com/ugc/2027237398680799842/956E1BD2F9D917430D3813A799CBFBAF443F169F/"
   }
 }
