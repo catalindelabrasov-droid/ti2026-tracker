@@ -2563,7 +2563,9 @@ async function lgFetchActive(){
     const state={ id:leagueId, name:lg.name, code:lg.code, me, adminId:lg.admin_id,
       admin:(members||[]).length?(members.find(x=>x.user_id===lg.admin_id)||{}).username:me,
       members:(members||[]).map(m=>m.username),
-      rules:Object.keys(lg.rules||{}).length?lg.rules:{...DEFAULT_RULES},
+      // Merge over the defaults so a league created before a rule existed
+      // shows it switched off at its proper points value, not at zero.
+      rules:{...DEFAULT_RULES, ...(lg.rules||{})},
       predictions, outcomes, _uid:uid, otherPredictions:{}, board:board,
       leagueList:list, memberRows:memberRows, isAdmin:(lg.admin_id===uid) };
     lgSave(state);
