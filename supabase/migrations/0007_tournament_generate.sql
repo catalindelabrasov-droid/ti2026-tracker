@@ -184,9 +184,11 @@ begin
             and f.status <> 'done')
       order by round, slot
     loop
+      -- Don't touch the label: it names the ROUND and is read as a heading.
+      -- A bye is recognisable from "finished with one empty side".
       update tournament_matches
         set status = 'done', winner_id = coalesce(rec.team_a, rec.team_b),
-            label = label || ' (bye)', updated_at = now()
+            updated_at = now()
       where id = rec.id;
       if rec.next_match_id is not null then
         if rec.next_is_a then

@@ -152,6 +152,9 @@
   .rank-note{font-size:12px;color:var(--ink-dim);line-height:1.6;padding:12px 14px;border:1px solid var(--line);border-left:2px solid var(--aegis);border-radius:var(--radius);background:var(--panel);margin-bottom:4px}
   .rank-note.sub{border-left-color:var(--line);margin-top:20px;color:var(--ink-faint)}
   .rank-note b{color:var(--ink)}
+  /* bell shrunk to an icon; the count rides on it */
+  .tbtn-bell{position:relative;padding:8px 11px;font-size:14px;line-height:1}
+  .bell-count{position:absolute;top:-4px;right:-4px;background:var(--aegis);color:#14100a;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
   /* rules presets + member-facing summary */
   .rule-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:4px 0 2px}
   .rule-preset{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:4px}
@@ -175,6 +178,51 @@
   .lg-back:hover{color:var(--ink)}
   .lg-plan{margin:0;padding-left:20px;color:var(--ink-dim);font-size:13px;line-height:1.85}
   .lg-plan b{color:var(--ink);font-weight:500}
+  /* ---- tournaments ---- */
+  /* The tournament page reuses .league-page styling but must not appear when
+     the LEAGUE page is open, hence the id-qualified override. */
+  .league-page#tourneyPage{display:none}
+  body.tourney-open .league-page#tourneyPage{display:block}
+  body.tourney-open #app,body.tourney-open #regionPage,body.tourney-open #teamPage{display:none}
+  .tr-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .tr-card{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;cursor:pointer;transition:.15s;font:inherit;color:inherit;display:flex;flex-direction:column;gap:8px}
+  .tr-card:hover{border-color:var(--aegis);transform:translateY(-2px)}
+  .tr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .tr-name{font-family:'Oswald',sans-serif;font-size:16px;letter-spacing:.02em;color:var(--ink)}
+  .tr-status{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:3px;white-space:nowrap;border:1px solid var(--line);color:var(--ink-dim)}
+  .tr-status.tr-registration{color:var(--win);border-color:rgba(78,201,143,.4)}
+  .tr-status.tr-running{color:var(--live);border-color:rgba(239,83,80,.4)}
+  .tr-meta{display:flex;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint)}
+  .tr-desc{font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .tr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .tr-teams{display:flex;flex-direction:column;gap:2px;margin-top:10px}
+  .tr-team{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+  .tr-team:last-child{border-bottom:none}
+  .tr-seed{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);width:26px}
+  .tr-tname{flex:1;font-size:14px}
+  .tr-you{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--aegis-bright);border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+  .tr-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);cursor:pointer;margin-top:4px}
+  /* bracket */
+  .tr-bracket{display:flex;gap:16px;overflow-x:auto;padding:6px 2px 14px;margin-top:16px}
+  .tr-round{display:flex;flex-direction:column;justify-content:space-around;gap:12px;min-width:190px}
+  .tr-rlabel{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:center;padding-bottom:2px}
+  .tr-bm{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .tr-bm.done{border-color:var(--line-soft)}
+  .tr-bteam{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;font-size:13px;color:var(--ink-dim);border-bottom:1px solid var(--line-soft)}
+  .tr-bteam b{font-family:'JetBrains Mono',monospace;font-size:12px}
+  .tr-bteam.win{color:var(--ink);background:rgba(217,164,65,.07)}
+  .tr-bteam.win b{color:var(--aegis-bright)}
+  .tr-bfoot{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-faint);padding:5px 11px;background:var(--bg)}
+  /* matches to play */
+  .tr-mlist{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .tr-mrow{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line-soft)}
+  .tr-mrow:last-child{border-bottom:none}
+  .tr-mrow.mine{background:rgba(217,164,65,.05)}
+  .tr-mteams{flex:1;font-size:13.5px}
+  .tr-mteams .vs{color:var(--ink-faint);font-size:11px;margin:0 4px}
+  .tr-mbo{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint)}
+  .tr-mwait{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
+  .tr-report{padding:6px 12px;font-size:12px}
   /* my picks history */
   .mp-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px}
   .mp-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
@@ -944,6 +992,24 @@
       <div class="lg-panel" id="lgPanel"></div>
     </div>
   </div>
+
+  <!-- Tournament page -->
+  <div class="league-page" id="tourneyPage">
+    <div class="wrap">
+      <button class="rp-back" id="tourneyBack">&larr; Back to tracker</button>
+      <div class="lg-hero">
+        <div class="eyebrow">Your team · Your bracket · Verified results</div>
+        <h1>Tournaments</h1>
+        <p>Run a competition your own team plays in. Pick the format, invite teams, and let the bracket look after itself — results are checked against Dota's own match history.</p>
+      </div>
+      <div class="lg-tabs" id="trTabs">
+        <div class="lg-tab on" data-trtab="browse">Browse</div>
+        <div class="lg-tab" data-trtab="mine">My tournaments</div>
+        <div class="lg-tab" data-trtab="create">Create</div>
+      </div>
+      <div class="lg-panel" id="trPanel"></div>
+    </div>
+  </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ----- Supabase backend (accounts + shared league) ------------------------
@@ -1115,9 +1181,10 @@ function render(d){
       <button class="tbtn filt ${activeFilter==='all'?'on':''}" data-filter="all">All</button>
       <button class="tbtn filt ${activeFilter==='live'?'on':''}" data-filter="live">Live</button>
       <button class="tbtn filt ${activeFilter==='upcoming'?'on':''}" data-filter="upcoming">Upcoming</button>
-      <button class="tbtn" id="notifBtn">🔔 Notifications ${notifIds.size?`(${notifIds.size})`:""}</button>
+      <button class="tbtn tbtn-bell" id="notifBtn" title="Match notifications" aria-label="Match notifications">🔔${notifIds.size?`<span class="bell-count">${notifIds.size}</span>`:""}</button>
       <button class="tbtn tbtn-league" id="myLeaguesBtn" style="display:none">📋 My Leagues</button>
       <button class="tbtn tbtn-league" id="leagueBtn">🏆 Create League</button>
+      <button class="tbtn tbtn-league" id="tourneyBtn">⚔️ Create Tournament</button>
       <span class="toolbar-spacer"></span>
       <span class="auth-area" id="authArea">
         <button class="tbtn" id="signinBtn">Sign in</button>
@@ -1187,6 +1254,7 @@ function render(d){
   wireToolbar();wireNav();applySearchFilter();renderAuthArea();startCountdown(d);wireQualifiers(d);wireTeams(d);
   wireHubTabs();renderLiveStrip();
   const _lb=$("#leagueBtn"); if(_lb) _lb.onclick=openLeague;
+  const _tb=$("#tourneyBtn"); if(_tb) _tb.onclick=openTourneys;
   wireMyLeaguesMenu();
 }
 
@@ -1548,6 +1616,324 @@ function renderPlayersTabInto(){
       <span class="ply-role">${p.role?esc(p.role):''}</span>
     </a>`).join("")}
   </div>`).join("")}`;
+}
+
+/* =========================== TOURNAMENTS ===========================
+   Users run their own competitions here. The bracket itself is generated
+   and advanced server-side (see supabase/migrations/0006-0007); this is
+   the window onto it. */
+let _trTab="browse", _trOpenId=null, _trCache=null;
+// Every render takes a ticket; a slow fetch that finishes after you've moved
+// on throws its result away instead of overwriting the panel.
+let _trSeq=0;
+
+function openTourneys(){
+  document.body.classList.add("tourney-open");
+  window.scrollTo(0,0);
+  renderTourney();
+}
+function closeTourneys(){ document.body.classList.remove("tourney-open"); }
+
+async function trFetchList(){
+  if(!SB_READY()) return [];
+  const {data,error}=await SB.from("tournaments")
+    .select("id,code,name,format,status,max_teams,series_format,third_place,organiser_id,created_at,starts_at,description")
+    .eq("visibility","public").order("created_at",{ascending:false}).limit(50);
+  if(error){ console.warn("tournaments fetch failed",error); return []; }
+  // Team counts in one extra query rather than N.
+  const ids=(data||[]).map(t=>t.id);
+  let counts={};
+  if(ids.length){
+    const {data:tt}=await SB.from("tournament_teams").select("tournament_id").in("tournament_id",ids);
+    (tt||[]).forEach(r=>counts[r.tournament_id]=(counts[r.tournament_id]||0)+1);
+  }
+  return (data||[]).map(t=>({...t,teamCount:counts[t.id]||0}));
+}
+
+const TR_FORMAT_NAME={single_elim:"Single elimination",round_robin:"Round robin"};
+const TR_STATUS_NAME={registration:"Open for teams",running:"In progress",finished:"Finished",cancelled:"Cancelled"};
+
+function trSeriesSummary(sf){
+  if(!sf) return "Bo3";
+  const d=sf.default||3, f=sf.final;
+  return f&&f!==d ? `Bo${d}, Bo${f} final` : `Bo${d}`;
+}
+
+function renderTourney(){
+  document.querySelectorAll(".lg-tab[data-trtab]").forEach(t=>
+    t.classList.toggle("on",t.getAttribute("data-trtab")===_trTab));
+  const panel=$("#trPanel"); if(!panel) return;
+  const seq=++_trSeq;
+  if(_trOpenId){ trRenderDetail(panel,seq); return; }
+  if(_trTab==="create"){ panel.innerHTML=trCreateForm(); wireTourneyPanel(); return; }
+  panel.innerHTML=`<div class="loading" style="padding:30px">Loading tournaments…</div>`;
+  trFetchList().then(async list=>{
+    if(seq!==_trSeq) return;                    // the view moved on
+    _trCache=list;
+    if(_trTab==="mine"){
+      const uid=await lgCurrentUserId();
+      let ownIds=new Set();
+      if(uid){
+        const {data:t}=await SB.from("tournament_teams").select("tournament_id").eq("captain_id",uid);
+        (t||[]).forEach(r=>ownIds.add(r.tournament_id));
+      }
+      if(seq!==_trSeq) return;
+      panel.innerHTML=trListHTML(list.filter(t=>t.organiser_id===uid||ownIds.has(t.id)),true);
+    }else{
+      panel.innerHTML=trListHTML(list,false);
+    }
+    wireTourneyPanel();
+  });
+}
+
+function trListHTML(list,mine){
+  if(!list.length){
+    return `<div class="lg-empty"><div class="big">⚔️</div>
+      <h3>${mine?"You're not in a tournament yet":"No tournaments yet"}</h3>
+      <div class="hint">${mine?"Create one, or join an open tournament from the Browse tab."
+        :"Be the first — create one and share the link with the teams you want in it."}</div>
+      <button class="lg-btn" data-trtab-go="create" style="margin-top:18px">Create a tournament</button></div>`;
+  }
+  return `<div class="tr-list">${list.map(t=>`
+    <button class="tr-card" data-tr-open="${esc(t.id)}">
+      <div class="tr-top">
+        <span class="tr-name">${esc(t.name)}</span>
+        <span class="tr-status tr-${esc(t.status)}">${esc(TR_STATUS_NAME[t.status]||t.status)}</span>
+      </div>
+      <div class="tr-meta">
+        <span>${esc(TR_FORMAT_NAME[t.format]||t.format)}</span>
+        <span>${t.teamCount}/${t.max_teams} teams</span>
+        <span>${esc(trSeriesSummary(t.series_format))}</span>
+      </div>
+      ${t.description?`<div class="tr-desc">${esc(t.description)}</div>`:""}
+    </button>`).join("")}</div>`;
+}
+
+function trCreateForm(){
+  if(!lgCurrentUser()){
+    return `<div class="lg-empty"><div class="big">🔐</div><h3>Sign in to run a tournament</h3>
+      <div class="hint">You'll be the organiser — you control the format and who's in.</div>
+      <button class="lg-btn" id="trGoSignin" style="margin-top:18px">Sign in</button></div>`;
+  }
+  const opt=(v,l,sel)=>`<option value="${v}" ${sel?"selected":""}>${esc(l)}</option>`;
+  return `<div class="lg-card">
+      <h3>Create a tournament</h3>
+      <div class="hint">You can change nothing once it starts, so set it up the way you want it.</div>
+      <div class="lg-field"><label>Name</label>
+        <input id="trName" maxlength="50" placeholder="Sunday Night Cup"></div>
+      <div class="lg-field"><label>Format</label>
+        <select id="trFormat">
+          ${opt("single_elim","Single elimination — lose once, you're out",true)}
+          ${opt("round_robin","Round robin — everyone plays everyone",false)}
+        </select></div>
+      <div class="lg-field"><label>Maximum teams</label>
+        <select id="trMax">${[2,4,6,8,12,16,24,32].map(n=>opt(n,n+" teams",n===8)).join("")}</select></div>
+      <div class="lg-grid2" style="gap:12px">
+        <div class="lg-field"><label>Series length</label>
+          <select id="trBo">${[[1,"Bo1 — single game"],[3,"Bo3 — best of three"],[5,"Bo5 — best of five"]]
+            .map(([v,l])=>opt(v,l,v===3)).join("")}</select></div>
+        <div class="lg-field"><label>Final</label>
+          <select id="trBoFinal">${[[0,"Same as the rest"],[1,"Bo1"],[3,"Bo3"],[5,"Bo5"]]
+            .map(([v,l])=>opt(v,l,v===5)).join("")}</select></div>
+      </div>
+      <label class="tr-check"><input type="checkbox" id="trThird"> Play a third-place match</label>
+      <div class="lg-field" style="margin-top:12px"><label>Description <span style="opacity:.6">(optional)</span></label>
+        <input id="trDesc" maxlength="120" placeholder="Open to anyone, EU servers, Sunday 20:00"></div>
+      <button class="lg-btn" id="trCreateBtn" style="margin-top:6px">Create tournament</button>
+      <div class="hint" style="margin-top:12px">Teams register themselves with a link. You start it when everyone's in — the bracket is seeded by world ranking where we know a team.</div>
+    </div>`;
+}
+
+async function trRenderDetail(panel,seq){
+  panel.innerHTML=`<div class="loading" style="padding:30px">Loading…</div>`;
+  const id=_trOpenId;
+  const [{data:t},{data:teams},{data:matches},uid]=await Promise.all([
+    SB.from("tournaments").select("*").eq("id",id).maybeSingle(),
+    SB.from("tournament_teams").select("*").eq("tournament_id",id).order("seed",{nullsFirst:false}),
+    SB.from("tournament_matches").select("*").eq("tournament_id",id).order("round").order("slot"),
+    lgCurrentUserId(),
+  ]);
+  if(seq!==undefined&&seq!==_trSeq) return;    // navigated away while loading
+  if(!t){ panel.innerHTML=`<div class="lg-empty"><h3>Tournament not found</h3></div>`; return; }
+  const byId={}; (teams||[]).forEach(x=>byId[x.id]=x);
+  const isOrg=uid&&t.organiser_id===uid;
+  const myTeam=(teams||[]).find(x=>x.captain_id===uid);
+  const nm=id2=>id2&&byId[id2]?byId[id2].name:"—";
+
+  const roster=(teams||[]).map(x=>`<div class="tr-team">
+      <span class="tr-seed">${x.seed?"#"+x.seed:"–"}</span>
+      <span class="tr-tname">${esc(x.name)}</span>
+      ${x.captain_id===uid?'<span class="tr-you">your team</span>':''}
+    </div>`).join("")||`<div class="hint">No teams have registered yet.</div>`;
+
+  let body="";
+  if(t.status==="registration"){
+    body=`<div class="lg-card">
+        <h3>Teams (${(teams||[]).length}/${t.max_teams})</h3>
+        <div class="tr-teams">${roster}</div>
+        ${!myTeam&&uid&&(teams||[]).length<t.max_teams?`
+          <div class="lg-field" style="margin-top:16px"><label>Your team name</label>
+            <input id="trTeamName" maxlength="40" placeholder="e.g. Sunday Warriors"></div>
+          <button class="lg-btn" id="trJoinBtn">Register my team</button>`:""}
+        ${myTeam?`<div class="hint" style="margin-top:14px">You're in as <b>${esc(myTeam.name)}</b>.
+          <button class="linklike" id="trLeaveBtn">Withdraw</button></div>`:""}
+        ${!uid?`<div class="hint" style="margin-top:14px">Sign in to register a team.</div>`:""}
+        ${isOrg?`<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+          <button class="lg-btn" id="trStartBtn" ${(teams||[]).length<2?"disabled":""}>Start the tournament</button>
+          <div class="hint" style="margin-top:8px">${(teams||[]).length<2?"You need at least two teams.":"This generates the bracket and closes registration."}</div>
+        </div>`:""}
+      </div>`;
+  } else if(t.format==="round_robin"){
+    // Standings from completed matches.
+    const tally={}; (teams||[]).forEach(x=>tally[x.id]={n:x.name,w:0,l:0,gf:0,ga:0});
+    (matches||[]).forEach(m=>{
+      if(m.status!=="done"||!m.winner_id) return;
+      const a=tally[m.team_a],b=tally[m.team_b]; if(!a||!b) return;
+      a.gf+=m.score_a; a.ga+=m.score_b; b.gf+=m.score_b; b.ga+=m.score_a;
+      if(m.winner_id===m.team_a){a.w++;b.l++;}else{b.w++;a.l++;}
+    });
+    const rows=Object.values(tally).sort((x,y)=>y.w-x.w||(y.gf-y.ga)-(x.gf-x.ga)||x.n.localeCompare(y.n));
+    body=`<div class="lg-card" style="padding:0;overflow:hidden">
+        <table class="lb-table"><thead><tr><th>#</th><th>Team</th><th style="text-align:right">W–L</th><th style="text-align:right">Games</th></tr></thead>
+        <tbody>${rows.map((r,i)=>`<tr class="lb-row"><td class="lb-rank"><span class="lb-place">${i+1}</span></td>
+          <td>${esc(r.n)}</td><td class="lb-acc">${r.w}–${r.l}</td><td class="lb-pts">${r.gf}–${r.ga}</td></tr>`).join("")}</tbody></table>
+      </div>
+      ${trMatchListHTML(matches,nm,uid,byId,t)}`;
+  } else {
+    body=trBracketHTML(matches,nm,t)+trMatchListHTML(matches,nm,uid,byId,t);
+  }
+
+  panel.innerHTML=`<button class="lg-back" id="trBackList">← All tournaments</button>
+    <div class="lg-card tr-head">
+      <div style="flex:1">
+        <h3 style="margin:0 0 4px">${esc(t.name)}</h3>
+        <div class="hint" style="margin:0">${esc(TR_FORMAT_NAME[t.format]||t.format)} · ${esc(trSeriesSummary(t.series_format))}
+          ${t.third_place?" · third-place match":""} · <span class="tr-status tr-${esc(t.status)}">${esc(TR_STATUS_NAME[t.status]||t.status)}</span></div>
+        ${t.description?`<div class="tr-desc" style="margin-top:8px">${esc(t.description)}</div>`:""}
+      </div>
+      <button class="lg-btn-ghost" id="trShareBtn">📨 Invite teams</button>
+    </div>
+    ${body}`;
+  wireTourneyPanel(t,teams,matches);
+}
+
+function trBracketHTML(matches,nm,t){
+  const main=(matches||[]).filter(m=>m.bracket==="main");
+  if(!main.length) return "";
+  const rounds=[...new Set(main.map(m=>m.round))].sort((a,b)=>a-b);
+  const third=(matches||[]).filter(m=>m.bracket==="third_place");
+  return `<div class="tr-bracket">${rounds.map(r=>{
+    const ms=main.filter(m=>m.round===r);
+    return `<div class="tr-round">
+      <div class="tr-rlabel">${esc(ms[0].label||("Round "+r))}</div>
+      ${ms.map(m=>trBracketMatch(m,nm)).join("")}
+    </div>`;
+  }).join("")}
+  ${third.length?`<div class="tr-round"><div class="tr-rlabel">Third place</div>${third.map(m=>trBracketMatch(m,nm)).join("")}</div>`:""}
+  </div>`;
+}
+
+function trBracketMatch(m,nm){
+  const done=m.status==="done";
+  // A finished match with only one side was never played — it's a bye.
+  const isBye=done&&(!m.team_a||!m.team_b);
+  if(isBye){
+    return `<div class="tr-bm done bye">
+      <div class="tr-bteam win"><span>${esc(nm(m.team_a||m.team_b))}</span><b>✓</b></div>
+      <div class="tr-bfoot">Advanced — bye</div>
+    </div>`;
+  }
+  const aw=done&&m.winner_id===m.team_a, bw=done&&m.winner_id===m.team_b;
+  return `<div class="tr-bm ${done?'done':''}">
+    <div class="tr-bteam ${aw?'win':''}"><span>${esc(nm(m.team_a))}</span><b>${done?m.score_a:"–"}</b></div>
+    <div class="tr-bteam ${bw?'win':''}"><span>${esc(nm(m.team_b))}</span><b>${done?m.score_b:"–"}</b></div>
+    <div class="tr-bfoot">Bo${m.best_of}${m.scheduled_at?" · "+new Date(m.scheduled_at).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):""}</div>
+  </div>`;
+}
+
+function trMatchListHTML(matches,nm,uid,byId,t){
+  const playable=(matches||[]).filter(m=>m.status!=="done"&&m.team_a&&m.team_b);
+  if(!playable.length) return "";
+  const mine=m=>uid&&((byId[m.team_a]||{}).captain_id===uid||(byId[m.team_b]||{}).captain_id===uid);
+  return `<div class="td-section-label" style="margin-top:22px">Matches to play</div>
+    <div class="tr-mlist">${playable.map(m=>`<div class="tr-mrow ${mine(m)?'mine':''}">
+      <span class="tr-mteams">${esc(nm(m.team_a))} <span class="vs">vs</span> ${esc(nm(m.team_b))}</span>
+      <span class="tr-mbo">Bo${m.best_of}</span>
+      ${mine(m)?`<button class="lg-btn-ghost tr-report" data-report="${esc(m.id)}">Report result</button>`
+               :`<span class="tr-mwait">${esc(m.label||"")}</span>`}
+    </div>`).join("")}</div>
+    <div class="hint" style="margin-top:10px">Results are checked against Dota's match history — paste the match ID and we confirm the game ourselves.</div>`;
+}
+
+function wireTourneyPanel(t,teams,matches){
+  document.querySelectorAll("[data-trtab-go]").forEach(b=>b.onclick=()=>{
+    _trTab=b.getAttribute("data-trtab-go"); _trOpenId=null; renderTourney(); });
+  document.querySelectorAll("[data-tr-open]").forEach(b=>b.onclick=()=>{
+    _trOpenId=b.getAttribute("data-tr-open"); renderTourney(); });
+  const back=$("#trBackList"); if(back) back.onclick=()=>{ _trOpenId=null; renderTourney(); };
+  const gs=$("#trGoSignin"); if(gs) gs.onclick=()=>{ closeTourneys(); openModal("signinModal"); };
+
+  const cb=$("#trCreateBtn"); if(cb) cb.onclick=async()=>{
+    const name=($("#trName").value||"").trim();
+    if(!name){ toast("Name it","Give your tournament a name."); return; }
+    const uid=await lgCurrentUserId();
+    if(!uid){ toast("Sign in first","You need an account to organise a tournament."); return; }
+    const bo=+$("#trBo").value, boF=+$("#trBoFinal").value;
+    const sf={default:bo}; if(boF) sf.final=boF;
+    cb.disabled=true; const o=cb.textContent; cb.textContent="Creating…";
+    const {data:code}=await SB.rpc("tournament_code");
+    const {data,error}=await SB.from("tournaments").insert({
+      code, name, format:$("#trFormat").value, organiser_id:uid,
+      max_teams:+$("#trMax").value, series_format:sf,
+      third_place:$("#trThird").checked, description:($("#trDesc").value||"").trim()||null
+    }).select().maybeSingle();
+    if(error){ toast("Couldn't create",error.message||"Try again."); cb.disabled=false; cb.textContent=o; return; }
+    toast("Tournament created","Share the invite link to bring teams in.");
+    _trOpenId=data.id; _trTab="mine"; renderTourney();
+  };
+
+  const jb=$("#trJoinBtn"); if(jb) jb.onclick=async()=>{
+    const name=($("#trTeamName").value||"").trim();
+    if(!name){ toast("Team name","What are you calling your team?"); return; }
+    const uid=await lgCurrentUserId(); if(!uid) return;
+    jb.disabled=true;
+    const {error}=await SB.from("tournament_teams").insert({tournament_id:_trOpenId,name,captain_id:uid});
+    if(error){
+      toast("Couldn't register", /duplicate|unique/i.test(error.message||"")
+        ? "That team name is taken, or you already have a team here." : (error.message||"Try again."));
+      jb.disabled=false; return;
+    }
+    toast("You're in",`${name} is registered.`);
+    renderTourney();
+  };
+
+  const lb=$("#trLeaveBtn"); if(lb) lb.onclick=async()=>{
+    if(!confirm("Withdraw your team from this tournament?")) return;
+    const uid=await lgCurrentUserId();
+    await SB.from("tournament_teams").delete().eq("tournament_id",_trOpenId).eq("captain_id",uid);
+    toast("Withdrawn","Your team has been removed.");
+    renderTourney();
+  };
+
+  const sb=$("#trStartBtn"); if(sb) sb.onclick=async()=>{
+    if(!confirm("Start the tournament? The bracket is generated now and registration closes.")) return;
+    sb.disabled=true; sb.textContent="Generating…";
+    const {data,error}=await SB.rpc("tournament_start",{p_tournament:_trOpenId});
+    if(error){ toast("Couldn't start",error.message||"Try again."); sb.disabled=false; sb.textContent="Start the tournament"; return; }
+    toast("Under way",`${data} matches created.`);
+    renderTourney();
+  };
+
+  const shb=$("#trShareBtn"); if(shb) shb.onclick=()=>{
+    const url=location.origin+location.pathname+"?t="+encodeURIComponent(_trOpenId);
+    const text=`Join my Dota tournament${t?` "${t.name}"`:""}\n${url}`;
+    if(navigator.share){ navigator.share({title:"Dota tournament",text}).catch(()=>{}); return; }
+    copyText(text).then(ok=>{ const o=shb.textContent; shb.textContent=ok?"Copied!":"Copy failed";
+      setTimeout(()=>shb.textContent=o,1400); });
+  };
+
+  document.querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>
+    toast("Almost there","Result reporting lands next — the bracket engine is already wired for it."));
 }
 
 /* ---- Heroes tab ----
@@ -3516,7 +3902,9 @@ function lgOpenCreateModal(){
 function wireLeague(){
   const lb=$("#leagueBtn"); if(lb) lb.onclick=openLeague;
   const back=$("#leagueBack"); if(back) back.onclick=closeLeague;
-  document.querySelectorAll(".lg-tab").forEach(t=>t.onclick=()=>{_lgTab=t.getAttribute("data-lgtab");renderLeague();});
+  document.querySelectorAll(".lg-tab[data-lgtab]").forEach(t=>t.onclick=()=>{_lgTab=t.getAttribute("data-lgtab");renderLeague();});
+  document.querySelectorAll(".lg-tab[data-trtab]").forEach(t=>t.onclick=()=>{_trTab=t.getAttribute("data-trtab");_trOpenId=null;renderTourney();});
+  const trb=$("#tourneyBack"); if(trb) trb.onclick=closeTourneys;
 }
 
 async function init(){
