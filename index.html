@@ -238,6 +238,33 @@
   .ld-me{display:flex;justify-content:space-between;align-items:center;gap:16px}
   .ld-rank-big{font-family:'Oswald',sans-serif;font-size:38px;font-weight:600;color:var(--aegis-bright);line-height:1}
   .ld-prov{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);border:1px solid var(--line);border-radius:3px;padding:1px 5px;margin-left:8px}
+  /* Format-specific settings, revealed only for the format that owns them. */
+  .tr-fmtbox{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 12px;margin:2px 0 14px;background:rgba(255,255,255,.015)}
+  .tr-fmthead{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--aegis-bright);margin-bottom:10px}
+  .tr-fmtnote{font-size:11.5px;color:var(--ink-faint);margin-top:6px;line-height:1.45}
+  .tr-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+  .tr-gtitle{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.07em;font-size:12px;color:var(--ink-dim);margin:0 0 8px}
+  .tr-gcard{margin-bottom:2px}
+  .tr-gtable th{font-size:9.5px}
+  .tr-gtable td{padding-top:7px;padding-bottom:7px}
+  /* The qualification line: everything above it goes through. */
+  .lb-row.tr-cut td{border-bottom:2px solid var(--aegis)}
+  .lb-row.tr-dim{opacity:.5}
+  .tr-thru,.tr-st,.tr-bye{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-left:8px;padding:1.5px 5px;border-radius:3px;vertical-align:middle}
+  .tr-thru,.tr-st.thru{color:#5fbf72;background:rgba(95,191,114,.13)}
+  .tr-st.out{color:#d4695f;background:rgba(212,105,95,.13)}
+  .tr-bye{color:var(--ink-faint);background:rgba(255,255,255,.05)}
+  .tr-stakes{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;margin-left:10px;padding:1.5px 6px;border-radius:3px;color:var(--aegis-bright);background:rgba(217,164,65,.12)}
+  .tr-stakes.eliminate{color:#d4695f;background:rgba(212,105,95,.12)}
+  .tr-waiting{margin-top:22px;padding:16px 18px;border:1px dashed var(--line);border-radius:var(--radius);color:var(--ink-dim);font-size:13px;text-align:center}
+  .tr-bm.empty{opacity:.35}
+  /* An even series has no winner to pick — the scoreline says everything. */
+  .rep-even{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 16px}
+  .rep-evenbtn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer;font:inherit;color:var(--ink-dim);transition:.15s}
+  .rep-evenbtn:hover{border-color:var(--aegis)}
+  .rep-evenbtn.sel{border-color:var(--aegis);background:rgba(217,164,65,.1);color:var(--ink)}
+  .rep-evenscore{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--ink)}
+  .rep-evenwho{font-size:10px;color:var(--ink-faint);text-align:center;line-height:1.2}
   .ld-streak{font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:8px;padding:1px 5px;border-radius:3px}
   .ld-streak.up{color:#5fbf72;background:rgba(95,191,114,.12)}
   .ld-streak.down{color:#d4695f;background:rgba(212,105,95,.12)}
@@ -1670,7 +1697,7 @@ function closeTourneys(){ document.body.classList.remove("tourney-open"); }
 async function trFetchList(){
   if(!SB_READY()) return [];
   const {data,error}=await SB.from("tournaments")
-    .select("id,code,name,format,status,max_teams,series_format,third_place,organiser_id,created_at,starts_at,description")
+    .select("id,code,name,format,status,max_teams,series_format,third_place,organiser_id,created_at,starts_at,description,stage,stage_config")
     .eq("visibility","public").order("created_at",{ascending:false}).limit(50);
   if(error){ console.warn("tournaments fetch failed",error); return []; }
   // Team counts in one extra query rather than N.
@@ -1683,7 +1710,15 @@ async function trFetchList(){
   return (data||[]).map(t=>({...t,teamCount:counts[t.id]||0}));
 }
 
-const TR_FORMAT_NAME={single_elim:"Single elimination",double_elim:"Double elimination",round_robin:"Round robin"};
+const TR_FORMAT_NAME={single_elim:"Single elimination",double_elim:"Double elimination",
+  round_robin:"Round robin",swiss:"Swiss",groups:"Groups → playoffs"};
+const TR_STAGE_NAME={swiss:"Swiss stage",groups:"Group stage",playoffs:"Playoffs"};
+const TR_FORMAT_BLURB={
+  single_elim:"Quickest to run. One bad game and a team's evening is over.",
+  double_elim:"Everyone gets a second life. Roughly twice the matches of a single elimination.",
+  round_robin:"Everyone plays everyone. Fairest table, but it grows fast — eight teams is 28 matches.",
+  swiss:"Fixed number of nights, same number of games for everyone, and you're always drawn against a team on your record.",
+  groups:"Guaranteed group games first, then a bracket between the teams that came through."};
 const TR_STATUS_NAME={registration:"Open for teams",running:"In progress",finished:"Finished",cancelled:"Cancelled"};
 
 function trSeriesSummary(sf){
@@ -1760,9 +1795,61 @@ function trCreateForm(){
           ${opt("single_elim","Single elimination — lose once, you're out",true)}
           ${opt("double_elim","Double elimination — two lives, like TI",false)}
           ${opt("round_robin","Round robin — everyone plays everyone",false)}
-        </select></div>
+          ${opt("swiss","Swiss — same number of games for everyone, no early exits",false)}
+          ${opt("groups","Groups → playoffs — the format TI actually uses",false)}
+        </select>
+        <div class="tr-fmtnote" id="trFmtNote"></div></div>
       <div class="lg-field"><label>Maximum teams</label>
         <select id="trMax">${[2,4,6,8,12,16,24,32].map(n=>opt(n,n+" teams",n===8)).join("")}</select></div>
+
+      <div class="tr-fmtbox" id="trSwissOpts" hidden>
+        <div class="tr-fmthead">Swiss settings</div>
+        <div class="lg-grid2" style="gap:12px">
+          <div class="lg-field"><label>Rounds</label>
+            <select id="trSwRounds">${[[0,"Work it out for me"],[3,"3 rounds"],[4,"4 rounds"],[5,"5 rounds"]]
+              .map(([v,l])=>opt(v,l,v===0)).join("")}</select></div>
+          <div class="lg-field"><label>Who keeps playing</label>
+            <select id="trSwMode">
+              ${opt("cut","Stop once you're through or out",true)}
+              ${opt("full","Everyone plays every round",false)}
+            </select></div>
+        </div>
+        <div class="lg-grid2" style="gap:12px">
+          <div class="lg-field"><label>Matches that decide someone's fate</label>
+            <select id="trSwDecider">${[[0,"Same as the rest"],[3,"Bo3"],[5,"Bo5"]]
+              .map(([v,l])=>opt(v,l,v===3)).join("")}</select></div>
+          <div class="lg-field"><label>After the Swiss</label>
+            <select id="trSwPlayoff">
+              ${opt("single_elim","Single-elimination playoff",true)}
+              ${opt("double_elim","Double-elimination playoff",false)}
+              ${opt("none","Nothing — the table decides it",false)}
+            </select></div>
+        </div>
+        <div class="hint" style="margin:0">Everyone plays the same number of games against opponents on the same record, and nobody is knocked out by one bad game. Four to sixteen teams.</div>
+      </div>
+
+      <div class="tr-fmtbox" id="trGroupOpts" hidden>
+        <div class="tr-fmthead">Group settings</div>
+        <div class="lg-grid2" style="gap:12px">
+          <div class="lg-field"><label>Groups</label>
+            <select id="trGrCount">${[[0,"Work it out for me"],[1,"One group"],[2,"Two groups"],[4,"Four groups"],[8,"Eight groups"]]
+              .map(([v,l])=>opt(v,l,v===0)).join("")}</select></div>
+          <div class="lg-field"><label>Through from each group</label>
+            <select id="trGrAdvance">${[[0,"Work it out for me"],[1,"Winner only"],[2,"Top two"],[3,"Top three"]]
+              .map(([v,l])=>opt(v,l,v===2)).join("")}</select></div>
+        </div>
+        <div class="lg-grid2" style="gap:12px">
+          <div class="lg-field"><label>Group games</label>
+            <select id="trGrBo">${[[2,"Bo2 — a 1–1 draw is a real result"],[1,"Bo1"],[3,"Bo3"]]
+              .map(([v,l])=>opt(v,l,v===2)).join("")}</select></div>
+          <div class="lg-field"><label>Playoff</label>
+            <select id="trGrPlayoff">
+              ${opt("double_elim","Double elimination",true)}
+              ${opt("single_elim","Single elimination",false)}
+            </select></div>
+        </div>
+        <div class="hint" style="margin:0">Groups are drawn snake-style off the world ranking so they're even, and the playoff is seeded so two teams from one group can't meet before the final.</div>
+      </div>
       <div class="lg-grid2" style="gap:12px">
         <div class="lg-field"><label>Series length</label>
           <select id="trBo">${[[1,"Bo1 — single game"],[3,"Bo3 — best of three"],[5,"Bo5 — best of five"]]
@@ -1771,7 +1858,7 @@ function trCreateForm(){
           <select id="trBoFinal">${[[0,"Same as the rest"],[1,"Bo1"],[3,"Bo3"],[5,"Bo5"]]
             .map(([v,l])=>opt(v,l,v===5)).join("")}</select></div>
       </div>
-      <label class="tr-check"><input type="checkbox" id="trThird"> Play a third-place match</label>
+      <label class="tr-check" id="trThirdWrap"><input type="checkbox" id="trThird"> Play a third-place match</label>
       <div class="lg-field" style="margin-top:12px"><label>Description <span style="opacity:.6">(optional)</span></label>
         <input id="trDesc" maxlength="120" placeholder="Open to anyone, EU servers, Sunday 20:00"></div>
       <button class="lg-btn" id="trCreateBtn" style="margin-top:6px">Create tournament</button>
@@ -1790,6 +1877,21 @@ async function trRenderDetail(panel,seq){
   ]);
   if(seq!==undefined&&seq!==_trSeq) return;    // navigated away while loading
   if(!t){ panel.innerHTML=`<div class="lg-empty"><h3>Tournament not found</h3></div>`; return; }
+
+  // Standings come from the server for every format that has them, so the
+  // table people read can never disagree with the tiebreakers that actually
+  // decide who goes through.
+  let standings=null;
+  if(t.status!=="registration"){
+    if(t.format==="swiss"){
+      const {data}=await SB.rpc("tournament_swiss_standings",{p_tournament:id});
+      standings=data||[];
+    }else if(t.format==="groups"||t.format==="round_robin"){
+      const {data}=await SB.rpc("tournament_group_standings",{p_tournament:id,p_group:null});
+      standings=data||[];
+    }
+    if(seq!==undefined&&seq!==_trSeq) return;
+  }
   const byId={}; (teams||[]).forEach(x=>byId[x.id]=x);
   const isOrg=uid&&t.organiser_id===uid;
   const myTeam=(teams||[]).find(x=>x.captain_id===uid);
@@ -1818,22 +1920,17 @@ async function trRenderDetail(panel,seq){
           <div class="hint" style="margin-top:8px">${(teams||[]).length<2?"You need at least two teams.":"This generates the bracket and closes registration."}</div>
         </div>`:""}
       </div>`;
+  } else if(t.format==="swiss"){
+    body=trSwissHTML(standings||[],matches||[],t,myTeam)
+       + trMatchListHTML(matches,nm,uid,byId,t)
+       + trBracketHTML(matches,nm,t);
+  } else if(t.format==="groups"){
+    body=trGroupsHTML(standings||[],t,myTeam)
+       + trBracketHTML(matches,nm,t)
+       + trMatchListHTML(matches,nm,uid,byId,t);
   } else if(t.format==="round_robin"){
-    // Standings from completed matches.
-    const tally={}; (teams||[]).forEach(x=>tally[x.id]={n:x.name,w:0,l:0,gf:0,ga:0});
-    (matches||[]).forEach(m=>{
-      if(m.status!=="done"||!m.winner_id) return;
-      const a=tally[m.team_a],b=tally[m.team_b]; if(!a||!b) return;
-      a.gf+=m.score_a; a.ga+=m.score_b; b.gf+=m.score_b; b.ga+=m.score_a;
-      if(m.winner_id===m.team_a){a.w++;b.l++;}else{b.w++;a.l++;}
-    });
-    const rows=Object.values(tally).sort((x,y)=>y.w-x.w||(y.gf-y.ga)-(x.gf-x.ga)||x.n.localeCompare(y.n));
-    body=`<div class="lg-card" style="padding:0;overflow:hidden">
-        <table class="lb-table"><thead><tr><th>#</th><th>Team</th><th style="text-align:right">W–L</th><th style="text-align:right">Games</th></tr></thead>
-        <tbody>${rows.map((r,i)=>`<tr class="lb-row"><td class="lb-rank"><span class="lb-place">${i+1}</span></td>
-          <td>${esc(r.n)}</td><td class="lb-acc">${r.w}–${r.l}</td><td class="lb-pts">${r.gf}–${r.ga}</td></tr>`).join("")}</tbody></table>
-      </div>
-      ${trMatchListHTML(matches,nm,uid,byId,t)}`;
+    body=trTableHTML(standings||[],myTeam,0)
+       + trMatchListHTML(matches,nm,uid,byId,t);
   } else {
     body=trBracketHTML(matches,nm,t)+trMatchListHTML(matches,nm,uid,byId,t);
   }
@@ -1843,13 +1940,79 @@ async function trRenderDetail(panel,seq){
       <div style="flex:1">
         <h3 style="margin:0 0 4px">${esc(t.name)}</h3>
         <div class="hint" style="margin:0">${esc(TR_FORMAT_NAME[t.format]||t.format)} · ${esc(trSeriesSummary(t.series_format))}
-          ${t.third_place?" · third-place match":""} · <span class="tr-status tr-${esc(t.status)}">${esc(TR_STATUS_NAME[t.status]||t.status)}</span></div>
+          ${t.third_place?" · third-place match":""}${t.stage&&t.status==="running"?` · ${esc(TR_STAGE_NAME[t.stage]||t.stage)}`:""} · <span class="tr-status tr-${esc(t.status)}">${esc(TR_STATUS_NAME[t.status]||t.status)}</span></div>
         ${t.description?`<div class="tr-desc" style="margin-top:8px">${esc(t.description)}</div>`:""}
       </div>
       <button class="lg-btn-ghost" id="trShareBtn">📨 Invite teams</button>
     </div>
     ${body}`;
   wireTourneyPanel(t,teams,matches);
+}
+
+/* A group or round-robin table. cutAfter draws the qualification line — the
+   classic rule under second place, so you can see the cut without counting. */
+function trTableHTML(rows,myTeam,cutAfter,title){
+  if(!rows.length) return "";
+  return `${title?`<div class="tr-gtitle">${esc(title)}</div>`:""}
+    <div class="lg-card tr-gcard" style="padding:0;overflow:hidden">
+      <table class="lb-table tr-gtable"><thead><tr>
+        <th>#</th><th>Team</th>
+        <th style="text-align:right">P</th>
+        <th style="text-align:right">W–D–L</th>
+        <th style="text-align:right">Pts</th>
+        <th style="text-align:right">GD</th>
+      </tr></thead><tbody>${rows.map((r,i)=>`
+        <tr class="lb-row ${myTeam&&r.team_id===myTeam.id?'lb-you':''} ${cutAfter&&i+1===cutAfter?'tr-cut':''}">
+          <td class="lb-rank"><span class="lb-place">${r.pos}</span></td>
+          <td><div class="lb-name">${esc(r.team_name)}${cutAfter&&r.pos<=cutAfter?'<span class="tr-thru">through</span>':''}</div></td>
+          <td class="lb-acc">${r.played}</td>
+          <td class="lb-acc">${r.won}–${r.drawn}–${r.lost}</td>
+          <td class="lb-pts">${r.points}</td>
+          <td class="lb-acc">${r.game_diff>0?"+":""}${r.game_diff}</td>
+        </tr>`).join("")}</tbody></table>
+    </div>`;
+}
+
+function trGroupsHTML(standings,t,myTeam){
+  if(!standings.length) return "";
+  const k=+(t.stage_config||{}).advance||0;
+  const groups=[...new Set(standings.map(r=>r.group_no))].sort((a,b)=>a-b);
+  return `<div class="rank-note">Groups are drawn snake-style off the world ranking, so no group gets all the strong teams.
+      Two points for a series win, one for a 1–1. Level on points is settled between the tied teams first — their results against each other, then the games in those matches.</div>
+    <div class="tr-groups">${groups.map(g=>
+      trTableHTML(standings.filter(r=>r.group_no===g),myTeam,k,
+        groups.length>1?"Group "+String.fromCharCode(64+g):"Standings")).join("")}</div>`;
+}
+
+/* Swiss is not a bracket — it is a table plus this round's fixtures. */
+function trSwissHTML(standings,matches,t,myTeam){
+  if(!standings.length) return "";
+  const cfg=t.stage_config||{};
+  const total=+cfg.rounds||0;
+  const sw=matches.filter(m=>m.bracket==="swiss");
+  const cur=sw.length?Math.max(...sw.map(m=>m.round)):0;
+  const pill=s=>s==="advanced"?'<span class="tr-st thru">through</span>'
+             :s==="eliminated"?'<span class="tr-st out">out</span>':'';
+  const pct=v=>v==null?"—":Math.round(v*100)+"%";
+  return `<div class="rank-note"><b>${total?`Round ${Math.min(cur,total)} of ${total}.`:""}</b>
+      Every round you're drawn against a team on the same record as you, and never the same opponent twice.
+      ${cfg.mode==="cut"?`Win ${cfg.advance_wins} and you're through; lose ${cfg.eliminate_losses} and you're out.`:"Everyone plays every round; the table decides who goes through."}</div>
+    <div class="lg-card tr-gcard" style="padding:0;overflow:hidden">
+      <table class="lb-table tr-gtable"><thead><tr>
+        <th>#</th><th>Team</th>
+        <th style="text-align:right">W–L</th>
+        <th style="text-align:right">Opp. win rate</th>
+        <th style="text-align:right">GD</th>
+      </tr></thead><tbody>${standings.map(r=>`
+        <tr class="lb-row ${myTeam&&r.team_id===myTeam.id?'lb-you':''} ${r.state==='eliminated'?'tr-dim':''}">
+          <td class="lb-rank"><span class="lb-place">${r.rank}</span></td>
+          <td><div class="lb-name">${esc(r.name)}${pill(r.state)}${r.byes?'<span class="tr-bye">bye</span>':''}</div></td>
+          <td class="lb-acc">${r.wins}–${r.losses}</td>
+          <td class="lb-acc">${pct(r.omw)}</td>
+          <td class="lb-pts">${r.game_diff>0?"+":""}${r.game_diff}</td>
+        </tr>`).join("")}</tbody></table>
+    </div>
+    <div class="hint" style="margin-top:8px">Level on record is settled by results between the tied teams, then by how strong their opponents turned out to be.</div>`;
 }
 
 function trBracketSection(matches,nm,title,cls){
@@ -1879,29 +2042,50 @@ function trBracketHTML(matches,nm,t){
 
 function trBracketMatch(m,nm){
   const done=m.status==="done";
+  // A slot both of whose feeders were byes never has anyone in it. It exists
+  // so the bracket keeps its shape; it is not a match anybody played.
+  if(done&&!m.team_a&&!m.team_b){
+    return `<div class="tr-bm done empty"><div class="tr-bteam"><span>—</span></div>
+      <div class="tr-bfoot">Not needed</div></div>`;
+  }
   // A finished match with only one side was never played — it's a bye.
-  const isBye=done&&(!m.team_a||!m.team_b);
-  if(isBye){
+  if(done&&(!m.team_a||!m.team_b)){
     return `<div class="tr-bm done bye">
       <div class="tr-bteam win"><span>${esc(nm(m.team_a||m.team_b))}</span><b>✓</b></div>
       <div class="tr-bfoot">Advanced — bye</div>
     </div>`;
   }
+  const drawn=done&&!m.winner_id;
   const aw=done&&m.winner_id===m.team_a, bw=done&&m.winner_id===m.team_b;
+  const stakes=(m.meta||{}).stakes;
   return `<div class="tr-bm ${done?'done':''}">
     <div class="tr-bteam ${aw?'win':''}"><span>${esc(nm(m.team_a))}</span><b>${done?m.score_a:"–"}</b></div>
     <div class="tr-bteam ${bw?'win':''}"><span>${esc(nm(m.team_b))}</span><b>${done?m.score_b:"–"}</b></div>
-    <div class="tr-bfoot">Bo${m.best_of}${m.scheduled_at?" · "+new Date(m.scheduled_at).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):""}</div>
+    <div class="tr-bfoot">${drawn?"Drawn · ":""}Bo${m.best_of}${
+      stakes?" · "+esc(TR_STAKES[stakes]||""):""}${
+      m.scheduled_at?" · "+new Date(m.scheduled_at).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):""}</div>
   </div>`;
 }
+const TR_STAKES={advance:"winner goes through",eliminate:"loser is out",both:"winner through, loser out"};
 
 function trMatchListHTML(matches,nm,uid,byId,t){
   const playable=(matches||[]).filter(m=>m.status!=="done"&&m.team_a&&m.team_b);
-  if(!playable.length) return "";
+  if(!playable.length){
+    // In a Swiss, the next round cannot be drawn until every match of this one
+    // is settled — so say that, rather than showing an empty panel.
+    if(t&&t.status==="running"&&t.format==="swiss"){
+      return `<div class="tr-waiting">Every match of this round is in. The next round is drawn as soon as the last result is confirmed.</div>`;
+    }
+    return "";
+  }
   const mine=m=>uid&&((byId[m.team_a]||{}).captain_id===uid||(byId[m.team_b]||{}).captain_id===uid);
+  const tag=m=>{
+    const s=(m.meta||{}).stakes;
+    return s?`<span class="tr-stakes ${esc(s)}">${esc(TR_STAKES[s]||"")}</span>`:"";
+  };
   return `<div class="td-section-label" style="margin-top:22px">Matches to play</div>
     <div class="tr-mlist">${playable.map(m=>`<div class="tr-mrow ${mine(m)?'mine':''}">
-      <span class="tr-mteams">${esc(nm(m.team_a))} <span class="vs">vs</span> ${esc(nm(m.team_b))}</span>
+      <span class="tr-mteams">${esc(nm(m.team_a))} <span class="vs">vs</span> ${esc(nm(m.team_b))}${tag(m)}</span>
       <span class="tr-mbo">Bo${m.best_of}</span>
       ${mine(m)?`<button class="lg-btn-ghost tr-report" data-report="${esc(m.id)}">Report result</button>`
                :`<span class="tr-mwait">${esc(m.label||"")}</span>`}
@@ -1917,19 +2101,48 @@ function wireTourneyPanel(t,teams,matches){
   const back=$("#trBackList"); if(back) back.onclick=()=>{ _trOpenId=null; renderTourney(); };
   const gs=$("#trGoSignin"); if(gs) gs.onclick=()=>{ closeTourneys(); openModal("signinModal"); };
 
+  // Only show the settings that belong to the chosen format — the whole form
+  // at once is a wall of options nobody reads.
+  const fmtSel=$("#trFormat");
+  if(fmtSel){
+    const syncFmt=()=>{
+      const f=fmtSel.value;
+      const sw=$("#trSwissOpts"), gr=$("#trGroupOpts"), th=$("#trThirdWrap"), note=$("#trFmtNote");
+      if(sw) sw.hidden=f!=="swiss";
+      if(gr) gr.hidden=f!=="groups";
+      if(th) th.hidden=f!=="single_elim";
+      if(note) note.textContent=TR_FORMAT_BLURB[f]||"";
+    };
+    fmtSel.onchange=syncFmt; syncFmt();
+  }
+
   const cb=$("#trCreateBtn"); if(cb) cb.onclick=async()=>{
     const name=($("#trName").value||"").trim();
     if(!name){ toast("Name it","Give your tournament a name."); return; }
     const uid=await lgCurrentUserId();
     if(!uid){ toast("Sign in first","You need an account to organise a tournament."); return; }
+    const fmt=$("#trFormat").value;
     const bo=+$("#trBo").value, boF=+$("#trBoFinal").value;
     const sf={default:bo}; if(boF) sf.final=boF;
+    const cfg={};
+    if(fmt==="swiss"){
+      const r=+$("#trSwRounds").value; if(r) cfg.rounds=r;
+      cfg.mode=$("#trSwMode").value;
+      cfg.playoff=$("#trSwPlayoff").value;
+      const dec=+$("#trSwDecider").value; if(dec) sf.decider=dec;
+    }else if(fmt==="groups"){
+      const g=+$("#trGrCount").value; if(g) cfg.groups=g;
+      const a=+$("#trGrAdvance").value; if(a) cfg.advance=a;
+      cfg.group_bo=+$("#trGrBo").value;
+      cfg.playoff=$("#trGrPlayoff").value;
+    }
     cb.disabled=true; const o=cb.textContent; cb.textContent="Creating…";
     const {data:code}=await SB.rpc("tournament_code");
     const {data,error}=await SB.from("tournaments").insert({
-      code, name, format:$("#trFormat").value, organiser_id:uid,
-      max_teams:+$("#trMax").value, series_format:sf,
-      third_place:$("#trThird").checked, description:($("#trDesc").value||"").trim()||null
+      code, name, format:fmt, organiser_id:uid,
+      max_teams:+$("#trMax").value, series_format:sf, stage_config:cfg,
+      third_place:fmt==="single_elim"&&$("#trThird").checked,
+      description:($("#trDesc").value||"").trim()||null
     }).select().maybeSingle();
     if(error){ toast("Couldn't create",error.message||"Try again."); cb.disabled=false; cb.textContent=o; return; }
     toast("Tournament created","Share the invite link to bring teams in.");
@@ -1987,20 +2200,35 @@ function trOpenReport(m,teams){
   const byId={}; teams.forEach(x=>byId[x.id]=x);
   const A=(byId[m.team_a]||{}).name||"Team A", B=(byId[m.team_b]||{}).name||"Team B";
   const need=Math.floor(m.best_of/2)+1;
+  // An even series has no clinch: both games are played whatever happens, so
+  // every scoreline is a full card and 1–1 is a real result. That makes the
+  // "who won" question meaningless, so the scoreline is the whole answer.
+  const even=m.best_of%2===0;
   const chips=[];
-  for(let l=0;l<need;l++) chips.push([need,l]);
+  if(even){ for(let a=m.best_of;a>=0;a--) chips.push([a,m.best_of-a]); }
+  else    { for(let l=0;l<need;l++) chips.push([need,l]); }
   const body=$("#leagueModalBody"); if(!body) return;
   $("#lgModalTitle").textContent="Report result";
   body.innerHTML=`
-    <div class="hint" style="margin-bottom:14px">${esc(m.label||"")} · Bo${m.best_of}. The other captain confirms before the bracket moves.</div>
-    <div class="rep-who">
-      <button class="rep-team" data-repwin="a">${esc(A)}</button>
-      <button class="rep-team" data-repwin="b">${esc(B)}</button>
-    </div>
-    <div class="pred-score-label" style="margin-top:16px">Series score</div>
-    <div class="pred-chips" id="repChips">
-      ${chips.map(([w,l])=>`<button class="pred-chip" data-repscore="${w}-${l}">${w}–${l}</button>`).join("")}
-    </div>
+    <div class="hint" style="margin-bottom:14px">${esc(m.label||"")} · Bo${m.best_of}. ${
+      even?"A 1–1 is a real result here and scores a point each. ":""}The other captain confirms before anything moves.</div>
+    ${even?`
+      <div class="pred-score-label">How did it end?</div>
+      <div class="rep-even" id="repChips">
+        ${chips.map(([a,b])=>`<button class="rep-evenbtn" data-repexact="${a}-${b}">
+          <span class="rep-evenscore">${a}–${b}</span>
+          <span class="rep-evenwho">${a===b?"draw":esc(a>b?A:B)}</span>
+        </button>`).join("")}
+      </div>`
+    :`
+      <div class="rep-who">
+        <button class="rep-team" data-repwin="a">${esc(A)}</button>
+        <button class="rep-team" data-repwin="b">${esc(B)}</button>
+      </div>
+      <div class="pred-score-label" style="margin-top:16px">Series score</div>
+      <div class="pred-chips" id="repChips">
+        ${chips.map(([w,l])=>`<button class="pred-chip" data-repscore="${w}-${l}">${w}–${l}</button>`).join("")}
+      </div>`}
     <div class="lg-field" style="margin-top:6px">
       <label>Dota match IDs <span style="opacity:.6">(optional, comma separated)</span></label>
       <input id="repIds" placeholder="8912958050, 8912990112">
@@ -2009,7 +2237,7 @@ function trOpenReport(m,teams){
     <button class="lg-btn" id="repSubmit" style="width:100%">Submit result</button>`;
   openModal("leagueModal");
 
-  let win=null, score=null;
+  let win=null, score=null, exact=null;
   body.querySelectorAll("[data-repwin]").forEach(b=>b.onclick=()=>{
     win=b.getAttribute("data-repwin");
     body.querySelectorAll("[data-repwin]").forEach(x=>x.classList.toggle("sel",x===b));
@@ -2018,11 +2246,21 @@ function trOpenReport(m,teams){
     score=b.getAttribute("data-repscore");
     body.querySelectorAll("[data-repscore]").forEach(x=>x.classList.toggle("sel",x===b));
   });
+  body.querySelectorAll("[data-repexact]").forEach(b=>b.onclick=()=>{
+    exact=b.getAttribute("data-repexact");
+    body.querySelectorAll("[data-repexact]").forEach(x=>x.classList.toggle("sel",x===b));
+  });
   $("#repSubmit").onclick=async()=>{
-    if(!win){ toast("Who won?","Pick the winning team."); return; }
-    if(!score){ toast("Pick a score","Choose how the series ended."); return; }
-    const [w,l]=score.split("-").map(Number);
-    const sa=win==="a"?w:l, sb=win==="a"?l:w;
+    let sa,sb;
+    if(even){
+      if(!exact){ toast("Pick a score","Choose how the series ended."); return; }
+      [sa,sb]=exact.split("-").map(Number);
+    }else{
+      if(!win){ toast("Who won?","Pick the winning team."); return; }
+      if(!score){ toast("Pick a score","Choose how the series ended."); return; }
+      const [w,l]=score.split("-").map(Number);
+      sa=win==="a"?w:l; sb=win==="a"?l:w;
+    }
     const ids=($("#repIds").value||"").split(/[,\s]+/).filter(Boolean);
     const btn=$("#repSubmit"); btn.disabled=true; btn.textContent="Submitting…";
     const {data,error}=await SB.rpc("tournament_report",
