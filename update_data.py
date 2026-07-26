@@ -1285,6 +1285,188 @@ def push_world_ratings():
     return n_teams
 
 
+# ---------------------------------------------------------------------------
+# Our own world ranking: collect pro match history, run Glicko-2 over it.
+# See rating_engine.py for the algorithm and why we don't just use datdota.
+# ---------------------------------------------------------------------------
+
+PRO_HISTORY_PAGES = int(os.environ.get("PRO_HISTORY_PAGES", "6"))   # 100 matches each
+RATING_WINDOW_DAYS = 270      # ~9 months of history feeds the rating
+ACTIVE_DAYS = 120             # a team must have played this recently to be listed
+
+
+# Only these count toward the world ranking. OpenDota marks 7,000+ leagues
+# "excluded" — open ladders and amateur grinders whose teams rack up wins
+# against weak opposition in a closed pool. Including them put unknown
+# amateur sides above Team Falcons; rating pools only compare meaningfully
+# when the teams in them actually play each other.
+RATED_TIERS = ("premium", "professional")
+
+
+def fetch_league_tiers():
+    """{league_id: tier} from OpenDota."""
+    try:
+        rows = opendota_get("/leagues")
+    except Exception as e:
+        print(f"  ! OpenDota leagues failed: {e}", file=sys.stderr)
+        return {}
+    return {l["leagueid"]: (l.get("tier") or "").lower()
+            for l in (rows or []) if l.get("leagueid")}
+
+
+def fetch_pro_series(pages=PRO_HISTORY_PAGES, tiers=None):
+    """
+    Walk back through OpenDota's pro match feed and aggregate games into
+    series. Returns {series_key: row} ready for the pro_series table.
+    """
+    if tiers is None:
+        tiers = fetch_league_tiers()
+    out = {}
+    before = None
+    for _ in range(max(1, pages)):
+        path = "/proMatches" + (f"?less_than_match_id={before}" if before else "")
+        try:
+            rows = opendota_get(path)
+        except Exception as e:
+            print(f"  ! OpenDota proMatches failed: {e}", file=sys.stderr)
+            break
+        if not isinstance(rows, list) or not rows:
+            break
+        for g in rows:
+            ra, di = g.get("radiant_team_id"), g.get("dire_team_id")
+            rn = (g.get("radiant_name") or "").strip()
+            dn = (g.get("dire_name") or "").strip()
+            if not ra or not di or not rn or not dn or g.get("radiant_win") is None:
+                continue
+            start = g.get("start_time") or 0
+            # Order the pair deterministically so A/B don't flip between games.
+            if ra <= di:
+                aid, bid, an, bn, a_is_rad = ra, di, rn, dn, True
+            else:
+                aid, bid, an, bn, a_is_rad = di, ra, dn, rn, False
+            sid = g.get("series_id") or 0
+            key = f"s{sid}" if sid else f"p{aid}-{bid}-{start // 86400}"
+            row = out.get(key)
+            if row is None:
+                row = out[key] = {
+                    "series_key": key, "league_id": g.get("leagueid"),
+                    "tier": tiers.get(g.get("leagueid")) or None,
+                    "team_a_id": aid, "team_a": an, "team_b_id": bid, "team_b": bn,
+                    "score_a": 0, "score_b": 0,
+                    "best_of": _BEST_OF.get(g.get("series_type") or 0, 1),
+                    "_start": start,
+                }
+            if start and start < row["_start"]:
+                row["_start"] = start
+            rad_won = g["radiant_win"]
+            a_won = (rad_won == a_is_rad)
+            row["score_a" if a_won else "score_b"] += 1
+        before = rows[-1].get("match_id")
+        if not before:
+            break
+        time.sleep(1.1)          # stay well inside OpenDota's 60/min
+    for row in out.values():
+        row["started_at"] = datetime.datetime.fromtimestamp(
+            row.pop("_start"), datetime.timezone.utc).isoformat()
+    return out
+
+
+def _supabase_select(table, query, page_size=1000):
+    """
+    SELECT via PostgREST, paginated. PostgREST caps a response at its
+    max-rows setting (1000 here) and does it SILENTLY — asking for
+    limit=20000 just returns the first 1000, which quietly computed the
+    world ranking on two-month-old data until this was caught.
+    """
+    out = []
+    offset = 0
+    while True:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/{table}?{query}",
+            headers={"apikey": SUPABASE_SERVICE_ROLE_KEY,
+                     "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                     "Accept": "application/json",
+                     "Range-Unit": "items",
+                     "Range": f"{offset}-{offset + page_size - 1}"})
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            batch = json.loads(resp.read().decode("utf-8"))
+        out.extend(batch)
+        if len(batch) < page_size:
+            return out
+        offset += page_size
+
+
+def refresh_world_ranking():
+    """
+    Add any new pro series to our history, recompute Glicko-2 over the whole
+    stored window, and publish the ranking. Fully automatic — this is what
+    replaces the manual datdota refresh.
+    """
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        print("  · Supabase service key not set — skipping world ranking.")
+        return 0
+    import rating_engine
+
+    fresh = fetch_pro_series()
+    if fresh:
+        _supabase_upsert("pro_series", "series_key", list(fresh.values()))
+
+    cutoff = (datetime.datetime.now(datetime.timezone.utc)
+              - datetime.timedelta(days=RATING_WINDOW_DAYS))
+    tier_filter = ",".join(RATED_TIERS)
+    stored = _supabase_select(
+        "pro_series",
+        "select=series_key,team_a_id,team_a,team_b_id,team_b,score_a,score_b,started_at"
+        f"&started_at=gte.{cutoff.date().isoformat()}&tier=in.({tier_filter})"
+        "&order=started_at.asc")
+    if not stored:
+        print("  · No stored pro series yet — ranking not computed.")
+        return 0
+
+    for s in stored:
+        s["started_at"] = datetime.datetime.fromisoformat(
+            s["started_at"].replace("Z", "+00:00"))
+
+    ratings = rating_engine.compute_ratings(stored)
+    active_since = (datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(days=ACTIVE_DAYS))
+    ratings = rating_engine.active_ratings(ratings, stored, active_since)
+    ladder = rating_engine.ranked(ratings)      # enough games, best first
+    if not ladder:
+        print("  · Ranking produced no listable teams — keeping the stored one.")
+        return 0
+
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    rows = [{
+        "valve_id": tid, "name": r["name"], "glicko": r["rating"],
+        "conservative": r["conservative"], "glicko_prev": r["prev"],
+        "rd": r["rd"], "region": None, "as_of": now_iso,
+        "source": "computed", "games": r["games"],
+    } for tid, r in ladder]
+    _supabase_upsert("team_ratings", "valve_id", rows)
+    # Anything we no longer rate (disbanded, inactive) must go, or the ladder
+    # keeps showing teams that stopped playing months ago.
+    keep = {tid for tid, _ in ladder}
+    try:
+        old = _supabase_select("team_ratings", "select=valve_id")
+        stale = [r["valve_id"] for r in old if r["valve_id"] not in keep]
+        for i in range(0, len(stale), 100):
+            batch = ",".join(str(v) for v in stale[i:i + 100])
+            req = urllib.request.Request(
+                f"{SUPABASE_URL}/rest/v1/team_ratings?valve_id=in.({batch})",
+                headers={"apikey": SUPABASE_SERVICE_ROLE_KEY,
+                         "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"},
+                method="DELETE")
+            urllib.request.urlopen(req, timeout=30).close()
+    except Exception as e:
+        print(f"  ! Couldn't prune old ratings: {e}", file=sys.stderr)
+
+    top = [r["name"] for _, r in ladder[:5]]
+    print(f"  · World ranking: {len(rows)} teams from {len(stored)} rated series. "
+          f"Top: {', '.join(top)}")
+    return len(rows)
+
+
 def _stage_of(match_id):
     if match_id.startswith("q"):
         return "qualifier"
@@ -1383,11 +1565,12 @@ def push_league_backend(data):
     print(f"  · League backend: {len(matches)} match(es), {len(games)} game(s), "
           f"{len(results)} result(s).")
 
-    # The Dota hub's world ranking / tournament tiers (independent of the league).
+    # The Dota hub's world ranking — computed from match history we already
+    # pull, so it needs no third party and refreshes itself every run.
     try:
-        push_world_ratings()
+        refresh_world_ranking()
     except Exception as e:
-        print(f"  ! World ratings push failed: {e}", file=sys.stderr)
+        print(f"  ! World ranking failed: {e}", file=sys.stderr)
     return len(results)
 
 

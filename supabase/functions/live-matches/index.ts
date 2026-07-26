@@ -95,18 +95,24 @@ async function loadRatings() {
   _ddInFlight = (async () => {
     if (!SB_URL || !SB_KEY) { _ddFailAt = Date.now(); return; }
     const h = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+    // Ordered by the CONSERVATIVE rating — "what we're confident they're at
+    // least worth" — so a team with three lucky games can't top the ladder.
     const rows = await jurl(
-      `${SB_URL}/rest/v1/team_ratings?select=valve_id,name,glicko,glicko_prev,rd,region,as_of&order=glicko.desc`, h);
+      `${SB_URL}/rest/v1/team_ratings?select=valve_id,name,glicko,conservative,glicko_prev,rd,region,as_of,source,games&order=conservative.desc.nullslast,glicko.desc`, h);
     if (!Array.isArray(rows) || !rows.length) { _ddFailAt = Date.now(); return; }
     const map: Record<number, any> = {};
     for (const r of rows) {
       if (r.glicko == null || !r.valve_id) continue;
       map[r.valve_id] = {
         glicko: r.glicko,
+        // What we're confident they're at least worth; the ladder sorts on it.
+        conservative: r.conservative != null ? r.conservative : r.glicko,
         glickoPrev: r.glicko_prev,
         rd: r.rd,
         region: r.region,
         ddName: r.name,
+        games: r.games,
+        src: r.source || "datdota",
       };
     }
     if (!Object.keys(map).length) { _ddFailAt = Date.now(); return; }
@@ -186,9 +192,11 @@ async function loadLookups() {
         tag: od?.tag || "",
         logo: od?.logo_url || null,
         glicko: dd ? dd.glicko : null,
+        conservative: dd ? dd.conservative : null,
         glickoDelta: dd && dd.glickoPrev != null ? dd.glicko - dd.glickoPrev : null,
-        provisional: dd && dd.rd != null ? dd.rd > 100 : false,
+        provisional: dd && dd.rd != null ? dd.rd > 130 : false,
         region: dd?.region || null,
+        seriesPlayed: dd?.games ?? null,
         ratingSource: source,
         rating: dd ? dd.glicko : Math.round(od?.rating || 0),  // legacy key
         wins: w, losses: l,
@@ -200,8 +208,10 @@ async function loadLookups() {
     if (_dd && Object.keys(_dd).length) {
       const ranked = Object.keys(_dd)
         .map((k) => Number(k))
-        .map((id) => shape(id, odById[id], _dd![id], "datdota"))
-        .sort((a, b) => (b.glicko || 0) - (a.glicko || 0));
+        .map((id) => shape(id, odById[id], _dd![id], _dd![id].src || "datdota"))
+        // Sort on the conservative estimate, NOT the raw rating — otherwise a
+        // team with a big rating and a big uncertainty tops the ladder.
+        .sort((a, b) => (b.conservative ?? b.glicko ?? 0) - (a.conservative ?? a.glicko ?? 0));
       // Pad with OpenDota-rated teams so the tab still has depth below the
       // curated set, clearly marked as a different (weaker) rating source.
       const have = new Set(ranked.map((t) => t.id));
@@ -440,7 +450,8 @@ Deno.serve(async (req) => {
       topTeams: _topTeams || [], topPlayers: _topPlayers || [],
       ladder: _ladder || null,
       ratingsUpdatedAt: _ddAsOf,
-      ratingSource: (_dd && Object.keys(_dd).length) ? "datdota" : "opendota",
+      ratingSource: (_dd && Object.keys(_dd).length)
+        ? (_dd[Object.keys(_dd)[0] as any]?.src || "datdota") : "opendota",
       updatedAt: new Date().toISOString(),
     }), { headers: { ...CORS, "Content-Type": "application/json" } });
   } catch (e) {

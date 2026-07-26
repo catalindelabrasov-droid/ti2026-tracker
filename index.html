@@ -1338,19 +1338,22 @@ function renderTeamsTabInto(){
   const grid=$("#teamGrid"); if(!grid) return;
   const teams=LIVE_FEED.topTeams||[];
   if(!teams.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>No team data yet</b>Rankings load from datdota + OpenDota — check back shortly.</div>`; return; }
-  const ranked=teams.filter(t=>t.ratingSource==="datdota");
-  const rest=teams.filter(t=>t.ratingSource!=="datdota");
+  const ranked=teams.filter(t=>t.ratingSource==="datdota"||t.ratingSource==="computed");
+  const rest=teams.filter(t=>t.ratingSource!=="datdota"&&t.ratingSource!=="computed");
   const card=t=>`<div class="tmcard" data-team="${t.id}" data-tname="${esc(t.name)}" data-tlogo="${esc(t.logo||'')}" data-teams="${esc(t.name)}">
     <span class="tm-rank ${t.rank<=3?'top':''}">${t.rank}</span>
     ${teamLogo(t.name,40,t.logo)}
     <div class="tm-info">
       <div class="tm-name">${esc(t.name)}${t.provisional?'<span class="tm-prov" title="Few recent matches — rating still settling">provisional</span>':''}</div>
-      <div class="tm-stat">${t.region?esc(REGION_NAME[t.region]||t.region)+' · ':''}${t.wins}W ${t.losses}L · ${t.winRate}% WR</div>
+      <div class="tm-stat">${t.region?esc(REGION_NAME[t.region]||t.region)+' · ':''}${t.seriesPlayed?t.seriesPlayed+' series · ':''}${t.wins}W ${t.losses}L · ${t.winRate}% WR</div>
     </div>
     <span class="tm-rating">${t.glicko!=null?t.glicko:t.rating}${t.glicko!=null?ratingTrend(t.glickoDelta):''}</span>
   </div>`;
   const asOf=LIVE_FEED.ratingsUpdatedAt?new Date(LIVE_FEED.ratingsUpdatedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):null;
-  const head=ranked.length?`<div class="rank-note" style="grid-column:1/-1"><b>World ranking</b> — Glicko-2 rating from datdota${asOf?`, as of ${esc(asOf)}`:''}. ▲▼ is the 7-day move.</div>`:"";
+  const src=(LIVE_FEED.ratingSource==="computed")
+    ? `Glicko-2, computed from every premier and professional series we track${asOf?`, updated ${esc(asOf)}`:''}. Teams are ordered by the rating we're confident they're <i>at least</i> worth, so a hot streak in three games can't jump the queue.`
+    : `Glicko-2 rating from datdota${asOf?`, as of ${esc(asOf)}`:''}.`;
+  const head=ranked.length?`<div class="rank-note" style="grid-column:1/-1"><b>World ranking</b> — ${src} ▲▼ is the 7-day move.</div>`:"";
   const restHead=rest.length?`<div class="rank-note sub" style="grid-column:1/-1">Other active teams — ordered by OpenDota's match rating, not world-ranked.</div>`:"";
   grid.innerHTML=head+ranked.map(card).join("")+restHead+rest.map(card).join("");
   grid.querySelectorAll(".tmcard").forEach(c=>c.onclick=()=>openRoster(c.getAttribute("data-team"),c.getAttribute("data-tname"),c.getAttribute("data-tlogo")));
