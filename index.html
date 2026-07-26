@@ -152,6 +152,28 @@
   .rank-note{font-size:12px;color:var(--ink-dim);line-height:1.6;padding:12px 14px;border:1px solid var(--line);border-left:2px solid var(--aegis);border-radius:var(--radius);background:var(--panel);margin-bottom:4px}
   .rank-note.sub{border-left-color:var(--line);margin-top:20px;color:var(--ink-faint)}
   .rank-note b{color:var(--ink)}
+  /* rules presets + member-facing summary */
+  .rule-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:4px 0 2px}
+  .rule-preset{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:4px}
+  .rule-preset:hover{border-color:var(--aegis)}
+  .rule-preset.on{border-color:var(--aegis);background:rgba(217,164,65,.1)}
+  .rule-preset .rp-name{font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:.03em;color:var(--ink)}
+  .rule-preset.on .rp-name{color:var(--aegis-bright)}
+  .rule-preset .rp-desc{font-size:11.5px;color:var(--ink-dim);line-height:1.45}
+  .rule-summary{display:flex;flex-wrap:wrap;gap:8px}
+  .rs-item{font-size:12px;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-family:'JetBrains Mono',monospace}
+  .rs-item b{color:var(--ink);font-weight:500;font-family:'Inter',sans-serif}
+  /* my picks history */
+  .mp-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px}
+  .mp-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
+  .mp-row:last-child{border-bottom:none}
+  .mp-mark{font-size:16px;text-align:center}
+  .mp-row.hit .mp-mark{color:#5fbf72}.mp-row.miss .mp-mark{color:#d4695f}.mp-row.pending{opacity:.65}
+  .mp-pick{font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:.02em}
+  .mp-score{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint);margin-left:4px}
+  .mp-result{font-size:12px;color:var(--ink-dim);margin-top:2px}
+  .mp-pts{font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;color:var(--ink-dim)}
+  .mp-row.hit .mp-pts{color:var(--aegis-bright)}.mp-row.miss .mp-pts{color:#d4695f}
   .trn-tier-head{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--ink-dim);border-bottom:1px solid var(--line);padding:14px 0 8px;margin-top:8px}
   .trn-tier-head:first-child{margin-top:0}
   /* players grouped under their team's world rank */
@@ -429,10 +451,11 @@
   .pred-team:hover{border-color:var(--ink-faint)}
   .pred-team.sel{border-color:var(--aegis);background:rgba(217,164,65,.1)}
   .pred-team.sel::after{content:"✓";margin-left:auto;color:var(--aegis);font-weight:700}
-  .pred-score{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:14px}
-  .pred-score input{width:56px;background:var(--panel);border:1px solid var(--line);border-radius:4px;color:var(--ink);font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;text-align:center;padding:6px;outline:none}
-  .pred-score input:focus{border-color:var(--aegis)}
-  .pred-score .vs{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);font-size:12px}
+  .pred-score-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:center;margin-bottom:8px}
+  .pred-chips{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+  .pred-chip{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--ink-dim);font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;padding:8px 16px;cursor:pointer;transition:.15s;min-width:64px}
+  .pred-chip:hover{border-color:var(--aegis);color:var(--ink)}
+  .pred-chip.sel{border-color:var(--aegis);background:rgba(217,164,65,.12);color:var(--aegis-bright)}
   .pred-actions{display:flex;gap:10px;align-items:center}
   .pred-lock{flex:1;background:var(--aegis);color:#0b0e13;font-weight:600;font-size:14px;padding:11px;border-radius:var(--radius);transition:.15s}
   .pred-lock:hover{background:var(--aegis-bright)}
@@ -796,6 +819,7 @@
       <div class="lg-tabs" id="lgTabs">
         <div class="lg-tab on" data-lgtab="home">My League</div>
         <div class="lg-tab" data-lgtab="predict">Predictions</div>
+        <div class="lg-tab" data-lgtab="mypicks">My Picks</div>
         <div class="lg-tab" data-lgtab="leaderboard">Leaderboard</div>
         <div class="lg-tab" data-lgtab="rules">Rules</div>
       </div>
@@ -2242,6 +2266,7 @@ function renderLeague(){
   }
   if(_lgTab==="home") panel.innerHTML=lgHome(lg);
   else if(_lgTab==="predict"){ panel.innerHTML=lgPredictions(lg); lgLoadOthersForLocked(lg); }
+  else if(_lgTab==="mypicks") panel.innerHTML=lgMyPicks(lg);
   else if(_lgTab==="leaderboard") panel.innerHTML=lgLeaderboard(lg);
   else if(_lgTab==="rules") panel.innerHTML=lgRulesView(lg);
   wireLeaguePanel();
@@ -2428,16 +2453,20 @@ function lgPredictions(lg){
       // Deadline passed: everyone's picks are public, even if you didn't play.
       body=`<div class="pred-hidden">Predictions closed for this match.</div>${lgOthersBlock(lg,m,true)}`;
     }else{
+      // Scores are chips derived from the series length, always read as
+      // "winner–loser". Free-typed numbers let people submit a 3–0 in a Bo3
+      // or a score that contradicts the team they just picked.
+      const need=Math.floor((m.bestOf||3)/2)+1;
+      const chips=[];
+      for(let losses=0;losses<need;losses++) chips.push([need,losses]);
+      const selScore=myPred?[Math.max(myPred.sa,myPred.sb),Math.min(myPred.sa,myPred.sb)].join("-"):null;
       body=`<div class="pred-pick">
           <div class="pred-team ${selA?'sel':''}" data-pick="${esc(a)}" data-mid="${esc(m.id)}">${teamLogo(a,22)}<span>${esc(a)}</span></div>
           <div class="pred-team ${selB?'sel':''}" data-pick="${esc(b)}" data-mid="${esc(m.id)}">${teamLogo(b,22)}<span>${esc(b)}</span></div>
         </div>
-        <div class="pred-score">
-          <span>${esc(a)}</span>
-          <input type="number" min="0" max="5" id="sa_${esc(m.id)}" value="${myPred?myPred.sa:''}" placeholder="0">
-          <span class="vs">vs</span>
-          <input type="number" min="0" max="5" id="sb_${esc(m.id)}" value="${myPred?myPred.sb:''}" placeholder="0">
-          <span>${esc(b)}</span>
+        <div class="pred-score-label">Series score</div>
+        <div class="pred-chips" data-mid="${esc(m.id)}">
+          ${chips.map(([w,l])=>`<button class="pred-chip ${selScore===w+"-"+l?'sel':''}" data-score="${w}-${l}" data-mid="${esc(m.id)}">${w}–${l}</button>`).join("")}
         </div>
         <div class="pred-actions"><button class="pred-lock" data-lock="${esc(m.id)}">🔒 Lock prediction</button></div>`;
     }
@@ -2545,6 +2574,102 @@ function lgComputeLeaderboard(lg){
   return Object.values(players).sort((a,b)=>b.points-a.points||b.correct-a.correct);
 }
 
+// Your own picks, checked against the real results. The leaderboard is just a
+// number until you can see which calls earned it.
+function lgMyPicks(lg){
+  const preds=lg.predictions||{};
+  const byId={}; allMatches(DATA).forEach(m=>byId[m.id]=m);
+  (DATA.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>byId[m.id]=m));
+  const rows=[];
+  let pts=0,correct=0,settled=0,pending=0;
+  Object.entries(preds).forEach(([mid,p])=>{
+    if(!p||!p.locked) return;
+    const m=byId[mid];
+    if(!m){ pending++; return; }
+    const a=m.teamA||{},b=m.teamB||{};
+    const done=m.status==="completed"&&typeof a.score==="number"&&typeof b.score==="number"&&a.score!==b.score;
+    if(!done){ pending++; rows.push({m,p,done:false}); return; }
+    const winner=a.score>b.score?a.name:b.name;
+    const hit=p.pick===winner;
+    // Mirrors the server for the rules that are computable in the browser;
+    // lone-wolf/first-game bonuses need other players' picks or per-game rows,
+    // so those land on the leaderboard only — said plainly below.
+    let earned=0;
+    if(rOn(lg.rules,"winner")&&hit) earned+=rPts(lg.rules,"winner");
+    if(rOn(lg.rules,"exactScore")&&hit&&p.sa===a.score&&p.sb===b.score) earned+=rPts(lg.rules,"exactScore");
+    if(rOn(lg.rules,"gameCountOU")&&(p.sa+p.sb)===(a.score+b.score)) earned+=rPts(lg.rules,"gameCountOU");
+    if(rOn(lg.rules,"negativePoints")&&!hit) earned-=rPts(lg.rules,"negativePoints");
+    pts+=earned; settled++; if(hit) correct++;
+    rows.push({m,p,done:true,winner,hit,earned});
+  });
+  if(!rows.length) return `<div class="lg-empty"><div class="big">🗒️</div><h3>No locked picks yet</h3>
+    <div class="hint">Lock a prediction and it'll show up here with the result and the points it earned.</div></div>`;
+  rows.sort((x,y)=>(y.done?1:0)-(x.done?1:0));
+  const hasBonus=["loneWolf","firstGame","reverseSweep"].some(k=>rOn(lg.rules,k));
+  const list=rows.map(({m,p,done,winner,hit,earned})=>{
+    const a=m.teamA||{},b=m.teamB||{};
+    const result=done?`${esc(a.name)} ${a.score}–${b.score} ${esc(b.name)}`:"Not played yet";
+    return `<div class="mp-row ${done?(hit?'hit':'miss'):'pending'}">
+      <div class="mp-mark">${done?(hit?'✓':'✗'):'⏳'}</div>
+      <div class="mp-body">
+        <div class="mp-pick">${esc(p.pick)} <span class="mp-score">${p.sa}–${p.sb}</span></div>
+        <div class="mp-result">${result}</div>
+      </div>
+      <div class="mp-pts">${done?(earned>0?'+'+earned:earned):''}</div>
+    </div>`;
+  }).join("");
+  return `<div class="lg-card" style="padding:16px 18px">
+      <h3 style="margin:0 0 4px">My picks</h3>
+      <div class="hint" style="margin:0">${correct}/${settled} correct${settled?` · ${pts} pts from these rules`:""}${pending?` · ${pending} still to play`:""}</div>
+    </div>
+    <div class="mp-list">${list}</div>
+    ${hasBonus?`<div class="hint" style="margin-top:12px">Lone-wolf, game-1 and reverse-sweep bonuses are added on the standings — they depend on other players' picks and per-game results.</div>`:""}`;
+}
+
+// Rule presets. Each lists ONLY the rules it enables — everything else is
+// switched off — so applying one gives a predictable, fully-scored league.
+const RULE_PRESETS={
+  casual:{on:{winner:10,champion:50},mode:"flat"},
+  standard:{on:{winner:10,exactScore:15,champion:50,grandFinalists:25,topFour:20},mode:"flat"},
+  sweaty:{on:{winner:10,exactScore:15,gameCountOU:6,loneWolf:5,firstGame:5,reverseSweep:12,
+              champion:50,grandFinalists:25,topFour:20,topEight:10,champFromLB:20,
+              negativePoints:5},mode:"weighted"},
+};
+const SCORED_RULE_KEYS=["winner","exactScore","gameCountOU","loneWolf","firstGame","reverseSweep",
+  "champion","grandFinalists","topFour","topEight","champFromLB","negativePoints"];
+
+function lgApplyPreset(rules,key){
+  const p=RULE_PRESETS[key]; if(!p) return rules;
+  SCORED_RULE_KEYS.forEach(k=>{
+    const pts=p.on[k];
+    if(typeof rules[k]!=="object"||rules[k]===null) rules[k]={on:false,pts:0};
+    rules[k].on=pts!=null;
+    if(pts!=null) rules[k].pts=pts;
+  });
+  rules.scoreMode=p.mode;
+  return rules;
+}
+function lgPresetMatches(r,key){
+  const p=RULE_PRESETS[key]; if(!p) return false;
+  if((r.scoreMode||"flat")!==p.mode) return false;
+  return SCORED_RULE_KEYS.every(k=>{
+    const on=!!(r[k]&&r[k].on), want=p.on[k]!=null;
+    return on===want && (!want || (r[k].pts===p.on[k]));
+  });
+}
+const RULE_SHORT={winner:"Correct winner",exactScore:"Exact score",gameCountOU:"Game count",
+  loneWolf:"Lone wolf",firstGame:"Wins game 1",reverseSweep:"Reverse sweep",
+  champion:"Champion",grandFinalists:"Grand finalists",topFour:"Top 4",topEight:"Top 8",
+  champFromLB:"Champion from LB",negativePoints:"Wrong pick"};
+function lgRulesSummary(r){
+  const parts=SCORED_RULE_KEYS.filter(k=>r[k]&&r[k].on).map(k=>{
+    const pts=r[k].pts||0;
+    const val=(k==="negativePoints")?`−${pts}`:`+${pts}`;
+    return `<span class="rs-item"><b>${esc(RULE_SHORT[k]||k)}</b> ${val}</span>`;
+  });
+  return parts.length?parts.join(""):`<span class="rs-item">No scoring rules are enabled.</span>`;
+}
+
 function lgRulesView(lg){
   const editable=lg.me===lg.admin;
   const r=lg.rules;
@@ -2562,9 +2687,33 @@ function lgRulesView(lg){
   };
   const modeBtn=(val,label)=>`<button class="rule-mode ${r.scoreMode===val?'on':''}" data-mode="${val}" ${dis}>${esc(label)}</button>`;
   const tb=(key,label)=>{const on=(typeof r[key]==="object")?!!r[key].on:!!r[key];return `<label class="tb-item"><input type="checkbox" data-ruleon="${key}" ${on?'checked':''} ${dis}> ${esc(label)}</label>`;};
+
+  // Most groups never want to read 14 toggles — they want "the normal one".
+  // Presets set everything in one tap; the toggles stay for anyone who cares.
+  const presetBtn=(k,label,desc)=>`<button class="rule-preset ${lgPresetMatches(r,k)?'on':''}" data-preset="${k}" ${dis}>
+      <span class="rp-name">${esc(label)}</span><span class="rp-desc">${esc(desc)}</span></button>`;
+
+  // Members can't change anything, so show them the scoring, not dead switches.
+  if(!editable){
+    return `<div class="lg-card">
+        <h3 style="margin:0 0 4px">League rules</h3>
+        <div class="hint" style="margin:0 0 14px">Set by the admin. This is how points are scored.</div>
+        <div class="rule-summary">${lgRulesSummary(r)}</div>
+        <div class="hint" style="margin-top:14px">Predictions lock ${Math.round(r.lockLeadMs/60000)} minutes before each match${r.scoreMode==="weighted"?", and later rounds are worth more":""}.</div>
+      </div>`;
+  }
+
   return `<div class="lg-card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <div><h3 style="margin:0">League rules</h3><div class="hint" style="margin:4px 0 0">${editable?'As admin, toggle what counts and set the points. Everything is on the table for now; trim later.':'Only the admin can change these.'}</div></div>
-      ${editable?'<button class="lg-btn" id="lgSaveRules">Save rules</button>':''}
+      <div><h3 style="margin:0">League rules</h3><div class="hint" style="margin:4px 0 0">Pick a preset, or fine-tune below. Everything here is scored automatically.</div></div>
+      <button class="lg-btn" id="lgSaveRules">Save rules</button>
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Presets</div>
+      <div class="rule-presets">
+        ${presetBtn("casual","Casual","Winner + champion only. Easy to follow.")}
+        ${presetBtn("standard","Standard","Winner, exact score and the tournament picks.")}
+        ${presetBtn("sweaty","Sweaty","Everything on, wrong picks cost you, finals worth more.")}
+      </div>
     </div>
 
     <div class="rule-group"><div class="rule-group-h">Per-match predictions</div>
@@ -2687,14 +2836,24 @@ function wireLeaguePanel(){
     document.querySelectorAll(`.pred-team[data-mid="${cssEscape(mid)}"]`).forEach(x=>x.classList.remove("sel"));
     t.classList.add("sel");
   });
+  // predictions: select the series score
+  document.querySelectorAll(".pred-chip").forEach(c=>c.onclick=()=>{
+    const mid=c.getAttribute("data-mid");
+    document.querySelectorAll(`.pred-chip[data-mid="${cssEscape(mid)}"]`).forEach(x=>x.classList.remove("sel"));
+    c.classList.add("sel");
+  });
   // lock prediction
   document.querySelectorAll("[data-lock]").forEach(btn=>btn.onclick=async()=>{
     const mid=btn.getAttribute("data-lock");
     const sel=document.querySelector(`.pred-team.sel[data-mid="${cssEscape(mid)}"]`);
-    const sa=$("#sa_"+CSS.escape(mid)).value, sb=$("#sb_"+CSS.escape(mid)).value;
     if(!sel){toast("Pick a winner","Choose which team you think will win.");return;}
-    if(sa===""||sb===""){toast("Enter a score","Add your predicted exact score, e.g. 2–1.");return;}
+    const chip=document.querySelector(`.pred-chip.sel[data-mid="${cssEscape(mid)}"]`);
+    if(!chip){toast("Pick a score","Choose how the series ends, e.g. 2–1.");return;}
     const pick=sel.getAttribute("data-pick");
+    // Chips read winner–loser; map them onto this match's A/B order.
+    const [win,lose]=chip.getAttribute("data-score").split("-").map(Number);
+    const isA=(document.querySelectorAll(`.pred-team[data-mid="${cssEscape(mid)}"]`)[0]===sel);
+    const sa=isA?win:lose, sb=isA?lose:win;
     const s=lgLoad();
     // No account or no league yet: park the pick and pick the flow back up
     // after sign-in instead of throwing the choice away.
@@ -2771,6 +2930,18 @@ function wireLeaguePanel(){
     }
     toast("Rules saved","Your league rules are updated."); renderLeague();
   };
+  // one-tap rule presets
+  document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=async()=>{
+    const s=lgLoad(); if(!s||!s.id) return;
+    lgApplyPreset(s.rules,b.getAttribute("data-preset"));
+    lgSave(s);
+    if(SB_READY()){
+      const {error}=await SB.from("leagues").update({rules:s.rules}).eq("id",s.id);
+      if(error){ toast("Couldn't save", error.message||"Try again."); return; }
+    }
+    toast("Rules updated",`${b.querySelector(".rp-name").textContent} scoring is now active.`);
+    renderLeague();
+  });
   const sr=$("#lgSaveRules"); if(sr) sr.onclick=saveRules;
   const sr2=$("#lgSaveRules2"); if(sr2) sr2.onclick=saveRules;
   // scoring mode buttons
