@@ -438,10 +438,13 @@ function isPro(g: any) { return g.league_id && g.team_name_radiant && g.team_nam
 function shapeLive(g: any) {
   const mins = g.game_time != null ? Math.max(0, Math.floor(g.game_time / 60)) : null;
   const lg = _leagues && _leagues[g.league_id];
-  const evName = (lg && lg.name) || g.league_name || "Pro Match";
+  // League names routinely carry trailing spaces ("EPL Masters 2026 "), which
+  // turned the stream search into a double-spaced query.
+  const evName = String((lg && lg.name) || g.league_name || "Pro Match")
+    .replace(/\s+/g, " ").trim();
   const tA = _teams && _teams[g.team_id_radiant];
   const tB = _teams && _teams[g.team_id_dire];
-  const twitch = "https://www.twitch.tv/search?term=" + encodeURIComponent(evName + " dota");
+  const twitch = "https://www.twitch.tv/search?term=" + encodeURIComponent(evName);
   return {
     id: String(g.match_id), leagueId: g.league_id, event: evName,
     teamA: { name: g.team_name_radiant, score: g.radiant_score ?? 0, logo: tA?.logo ?? null },
