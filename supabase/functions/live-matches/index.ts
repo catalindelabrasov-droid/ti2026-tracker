@@ -576,13 +576,22 @@ Deno.serve(async (req) => {
     await Promise.all([loadLookups(), loadMeta(), loadLadder()]);
     await loadPlayers(); // needs _topTeams from loadLookups
     const games = await jget("/live");
-    // OpenDota's /live keeps finished games around for a while, so the same
-    // two teams can appear twice — the game that just ended alongside the one
-    // actually being played. Keep only the newest game per pairing
-    // (match_id increases over time), then sort by audience.
+    // OpenDota's /live is a Redis dump with an EIGHT HOUR TTL, fed from
+    // Valve's "top games by MMR" endpoint rather than the league one.
+    // Measured 2026-07-26: 2 of 100 entries were league games, the median
+    // entry was ~4 hours stale, and 17 were matches that had already ended —
+    // including one we were happily showing as LIVE. So drop anything that
+    // has ended or has gone quiet, and accept showing nothing rather than
+    // showing a ghost. (League rows carry Valve's 15-minute broadcast delay,
+    // hence the generous window.)
+    const nowSec = Math.floor(Date.now() / 1000);
+    const STALE_SEC = 25 * 60;
     const newestByPair: Record<string, any> = {};
     for (const g of (Array.isArray(games) ? games : [])) {
       if (!isPro(g)) continue;
+      if (g.deactivate_time) continue;                       // match is over
+      const age = nowSec - (g.last_update_time || 0);
+      if (!g.last_update_time || age > STALE_SEC) continue;   // feed went quiet
       const pair = [String(g.team_name_radiant), String(g.team_name_dire)]
         .sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1).join("|");
       const prev = newestByPair[pair];
