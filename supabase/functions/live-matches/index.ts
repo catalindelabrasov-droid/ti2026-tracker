@@ -321,6 +321,55 @@ async function loadPlayers() {
   } catch (_e) { /* keep previous */ }
 }
 
+// Recent series for one event. OpenDota's API has these leagues even though
+// its website has no page for most of them (opendota.com/leagues/19944 renders
+// a client-side 404), so we render the detail ourselves instead of sending
+// people off-site to a dead page.
+const _leagueCache: Record<number, { at: number; data: any }> = {};
+async function fetchLeagueDetail(leagueId: number) {
+  const c = _leagueCache[leagueId];
+  if (c && (Date.now() - c.at < 10 * 60 * 1000)) return c.data;
+
+  const [rows, tms] = await Promise.all([
+    jget(`/leagues/${leagueId}/matches`),
+    jget(`/leagues/${leagueId}/teams`),
+  ]);
+  const names: Record<number, { name: string; logo: string | null }> = {};
+  for (const t of (Array.isArray(tms) ? tms : [])) {
+    if (t.team_id && t.name) names[t.team_id] = { name: t.name, logo: t.logo_url || null };
+  }
+  // Games -> series, so a Bo3 reads as one 2-1 row rather than three lines.
+  const series: Record<string, any> = {};
+  for (const g of (Array.isArray(rows) ? rows : [])) {
+    const rid = g.radiant_team_id, did = g.dire_team_id;
+    const rn = (g.radiant_name || names[rid]?.name || "").trim();
+    const dn = (g.dire_name || names[did]?.name || "").trim();
+    if (!rn || !dn) continue;
+    const [a, b] = [rn, dn].sort((x, y) => x.toLowerCase() < y.toLowerCase() ? -1 : 1);
+    const start = g.start_time || 0;
+    const key = g.series_id ? String(g.series_id) : `${a}-${b}-${Math.floor(start / 86400)}`;
+    const s = series[key] || (series[key] = {
+      a, b, sa: 0, sb: 0, start,
+      logoA: names[rn === a ? rid : did]?.logo || null,
+      logoB: names[rn === b ? rid : did]?.logo || null,
+    });
+    if (start) s.start = Math.min(s.start || start, start);
+    if (g.radiant_win == null) continue;
+    const winner = g.radiant_win ? rn : dn;
+    if (winner.toLowerCase() === s.a.toLowerCase()) s.sa++; else s.sb++;
+  }
+  const data = {
+    leagueId,
+    name: (_leagues && _leagues[leagueId] && _leagues[leagueId].name) || null,
+    series: Object.values(series)
+      .sort((x: any, y: any) => (y.start || 0) - (x.start || 0))
+      .slice(0, 40),
+    teams: Object.values(names).map((t: any) => t.name).sort(),
+  };
+  _leagueCache[leagueId] = { at: Date.now(), data };
+  return data;
+}
+
 async function fetchRoster(teamId: number) {
   const c = _rosterCache[teamId];
   if (c && (Date.now() - c.at < CACHE_MS)) return c.players;
@@ -363,6 +412,14 @@ Deno.serve(async (req) => {
     if (rosterId) {
       const players = await fetchRoster(Number(rosterId));
       return new Response(JSON.stringify({ teamId: Number(rosterId), players }),
+        { headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+    // On-demand event detail: /live-matches?league=LEAGUE_ID
+    const leagueId = url.searchParams.get("league");
+    if (leagueId) {
+      await loadLookups();                     // for the league name
+      const detail = await fetchLeagueDetail(Number(leagueId));
+      return new Response(JSON.stringify(detail),
         { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
