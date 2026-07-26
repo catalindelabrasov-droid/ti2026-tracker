@@ -368,6 +368,8 @@
   .lg-tab{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.05em;font-size:14px;color:var(--ink-dim);padding:14px 18px;border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer;transition:.15s}
   .lg-tab:hover{color:var(--ink)}
   .lg-tab.on{color:var(--aegis);border-bottom-color:var(--aegis)}
+  .lg-tab{position:relative}
+  .lg-tab.dirty::after{content:"";position:absolute;top:10px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--aegis);box-shadow:0 0 0 3px rgba(217,164,65,.18)}
   .lg-panel{padding:28px 0 70px}
   .lg-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:18px}
   .lg-card h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:18px;letter-spacing:.02em;margin-bottom:4px}
@@ -656,7 +658,7 @@
         <button class="x" data-close="signupModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-note">After you sign up, your login details will be sent to your email. (Email delivery activates once the backend is connected.)</div>
+        <div class="form-note">We'll email you a confirmation link — click it to activate your account.</div>
         <div class="form-ok" id="signupOk"></div>
         <div class="field">
           <label for="su_name">Full name</label>
@@ -854,7 +856,18 @@ function watchButton(m,mini){
   return `<a class="watch ${mini?'mini':''}" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Open the live stream in a new tab">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${label}</a>`;
 }
-function allMatches(d){const out=[];const b=d.bracket||{};const r=b.rounds||{};["upper","lower"].forEach(side=>{(r[side]||[]).forEach(rd=>{(rd.matches||[]).forEach(m=>out.push({...m,stage:rd.name,side}));});});if(b.grandFinal)out.push({...b.grandFinal,stage:"Grand Final",side:"gf"});return out;}
+function allMatches(d){
+  const out=[];
+  // Swiss group stage (5 rounds) — the bulk of the event's matches.
+  const g=d.groupStage||{};
+  (g.rounds||[]).forEach(rd=>{(rd.matches||[]).forEach(m=>out.push({...m,stage:rd.name,side:"group"}));});
+  (g.eliminationMatches||[]).forEach(m=>out.push({...m,stage:"Elimination Round",side:"group"}));
+  // Playoff bracket.
+  const b=d.bracket||{};const r=b.rounds||{};
+  ["upper","lower"].forEach(side=>{(r[side]||[]).forEach(rd=>{(rd.matches||[]).forEach(m=>out.push({...m,stage:rd.name,side}));});});
+  if(b.grandFinal)out.push({...b.grandFinal,stage:"Grand Final",side:"gf"});
+  return out;
+}
 
 let _cdTimer=null;
 function cdTargetDate(d){
@@ -1579,6 +1592,77 @@ function checkForResultChanges(newData){
   });
   localStorage.setItem(LS_SEEN,JSON.stringify(next));return fired;
 }
+
+// ----- League nudges --------------------------------------------------------
+// These fire while the page is open (and on returning to the tab). Real
+// alerts with the tab closed would need a service worker + push server.
+const LS_DLALERT="ti2026_deadline_alerted",LS_RANK="ti2026_last_rank";
+const DL_WARN_MS=45*60*1000;      // warn when under 45 min of pick time is left
+
+// Matches you haven't picked whose lock deadline is closing in.
+function checkDeadlineAlerts(){
+  const lg=lgLoad(); if(!lg||!lg.id||!DATA||!lgCurrentUser()) return 0;
+  let map={}; try{ map=JSON.parse(localStorage.getItem(LS_DLALERT)||"{}"); }catch(e){}
+  // No first-run suppression here: unlike result alerts there's no history to
+  // replay — only matches inside the next 45 minutes qualify, and that's
+  // exactly when someone needs telling. The map alone stops repeats.
+  const now=Date.now(), lead=(lg.rules&&lg.rules.lockLeadMs)||3600000;
+  const due=[];
+  lgUpcomingPredictable().forEach(m=>{
+    const sched=m.scheduled?new Date(m.scheduled).getTime():null; if(!sched) return;
+    const lockBy=sched-lead;
+    if(now>lockBy || lockBy-now>DL_WARN_MS) return;      // passed, or still far off
+    const p=(lg.predictions||{})[m.id]; if(p&&p.locked) return;
+    const k=lg.id+":"+m.id;
+    if(map[k]===lockBy) return;                          // already warned for this deadline
+    map[k]=lockBy; due.push({m,lockBy});
+  });
+  Object.keys(map).forEach(k=>{ if(map[k]<now-86400000) delete map[k]; });  // prune
+  localStorage.setItem(LS_DLALERT,JSON.stringify(map));
+  if(!due.length) return 0;
+  const mins=x=>Math.max(1,Math.round((x-now)/60000));
+  if(due.length===1){
+    const {m,lockBy}=due[0];
+    const body=`${m.teamA.name} vs ${m.teamB.name} — ${mins(lockBy)} min left to lock your pick.`;
+    toast("Pick closing soon",body); fireBrowserNotification("TI 2026 — pick closing soon",body);
+  }else{
+    const body=`${due.length} matches close for predictions soon. Open your league to pick.`;
+    toast("Picks closing soon",body); fireBrowserNotification("TI 2026 — picks closing soon",body);
+  }
+  lgMarkTabDirty("predict");
+  return due.length;
+}
+
+// Did anyone pass you (or did you pass them) since the last check?
+let _rankBusy=false,_rankLastAt=0;
+const RANK_POLL_MS=120000;
+async function checkRankChange(){
+  if(!SB_READY()||_rankBusy) return;
+  if(Date.now()-_rankLastAt<RANK_POLL_MS) return;
+  const lg=lgLoad(); const lid=lg&&lg.id; if(!lid||!lg.me) return;
+  _rankBusy=true;
+  try{
+    const {data:board}=await SB.rpc("league_leaderboard",{ p_league:lid });
+    if(!board||!board.length) return;
+    const i=board.findIndex(p=>p.username===lg.me); if(i<0) return;
+    const nowRank=i+1, pts=board[i].points;
+    const s=lgLoad(); if(s){ s.board=board; lgSave(s); }   // keeps the cached board live
+    let store={}; try{ store=JSON.parse(localStorage.getItem(LS_RANK)||"{}"); }catch(e){}
+    const prev=store[lid];
+    store[lid]={rank:nowRank,points:pts,at:Date.now()};
+    localStorage.setItem(LS_RANK,JSON.stringify(store));
+    if(prev&&prev.rank!==nowRank){
+      const up=nowRank<prev.rank;
+      const body=`You're now #${nowRank} of ${board.length} in ${lg.name} (${pts} pts).`;
+      toast(up?"You moved up 📈":"You dropped 📉",body);
+      fireBrowserNotification(up?"TI 2026 — you moved up":"TI 2026 — you dropped",body);
+      if(document.body.classList.contains("league-open")) renderLeague();
+      lgMarkTabDirty("leaderboard");
+    }
+  }catch(e){ console.warn("rank check failed",e); }
+  finally{ _rankBusy=false; _rankLastAt=Date.now(); }
+}
+
 function wireToolbar(){
   const si=$("#searchInput");
   if(si)si.addEventListener("input",e=>{searchTerm=e.target.value;applySearchFilter();});
@@ -1713,7 +1797,7 @@ function showCheckEmail(email){
         Click it to activate your account, then you'll be brought back here to sign in.
       </p>
       <p style="color:var(--ink-faint);font-size:12px;line-height:1.6;margin-top:12px">
-        The email activates once the backend is connected. Didn't get it? Check spam, or try again.
+        Didn't get it? Check your spam folder, or resend it below.
       </p>
     </div>`;
   if(foot) foot.innerHTML=`
@@ -1721,7 +1805,57 @@ function showCheckEmail(email){
     <div class="modal-alt">Already confirmed? <button data-switch="signin">Sign in</button></div>`;
   // re-wire the switch + resend (they were just re-created)
   document.querySelectorAll("#signupModal [data-switch]").forEach(b=>b.addEventListener("click",()=>openModal("signinModal")));
-  const rb=$("#resendBtn"); if(rb) rb.addEventListener("click",()=>{rb.textContent="Email re-sent";rb.disabled=true;});
+  const rb=$("#resendBtn"); if(rb) rb.addEventListener("click",async()=>{
+    if(!SB_READY()){ rb.textContent="Backend unreachable"; return; }
+    rb.disabled=true; rb.textContent="Sending…";
+    try{
+      const {error}=await SB.auth.resend({type:"signup",email,options:{emailRedirectTo:location.origin+"/?confirmed=1"}});
+      if(error) throw error;
+      rb.textContent="Email re-sent";
+    }catch(e){
+      rb.textContent="Couldn't resend — try again";
+      rb.disabled=false;
+    }
+  });
+}
+
+// An invite link (?join=CODE) has to survive sign-up: the confirmation email
+// round-trips through ?confirmed=1, which drops every other query param. So we
+// stash the code the moment we see it and act on it once there's a session.
+const LS_PENDJOIN="ti2026_pending_join";
+function captureJoinParam(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get("join");
+  if(!code) return;
+  localStorage.setItem(LS_PENDJOIN,String(code).trim().toUpperCase());
+  // Drop it from the URL so a refresh doesn't look like a fresh invite.
+  params.delete("join");
+  const q=params.toString();
+  history.replaceState(null,"",location.pathname+(q?"?"+q:""));
+}
+
+// Redeem a stashed invite once the visitor is signed in. Signed-out visitors
+// keep the code until they come back with an account.
+async function handleJoinLanding(){
+  const code=localStorage.getItem(LS_PENDJOIN);
+  if(!code) return;
+  if(!lgCurrentUser()){
+    // Nudge them to sign up — the code stays parked until they do.
+    toast("You've been invited",`Sign in or create an account to join with code ${code}.`);
+    openModal("signupModal");
+    return;
+  }
+  const res=await lgJoinByCode(code);
+  if(res.ok){
+    localStorage.removeItem(LS_PENDJOIN);
+    _lgTab="home"; await openLeague();
+    toast(res.already?"Already a member":"League joined",
+          res.already?"You're already in this league.":"You're in. Good luck!");
+  }else if(res.reason==="notfound"||res.reason==="invalid"){
+    localStorage.removeItem(LS_PENDJOIN);
+    toast("Invite not valid",`No league found for code ${code}.`);
+  }
+  // offline/error: keep the code parked and try again next load
 }
 
 // When the user returns from clicking the email link (?confirmed=1), Supabase
@@ -1806,14 +1940,25 @@ function wireAuth(){
         email:u.email, name:(u.user_metadata&&u.user_metadata.name)||""
       }));
       const ok=$("#signinOk"); if(ok){ok.classList.add("show");ok.textContent="Signed in.";}
-      setTimeout(()=>{closeModals();renderAuthArea();wireMyLeaguesMenu();},700);
+      setTimeout(async()=>{
+        closeModals();renderAuthArea();wireMyLeaguesMenu();
+        // Pick up anything they started before having an account.
+        try{ await handleJoinLanding(); await lgReplayPendingPick(); }
+        catch(e){ console.warn("post-signin handoff failed",e); }
+      },700);
     }catch(e){ setErr("si_pw","Something went wrong. Try again."); btn.disabled=false; btn.textContent=orig; }
   });
-  handleConfirmationLanding();
+  // Capture the invite code BEFORE the confirmation handler rewrites the URL,
+  // then redeem it only once a session exists (hence the chain, not two calls).
+  captureJoinParam();
+  handleConfirmationLanding()
+    .then(handleJoinLanding)
+    .then(lgReplayPendingPick)
+    .catch(e=>console.warn("landing handlers failed",e));
 }
 /* ----------------------------- League (predictions) ----------------------------- */
-// Front-end + localStorage only. A real shared league (friends on other devices
-// seeing the same leaderboard) needs a backend; this is structured for that swap.
+// Shared league backed by Supabase (leagues / league_members / predictions /
+// outcome_predictions), with localStorage kept as a fast local mirror.
 const LS_LEAGUE="ti2026_league";
 // Every rule here is scored server-side by the league_leaderboard() RPC
 // (supabase/migrations/0001_league_core.sql). If a rule can't be scored from
@@ -1921,12 +2066,55 @@ function lgCurrentUser(){
   if(raw){try{const u=JSON.parse(raw);return u.username||u.name||null;}catch(e){}}
   return null;
 }
-function lgCurrentEmail(){
-  const raw=localStorage.getItem(LS_USER);
-  if(raw){try{const u=JSON.parse(raw);return u.email||null;}catch(e){}}
-  return null;
-}
 function lgCode(){ return Math.random().toString(36).slice(2,7).toUpperCase(); }
+
+// ----- Invites --------------------------------------------------------------
+// A join code alone means someone has to read five characters down the phone.
+// The invite link carries the code, so a friend taps it and lands on the join
+// screen with it filled in.
+function lgInviteUrl(code){ return location.origin+location.pathname+"?join="+encodeURIComponent(code); }
+function lgInviteText(lg){
+  return `Join my TI 2026 prediction league "${lg.name}" — code ${lg.code}\n${lgInviteUrl(lg.code)}`;
+}
+async function copyText(t){
+  try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(t); return true; } }catch(e){}
+  // Fallback: clipboard API is undefined on non-secure origins.
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    const ok=document.execCommand("copy"); ta.remove(); return ok;
+  }catch(e){ return false; }
+}
+async function lgShareInvite(lg,btn){
+  const text=lgInviteText(lg);
+  if(navigator.share){
+    try{ await navigator.share({title:"TI 2026 Prediction League",text}); return; }
+    catch(e){ if(e && e.name==="AbortError") return; }  // user dismissed the sheet
+  }
+  const ok=await copyText(text);
+  if(btn){ const o=btn.textContent; btn.textContent=ok?"Copied!":"Copy failed"; setTimeout(()=>btn.textContent=o,1400); }
+  else toast(ok?"Invite copied":"Couldn't copy", ok?"Paste it to your friends.":"Select the code and copy it manually.");
+}
+
+// Single join path, used by the panel, the modal and the ?join= link.
+async function lgJoinByCode(code){
+  if(!SB_READY()) return {ok:false,reason:"offline"};
+  const uid=await lgCurrentUserId(); if(!uid) return {ok:false,reason:"signedout"};
+  const me=lgCurrentUser()||"Player";
+  const clean=String(code||"").trim().toUpperCase();
+  if(clean.length<4) return {ok:false,reason:"invalid"};
+  try{
+    const {data:lid,error}=await SB.rpc("league_id_by_code",{ p_code:clean });
+    if(error) return {ok:false,reason:"error",message:error.message};
+    if(!lid) return {ok:false,reason:"notfound"};
+    const {error:jerr}=await SB.from("league_members").insert({league_id:lid,user_id:uid,username:me});
+    if(jerr && !/duplicate|unique/i.test(jerr.message||"")) return {ok:false,reason:"error",message:jerr.message};
+    lgSetActive(lid);            // the league you just joined becomes the active one
+    await lgFetchActive();
+    return {ok:true,leagueId:lid,already:!!jerr};
+  }catch(e){ return {ok:false,reason:"error",message:e.message}; }
+}
 function avatarColor(name){let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%360;return `hsl(${h} 45% 38%)`;}
 
 async function openLeague(){
@@ -1937,16 +2125,75 @@ async function openLeague(){
 }
 function closeLeague(){ document.body.classList.remove("league-open"); }
 
+// A stand-in league so someone without an account (or without a league yet)
+// can still browse the real matches and rules instead of hitting a wall.
+// Picks made here are parked locally and locked for real after sign-in.
+const LS_PENDPICK="ti2026_pending_pick";
+function lgGuestState(){
+  return { id:null, guest:true, name:"Preview", code:null,
+           me:lgCurrentUser()||"You", admin:null, adminId:null,
+           members:[], memberRows:[], rules:{...DEFAULT_RULES},
+           predictions:{}, outcomes:{}, otherPredictions:{},
+           board:[], leagueList:[], isAdmin:false };
+}
+
 function renderLeague(){
-  document.querySelectorAll(".lg-tab").forEach(t=>t.classList.toggle("on",t.getAttribute("data-lgtab")===_lgTab));
+  document.querySelectorAll(".lg-tab").forEach(t=>{
+    const on=t.getAttribute("data-lgtab")===_lgTab;
+    t.classList.toggle("on",on);
+    if(on) t.classList.remove("dirty");
+  });
   const panel=$("#lgPanel"); if(!panel) return;
   const lg=lgLoad();
-  if(!lg){ panel.innerHTML=lgCreateOrJoin(); wireLeaguePanel(); return; }
+  if(!lg){
+    // Home keeps the create/join (or sign-in) cards; the other tabs preview.
+    if(_lgTab==="home"){ panel.innerHTML=lgCreateOrJoin(); wireLeaguePanel(); return; }
+    const g=lgGuestState();
+    if(_lgTab==="predict") panel.innerHTML=lgPredictions(g);   // no others-fetch: there's no league yet
+    else if(_lgTab==="leaderboard") panel.innerHTML=lgLeaderboard(g);
+    else panel.innerHTML=lgRulesView(g);
+    wireLeaguePanel(); return;
+  }
   if(_lgTab==="home") panel.innerHTML=lgHome(lg);
   else if(_lgTab==="predict"){ panel.innerHTML=lgPredictions(lg); lgLoadOthersForLocked(lg); }
   else if(_lgTab==="leaderboard") panel.innerHTML=lgLeaderboard(lg);
   else if(_lgTab==="rules") panel.innerHTML=lgRulesView(lg);
   wireLeaguePanel();
+}
+
+function lgMarkTabDirty(tab){
+  const t=document.querySelector(`.lg-tab[data-lgtab="${tab}"]`);
+  if(t && _lgTab!==tab) t.classList.add("dirty");
+}
+
+// Lock a pick that was made before signing in. The deadline may well have
+// passed during the sign-up round trip, so the server's answer is final and
+// the parked pick is always cleared — never left to retry forever.
+async function lgReplayPendingPick(){
+  const raw=localStorage.getItem(LS_PENDPICK);
+  if(!raw || !lgCurrentUser() || !SB_READY()) return;
+  let p; try{ p=JSON.parse(raw); }catch(e){ localStorage.removeItem(LS_PENDPICK); return; }
+  await openLeague();                       // hydrates the active league first
+  const s=lgLoad();
+  if(!s || !s.id){
+    _lgTab="home"; renderLeague();
+    toast("Almost there","Create or join a league to lock the pick you made.");
+    return;                                 // keep it parked until they have a league
+  }
+  localStorage.removeItem(LS_PENDPICK);
+  try{
+    const uid=s._uid||await lgCurrentUserId();
+    const {error}=await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:p.mid,pick:p.pick,score_a:p.sa,score_b:p.sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"});
+    if(error) throw error;
+    s.predictions=s.predictions||{};
+    s.predictions[p.mid]={pick:p.pick,sa:p.sa,sb:p.sb,locked:true,at:Date.now()};
+    lgSave(s);
+    _lgTab="predict"; renderLeague();
+    toast("Prediction locked","Your pick from before signing in is in.");
+  }catch(e){
+    await lgFetchActive(); _lgTab="predict"; renderLeague();
+    toast("Couldn't lock that pick",(e&&e.message)||"The deadline may have passed.");
+  }
 }
 
 // For each match the user has LOCKED, pull everyone else's picks via the
@@ -1966,7 +2213,7 @@ function lgRevealableIds(lg){
 }
 
 async function lgLoadOthersForLocked(lg){
-  if(!SB_READY() || !lg.id || _othersFetching) return;
+  if(!SB_READY() || !lg || !lg.id || _othersFetching) return;
   const locked=lgRevealableIds(lg);
   if(!locked.length) return;
   _othersFetching=true;
@@ -1987,14 +2234,15 @@ function lgCreateOrJoin(){
   const user=lgCurrentUser();
   if(!user){
     return `<div class="lg-empty"><div class="big">🔐</div><h3>Sign in to use leagues</h3>
-      <div class="hint">Leagues are tied to your account — your username is your display name, and your join code is sent to your email. Sign in or create an account to continue.</div>
+      <div class="hint">Leagues are tied to your account — your username is your display name. Sign in or create an account to play.</div>
       <button class="lg-btn" id="lgGoSignin" style="margin-top:18px">Sign in</button>
-      <button class="lg-btn-ghost" id="lgGoSignup" style="margin-top:10px">Create account</button></div>`;
+      <button class="lg-btn-ghost" id="lgGoSignup" style="margin-top:10px">Create account</button>
+      <button class="lg-btn-ghost" id="lgGoBrowse" style="margin-top:10px">Look around first →</button></div>`;
   }
   return `<div class="lg-grid2">
     <div class="lg-card">
       <h3>Create a league</h3>
-      <div class="hint">Start a league and invite friends. You'll be the admin and set the scoring rules. Your join code is emailed to you so you can share it.</div>
+      <div class="hint">Start a league and invite friends. You'll be the admin and set the scoring rules. You'll get a join code and an invite link to share.</div>
       <div class="lg-field"><label>League name</label><input id="lgNewName" placeholder="The Aegis Office Pool" maxlength="40"></div>
       <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
       <button class="lg-btn" id="lgCreateBtn">Create league</button>
@@ -2002,10 +2250,10 @@ function lgCreateOrJoin(){
     <div class="lg-card">
       <h3>Join a league</h3>
       <div class="hint">Got a code from a friend? Enter it to join. You'll appear under your username.</div>
-      <div class="lg-field"><label>Join code</label><input id="lgJoinCode" placeholder="ABC12" maxlength="5" style="text-transform:uppercase;letter-spacing:.2em"></div>
+      <div class="lg-field"><label>Join code</label><input id="lgJoinCode" placeholder="ABC12" maxlength="5" value="${esc(localStorage.getItem(LS_PENDJOIN)||"")}" style="text-transform:uppercase;letter-spacing:.2em"></div>
       <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
       <button class="lg-btn-ghost" id="lgJoinBtn">Join league</button>
-      <div class="hint" style="margin-top:12px">Cross-device joining activates with the backend. Locally you can create your own league to explore.</div>
+      <div class="hint" style="margin-top:12px">Tapping a friend's invite link fills this in for you.</div>
     </div>
   </div>`;
 }
@@ -2037,18 +2285,15 @@ function lgHome(lg){
     return `<div class="lg-member"><span class="av" style="background:${avatarColor(m.username)}">${esc(m.username.charAt(0).toUpperCase())}</span>${esc(m.username)}${tags}${adminCtrls}</div>`;
   }).join("");
 
-  const codeCard = isAdmin ? `
+  // Every member can invite — a league that only the admin can grow stalls the
+  // moment the admin is asleep.
+  const codeCard = `
     <div class="lg-card">
       <h3>${esc(lg.name)}</h3>
-      <div class="hint">You're the admin. Share this code so friends can join — only you can see it.</div>
+      <div class="hint">${isAdmin?"You're the admin.":""} Share the code or send the invite link so friends can join.</div>
       <div class="lg-code">${esc(lg.code)}<button id="lgCopyCode">Copy</button></div>
+      <button class="lg-btn" id="lgInviteBtn" style="margin-top:12px">📨 Invite friends</button>
       <div style="margin-top:20px"><h3 style="font-size:14px">Members (${rows.length})</h3></div>
-      ${members}
-    </div>` : `
-    <div class="lg-card">
-      <h3>${esc(lg.name)}</h3>
-      <div class="hint">Only the league admin can invite new members.</div>
-      <div style="margin-top:14px"><h3 style="font-size:14px">Members (${rows.length})</h3></div>
       ${members}
     </div>`;
 
@@ -2117,7 +2362,10 @@ function lgPredictions(lg){
     </div>`;
   }).join("");
   const outcomes=lgOutcomesHTML(lg);
-  return `<div class="lg-card" style="padding:18px 20px"><div class="hint" style="margin:0">Predict tournament outcomes and individual matches. Pick a winner, enter the exact score, then lock — locking is final and reveals others' picks for that match.</div></div>
+  const intro=lg.guest
+    ? `<div class="lg-card" style="padding:18px 20px"><div class="hint" style="margin:0"><b style="color:var(--ink)">You're just looking around.</b> These are the real matches — make a pick and we'll ask you to sign in only when you lock it. Your pick is kept.</div></div>`
+    : `<div class="lg-card" style="padding:18px 20px"><div class="hint" style="margin:0">Predict tournament outcomes and individual matches. Pick a winner, enter the exact score, then lock — locking is final and reveals others' picks for that match.</div></div>`;
+  return `${intro}
     ${outcomes}
     <div class="td-section-label" style="margin-top:8px">Match predictions</div>
     ${cards}`;
@@ -2268,6 +2516,7 @@ function wireLeaguePanel(){
   // sign-in prompts (when not signed in)
   const gsi=$("#lgGoSignin"); if(gsi) gsi.onclick=()=>{closeLeague();openModal("signinModal");};
   const gsu=$("#lgGoSignup"); if(gsu) gsu.onclick=()=>{closeLeague();openModal("signupModal");};
+  const gbr=$("#lgGoBrowse"); if(gbr) gbr.onclick=()=>{_lgTab="predict";renderLeague();};
   // create / join
   const cb=$("#lgCreateBtn"); if(cb) cb.onclick=async()=>{
     const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to create a league.");return;}
@@ -2282,8 +2531,7 @@ function wireLeaguePanel(){
         if(error) throw error;
         await SB.from("league_members").insert({league_id:lg.id,user_id:uid,username:me});
         await lgFetchActive();
-        const email=lgCurrentEmail();
-        toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
+        toast("League created",`Your join code is ${code}. Use "Invite friends" to send the link.`);
         _lgTab="home"; renderLeague();
       }catch(e){ console.warn(e); toast("Couldn't create league", e.message||"Try again."); cb.disabled=false; cb.textContent=o; }
       return;
@@ -2297,25 +2545,27 @@ function wireLeaguePanel(){
     const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to join a league.");return;}
     const code=($("#lgJoinCode").value||"").trim().toUpperCase();
     if(code.length<4){toast("Invalid code","Enter the 5-character code your friend shared.");return;}
-    if(SB_READY()){
-      const uid=await lgCurrentUserId();
-      if(!uid){toast("Sign in first","Please sign in again to join.");return;}
-      jb.disabled=true; const o=jb.textContent; jb.textContent="Joining…";
-      try{
-        const {data:lid,error}=await SB.rpc("league_id_by_code",{ p_code:code });
-        if(error) throw error;
-        if(!lid){ toast("No league found","Double-check the code with your friend."); jb.disabled=false; jb.textContent=o; return; }
-        const {error:jerr}=await SB.from("league_members").insert({league_id:lid,user_id:uid,username:me});
-        if(jerr && !/duplicate|unique/i.test(jerr.message)) throw jerr;
-        await lgFetchActive();
-        toast("Joined!","You're in. Make your predictions and climb the board.");
-        _lgTab="home"; renderLeague();
-      }catch(e){ console.warn(e); toast("Couldn't join", e.message||"Try again."); jb.disabled=false; jb.textContent=o; }
-      return;
+    jb.disabled=true; const o=jb.textContent; jb.textContent="Joining…";
+    const res=await lgJoinByCode(code);
+    if(res.ok){
+      toast(res.already?"Already a member":"Joined!",
+            res.already?"You're already in this league.":"You're in. Make your predictions and climb the board.");
+      _lgTab="home"; renderLeague(); return;
     }
-    toast("Sign in needed","Joining a shared league requires being signed in online.");
+    jb.disabled=false; jb.textContent=o;
+    if(res.reason==="notfound") toast("No league found","Double-check the code with your friend.");
+    else if(res.reason==="offline"||res.reason==="signedout") toast("Sign in needed","Joining a shared league requires being signed in online.");
+    else toast("Couldn't join", res.message||"Try again.");
   };
-  const cc=$("#lgCopyCode"); if(cc) cc.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(lg.code);cc.textContent="Copied!";setTimeout(()=>cc.textContent="Copy",1200);};
+  const cc=$("#lgCopyCode"); if(cc) cc.onclick=async()=>{
+    const st=lgLoad(); if(!st||!st.code) return;
+    const ok=await copyText(st.code);
+    cc.textContent=ok?"Copied!":"Copy failed"; setTimeout(()=>cc.textContent="Copy",1200);
+  };
+  const ib=$("#lgInviteBtn"); if(ib) ib.onclick=()=>{
+    const st=lgLoad(); if(!st||!st.code) return;
+    lgShareInvite(st,ib);
+  };
   const gp=$("#lgGoPredict"); if(gp) gp.onclick=()=>{_lgTab="predict";renderLeague();};
   // admin: remove a member
   document.querySelectorAll("[data-kick]").forEach(b=>b.onclick=async()=>{
@@ -2359,14 +2609,29 @@ function wireLeaguePanel(){
     if(!sel){toast("Pick a winner","Choose which team you think will win.");return;}
     if(sa===""||sb===""){toast("Enter a score","Add your predicted exact score, e.g. 2–1.");return;}
     const pick=sel.getAttribute("data-pick");
-    const s=lgLoad(); s.predictions=s.predictions||{};
+    const s=lgLoad();
+    // No account or no league yet: park the pick and pick the flow back up
+    // after sign-in instead of throwing the choice away.
+    if(!s || !s.id || !lgCurrentUser()){
+      localStorage.setItem(LS_PENDPICK,JSON.stringify({mid,pick,sa:+sa,sb:+sb,at:Date.now()}));
+      toast("Sign in to lock","Your pick is saved — sign in and we'll lock it for you.");
+      closeLeague(); openModal(lgCurrentUser()?"signinModal":"signupModal");
+      return;
+    }
+    // The server owns the deadline, so write there first and only mirror
+    // locally once it accepts — otherwise the UI shows a lock that isn't real.
+    if(SB_READY()){
+      const uid=s._uid||await lgCurrentUserId();
+      const {error}=await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:mid,pick,score_a:+sa,score_b:+sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"});
+      if(error){
+        console.warn("save prediction failed",error);
+        toast("Couldn't lock that pick", error.message||"The deadline may have passed.");
+        return;
+      }
+    }
+    s.predictions=s.predictions||{};
     s.predictions[mid]={pick,sa:+sa,sb:+sb,locked:true,at:Date.now()};
     lgSave(s);
-    if(SB_READY() && s.id){
-      const uid=s._uid||await lgCurrentUserId();
-      try{ await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:mid,pick,score_a:+sa,score_b:+sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"}); }
-      catch(e){ console.warn("save prediction failed",e); }
-    }
     toast("Prediction locked","It's final now — and you can see others' picks for this match.");
     renderLeague();
   });
@@ -2374,7 +2639,9 @@ function wireLeaguePanel(){
   const lc=$("#lgLockChamp"); if(lc) lc.onclick=async()=>{
     const pick=($("#lgChampSel").value||"").trim();
     if(!pick){toast("Pick a team","Choose who you think wins the whole thing.");return;}
-    const s=lgLoad(); s.outcomes=s.outcomes||{};
+    const s=lgLoad();
+    if(!s||!s.id||!lgCurrentUser()){ toast("Sign in to lock","Join or create a league to lock tournament picks."); _lgTab="home"; renderLeague(); return; }
+    s.outcomes=s.outcomes||{};
     s.outcomes.champion={pick,locked:true,at:Date.now()};
     lgSave(s);
     if(SB_READY() && s.id){ const uid=s._uid||await lgCurrentUserId();
@@ -2386,7 +2653,9 @@ function wireLeaguePanel(){
     const picks=[...document.querySelectorAll(".lg-t4")].map(s=>s.value).filter(Boolean);
     const uniq=[...new Set(picks)];
     if(uniq.length<4){toast("Pick four teams","Select four different teams for the top 4.");return;}
-    const s=lgLoad(); s.outcomes=s.outcomes||{};
+    const s=lgLoad();
+    if(!s||!s.id||!lgCurrentUser()){ toast("Sign in to lock","Join or create a league to lock tournament picks."); _lgTab="home"; renderLeague(); return; }
+    s.outcomes=s.outcomes||{};
     s.outcomes.topFour={teams:uniq,locked:true,at:Date.now()};
     lgSave(s);
     if(SB_READY() && s.id){ const uid=s._uid||await lgCurrentUserId();
@@ -2396,6 +2665,7 @@ function wireLeaguePanel(){
   // save rules (new nested structure: toggles, points, mode, lock time, tie-breakers)
   const saveRules=async()=>{
     const s=lgLoad();
+    if(!s||!s.id){ toast("No league yet","Create or join a league to set its rules."); _lgTab="home"; renderLeague(); return; }
     document.querySelectorAll("[data-ruleon]").forEach(inp=>{
       const k=inp.getAttribute("data-ruleon");
       if(typeof s.rules[k]!=="object"||s.rules[k]===null) s.rules[k]={on:false,pts:(typeof s.rules[k]==="number"?s.rules[k]:0)};
@@ -2499,7 +2769,7 @@ function lgOpenCreateModal(){
   const body=$("#leagueModalBody");
   const user=lgCurrentUser()||"You";
   body.innerHTML=`
-    <div class="hint" style="margin-bottom:14px">Start a league and invite friends. You'll be the admin and set the rules. Your code is emailed to you to share.</div>
+    <div class="hint" style="margin-bottom:14px">Start a league and invite friends. You'll be the admin and set the rules. You'll get a join code and an invite link to share.</div>
     <div class="lg-field"><label>League name</label><input id="lgmName" placeholder="The Aegis Office Pool" maxlength="40"></div>
     <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
     <button class="lg-btn" id="lgmCreateBtn" style="width:100%;margin-top:6px">Create league</button>`;
@@ -2519,8 +2789,7 @@ function lgOpenCreateModal(){
       lgSetActive(lg.id);
       await lgFetchActive();
       closeModals();
-      const email=lgCurrentEmail();
-      toast("League created",`Your join code ${code} has been emailed${email?" to "+email:""}. Share it with friends.`);
+      toast("League created",`Your join code is ${code}. Use "Invite friends" to send the link.`);
       _lgTab="home"; renderLeague(); wireMyLeaguesMenu();
     }catch(e){ console.warn(e); toast("Couldn't create league", e.message||"Try again."); btn.disabled=false; btn.textContent=o; }
   };
@@ -2585,6 +2854,10 @@ function cssEscape(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&");}
 async function refreshNow(){
   if(typeof navigator!=="undefined" && navigator.onLine===false){setLiveStatus("offline");return;}
   setLiveStatus("updating");
+  // League nudges run before the early returns below, so a manual data
+  // override or an unreachable data.json doesn't silently kill them.
+  try{ checkDeadlineAlerts(); }catch(e){ console.warn("deadline check failed",e); }
+  checkRankChange();   // async + self-throttled; deliberately not awaited
   // refresh the live pro-match feed every cycle (this is the always-live part)
   const oldLiveSig=liveSignature(DATA);
   try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
