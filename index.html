@@ -163,6 +163,18 @@
   .rule-summary{display:flex;flex-wrap:wrap;gap:8px}
   .rs-item{font-size:12px;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-family:'JetBrains Mono',monospace}
   .rs-item b{color:var(--ink);font-weight:500;font-family:'Inter',sans-serif}
+  /* league: choose prediction vs tournament */
+  .lg-choose{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+  .lg-choice{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px 22px;cursor:pointer;transition:.18s;font:inherit;color:inherit}
+  .lg-choice:hover{border-color:var(--aegis);transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+  .lc-ico{font-size:30px;line-height:1}
+  .lc-name{font-family:'Oswald',sans-serif;font-size:20px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink)}
+  .lc-desc{font-size:13px;color:var(--ink-dim);line-height:1.6}
+  .lc-go{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--aegis-bright);margin-top:6px}
+  .lg-back{background:none;border:none;color:var(--ink-dim);font:inherit;font-size:13px;cursor:pointer;padding:0 0 14px}
+  .lg-back:hover{color:var(--ink)}
+  .lg-plan{margin:0;padding-left:20px;color:var(--ink-dim);font-size:13px;line-height:1.85}
+  .lg-plan b{color:var(--ink);font-weight:500}
   /* my picks history */
   .mp-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px}
   .mp-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
@@ -2470,10 +2482,15 @@ const DEFAULT_RULES={
   // per-match
   winner:        {on:true,  pts:10},  // correct series winner
   exactScore:    {on:true,  pts:15},  // bonus for the exact series score
+  cleanSweep:    {on:true,  pts:8},   // called a win where the loser got nothing
+  upsetBonus:    {on:true,  pts:10},  // your team was ranked below its opponent
   gameCountOU:   {on:false, pts:6},   // total games right, whoever won
   loneWolf:      {on:false, pts:5},   // correct pick ≤25% of the league made
   firstGame:     {on:false, pts:5},   // your team took game 1
   reverseSweep:  {on:false, pts:12},  // called a series won after losing game 1
+  // form
+  streakBonus:   {on:true,  pts:5},   // per extra correct pick in a run
+  perfectDay:    {on:false, pts:25},  // every pick on one day correct
   // tournament-long
   champion:      {on:true,  pts:50},
   grandFinalists:{on:true,  pts:25},  // per correct finalist
@@ -2631,6 +2648,8 @@ function closeLeague(){ document.body.classList.remove("league-open"); }
 // can still browse the real matches and rules instead of hitting a wall.
 // Picks made here are parked locally and locked for real after sign-in.
 const LS_PENDPICK="ti2026_pending_pick";
+// Which side of the league section you're in: "" (chooser), "predict", "tournament".
+let _lgMode="";
 function lgGuestState(){
   return { id:null, guest:true, name:"Preview", code:null,
            me:lgCurrentUser()||"You", admin:null, adminId:null,
@@ -2742,23 +2761,57 @@ function lgCreateOrJoin(){
       <button class="lg-btn-ghost" id="lgGoSignup" style="margin-top:10px">Create account</button>
       <button class="lg-btn-ghost" id="lgGoBrowse" style="margin-top:10px">Look around first →</button></div>`;
   }
-  return `<div class="lg-grid2">
+  // Two different things live here, so ask which one first rather than
+  // burying tournaments inside the prediction-league screen.
+  if(_lgMode==="predict") return `
+    <button class="lg-back" data-lgmode="">← Back</button>
+    <div class="lg-grid2">
+      <div class="lg-card">
+        <h3>Create a league</h3>
+        <div class="hint">Start a league and invite friends. You'll be the admin and set the scoring rules. You'll get a join code and an invite link to share.</div>
+        <div class="lg-field"><label>League name</label><input id="lgNewName" placeholder="The Aegis Office Pool" maxlength="40"></div>
+        <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
+        <button class="lg-btn" id="lgCreateBtn">Create league</button>
+      </div>
+      <div class="lg-card">
+        <h3>Join a league</h3>
+        <div class="hint">Got a code from a friend? Enter it to join. You'll appear under your username.</div>
+        <div class="lg-field"><label>Join code</label><input id="lgJoinCode" placeholder="ABC12" maxlength="5" value="${esc(localStorage.getItem(LS_PENDJOIN)||"")}" style="text-transform:uppercase;letter-spacing:.2em"></div>
+        <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
+        <button class="lg-btn-ghost" id="lgJoinBtn">Join league</button>
+        <div class="hint" style="margin-top:12px">Tapping a friend's invite link fills this in for you.</div>
+      </div>
+    </div>`;
+
+  if(_lgMode==="tournament") return `
+    <button class="lg-back" data-lgmode="">← Back</button>
     <div class="lg-card">
-      <h3>Create a league</h3>
-      <div class="hint">Start a league and invite friends. You'll be the admin and set the scoring rules. You'll get a join code and an invite link to share.</div>
-      <div class="lg-field"><label>League name</label><input id="lgNewName" placeholder="The Aegis Office Pool" maxlength="40"></div>
-      <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
-      <button class="lg-btn" id="lgCreateBtn">Create league</button>
-    </div>
-    <div class="lg-card">
-      <h3>Join a league</h3>
-      <div class="hint">Got a code from a friend? Enter it to join. You'll appear under your username.</div>
-      <div class="lg-field"><label>Join code</label><input id="lgJoinCode" placeholder="ABC12" maxlength="5" value="${esc(localStorage.getItem(LS_PENDJOIN)||"")}" style="text-transform:uppercase;letter-spacing:.2em"></div>
-      <div class="lg-field"><label>Playing as</label><input value="${esc(user)}" disabled style="opacity:.7"></div>
-      <button class="lg-btn-ghost" id="lgJoinBtn">Join league</button>
-      <div class="hint" style="margin-top:12px">Tapping a friend's invite link fills this in for you.</div>
-    </div>
-  </div>`;
+      <h3>Run your own tournament</h3>
+      <div class="hint" style="margin-bottom:14px">Being built now. The plan, so you know what's coming:</div>
+      <ul class="lg-plan">
+        <li><b>Register your team</b> — a name, a captain, and your line-up.</li>
+        <li><b>A real bracket</b> — single elimination or round robin, generated for you.</li>
+        <li><b>Schedule between yourselves</b> — agree a time with the other captain instead of filing a form.</li>
+        <li><b>Results check themselves</b> — report a match and we look it up in Dota's own match history to confirm who actually won. No screenshots, no arguments.</li>
+        <li><b>Anyone can follow</b> — other teams can watch your bracket, and your friends can predict on it.</li>
+      </ul>
+      <div class="hint" style="margin-top:14px">That last one is the part Challonge can't do — it doesn't know anything about Dota.</div>
+    </div>`;
+
+  return `<div class="lg-choose">
+      <button class="lg-choice" data-lgmode="predict">
+        <span class="lc-ico">🔮</span>
+        <span class="lc-name">Prediction league</span>
+        <span class="lc-desc">Call the results of pro matches and compete with your friends. Scored automatically as games finish.</span>
+        <span class="lc-go">Create or join →</span>
+      </button>
+      <button class="lg-choice" data-lgmode="tournament">
+        <span class="lc-ico">🏆</span>
+        <span class="lc-name">Tournament</span>
+        <span class="lc-desc">Run a competition your own team plays in — bracket, schedule and results, with matches verified from Dota itself.</span>
+        <span class="lc-go">See what's coming →</span>
+      </button>
+    </div>`;
 }
 
 function lgLeagueSwitcher(lg){
@@ -3022,12 +3075,15 @@ function lgMyPicks(lg){
 // switched off — so applying one gives a predictable, fully-scored league.
 const RULE_PRESETS={
   casual:{on:{winner:10,champion:50},mode:"flat"},
-  standard:{on:{winner:10,exactScore:15,champion:50,grandFinalists:25,topFour:20},mode:"flat"},
-  sweaty:{on:{winner:10,exactScore:15,gameCountOU:6,loneWolf:5,firstGame:5,reverseSweep:12,
+  standard:{on:{winner:10,exactScore:15,cleanSweep:8,upsetBonus:10,streakBonus:5,
+                champion:50,grandFinalists:25,topFour:20},mode:"flat"},
+  sweaty:{on:{winner:10,exactScore:15,cleanSweep:8,upsetBonus:10,gameCountOU:6,loneWolf:5,
+              firstGame:5,reverseSweep:12,streakBonus:5,perfectDay:25,
               champion:50,grandFinalists:25,topFour:20,topEight:10,champFromLB:20,
               negativePoints:5},mode:"weighted"},
 };
-const SCORED_RULE_KEYS=["winner","exactScore","gameCountOU","loneWolf","firstGame","reverseSweep",
+const SCORED_RULE_KEYS=["winner","exactScore","cleanSweep","upsetBonus","gameCountOU","loneWolf",
+  "firstGame","reverseSweep","streakBonus","perfectDay",
   "champion","grandFinalists","topFour","topEight","champFromLB","negativePoints"];
 
 function lgApplyPreset(rules,key){
@@ -3049,8 +3105,9 @@ function lgPresetMatches(r,key){
     return on===want && (!want || (r[k].pts===p.on[k]));
   });
 }
-const RULE_SHORT={winner:"Correct winner",exactScore:"Exact score",gameCountOU:"Game count",
-  loneWolf:"Lone wolf",firstGame:"Wins game 1",reverseSweep:"Reverse sweep",
+const RULE_SHORT={winner:"Correct winner",exactScore:"Exact score",cleanSweep:"Clean sweep",
+  upsetBonus:"Upset",gameCountOU:"Game count",loneWolf:"Lone wolf",firstGame:"Wins game 1",
+  reverseSweep:"Reverse sweep",streakBonus:"Streak",perfectDay:"Perfect day",
   champion:"Champion",grandFinalists:"Grand finalists",topFour:"Top 4",topEight:"Top 8",
   champFromLB:"Champion from LB",negativePoints:"Wrong pick"};
 function lgRulesSummary(r){
@@ -3111,10 +3168,17 @@ function lgRulesView(lg){
     <div class="rule-group"><div class="rule-group-h">Per-match predictions</div>
       ${row("winner","Correct winner","Pick who wins the series.","pts",true)}
       ${row("exactScore","Exact series score","Nail the exact result (2–1, 2–0, 3–2…).","pts",true)}
+      ${row("cleanSweep","Clean sweep","Your team wins without dropping a game.","pts",true)}
+      ${row("upsetBonus","Upset","Your team was ranked below its opponent in the world ranking — and won.","pts",true)}
       ${row("gameCountOU","Game count","Your total games matches the real one — even if you backed the wrong team.","pts",true)}
       ${row("loneWolf","Lone wolf","Bonus when your correct pick was made by a quarter of the league or fewer.","pts",true)}
       ${row("firstGame","Win game 1","Your team takes the opening game of the series.","pts",true)}
       ${row("reverseSweep","Reverse sweep call","Bonus when your team wins the series after losing game 1.","pts",true)}
+    </div>
+
+    <div class="rule-group"><div class="rule-group-h">Form</div>
+      ${row("streakBonus","Hot streak","Per extra correct pick in a run — three in a row pays twice.","per",true)}
+      ${row("perfectDay","Perfect day","Every one of your picks on a single day correct (needs at least two).","pts",true)}
     </div>
 
     <div class="rule-group"><div class="rule-group-h">Tournament-long (lock before the event)</div>
@@ -3144,6 +3208,9 @@ function wireLeaguePanel(){
   const gsi=$("#lgGoSignin"); if(gsi) gsi.onclick=()=>{closeLeague();openModal("signinModal");};
   const gsu=$("#lgGoSignup"); if(gsu) gsu.onclick=()=>{closeLeague();openModal("signupModal");};
   const gbr=$("#lgGoBrowse"); if(gbr) gbr.onclick=()=>{_lgTab="predict";renderLeague();};
+  document.querySelectorAll("[data-lgmode]").forEach(b=>b.onclick=()=>{
+    _lgMode=b.getAttribute("data-lgmode"); renderLeague();
+  });
   // create / join
   const cb=$("#lgCreateBtn"); if(cb) cb.onclick=async()=>{
     const me=lgCurrentUser(); if(!me){toast("Sign in first","You need to be signed in to create a league.");return;}
