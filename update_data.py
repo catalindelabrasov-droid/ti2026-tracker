@@ -1177,6 +1177,21 @@ def collect_completed_results(data):
 # ---------------------------------------------------------------------------
 
 DATDOTA_API = "https://api.datdota.com/api"
+# Heads-up for whoever maintains this: datdota is behind Cloudflare and blocks
+# DATA-CENTRE traffic outright — verified 403 "cfattack" from both Supabase
+# Edge Functions and GitHub Actions runners (2026-07-26), for every
+# User-Agent. It answers normally from a residential connection, so the
+# ranking is refreshed by running this script locally:
+#
+#     python update_data.py --ratings-only
+#
+# The scheduled Action still calls push_world_ratings(); it simply logs the
+# 403 and leaves the previously stored ranking in place, so the site keeps
+# showing the last good ladder rather than falling back to OpenDota's noisy
+# Elo. datdota only recomputes Glicko weekly, so a manual refresh every week
+# or two is enough. The date shown on the Teams tab is datdota's own rating
+# date, so a stale ladder is always visibly stale.
+#
 # A non-browser User-Agent is refused outright.
 DATDOTA_HEADERS = {
     "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -1491,4 +1506,8 @@ def main():
 
 
 if __name__ == "__main__":
+    if "--ratings-only" in sys.argv:
+        # Refresh just the world ranking / tournament tiers from datdota.
+        # Run this from a normal (residential) connection — see the note above.
+        sys.exit(0 if push_world_ratings() else 1)
     sys.exit(main())
