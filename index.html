@@ -234,6 +234,18 @@
   .rep-team{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink-dim);font:inherit;font-size:14px;padding:14px 12px;cursor:pointer;transition:.15s}
   .rep-team:hover{border-color:var(--ink-faint);color:var(--ink)}
   .rep-team.sel{border-color:var(--aegis);background:rgba(217,164,65,.12);color:var(--aegis-bright);font-weight:600}
+  /* ladder */
+  .ld-me{display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .ld-rank-big{font-family:'Oswald',sans-serif;font-size:38px;font-weight:600;color:var(--aegis-bright);line-height:1}
+  .ld-prov{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);border:1px solid var(--line);border-radius:3px;padding:1px 5px;margin-left:8px}
+  .ld-streak{font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:8px;padding:1px 5px;border-radius:3px}
+  .ld-streak.up{color:#5fbf72;background:rgba(95,191,114,.12)}
+  .ld-streak.down{color:#d4695f;background:rgba(212,105,95,.12)}
+  .ld-rd{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);margin-left:5px}
+  .ld-chal{padding:5px 11px;font-size:12px}
+  .ld-delta{font-family:'JetBrains Mono',monospace;font-size:11px}
+  .ld-delta.up{color:#5fbf72}.ld-delta.down{color:#d4695f}
+  .ld-win{color:var(--ink)}
   /* my picks history */
   .mp-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px}
   .mp-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
@@ -1024,6 +1036,7 @@
       </div>
       <div class="lg-tabs" id="trTabs">
         <div class="lg-tab on" data-trtab="browse">Browse</div>
+        <div class="lg-tab" data-trtab="ladder">Ladder</div>
         <div class="lg-tab" data-trtab="mine">My tournaments</div>
         <div class="lg-tab" data-trtab="create">Create</div>
       </div>
@@ -1685,6 +1698,7 @@ function renderTourney(){
   const panel=$("#trPanel"); if(!panel) return;
   const seq=++_trSeq;
   if(_trOpenId){ trRenderDetail(panel,seq); return; }
+  if(_trTab==="ladder"){ ldRender(panel,seq); return; }
   if(_trTab==="create"){ panel.innerHTML=trCreateForm(); wireTourneyPanel(); return; }
   panel.innerHTML=`<div class="loading" style="padding:30px">Loading tournaments…</div>`;
   trFetchList().then(async list=>{
@@ -2018,6 +2032,172 @@ function trOpenReport(m,teams){
     toast(data==="confirmed"?"Result confirmed":"Result reported",
           data==="confirmed"?"The bracket has moved on."
                             :"Waiting for the other captain to confirm.");
+    renderTourney();
+  };
+}
+
+/* ======================== THE LADDER ========================
+   No brackets, no scheduling problem. Register once, challenge anyone,
+   carry a real Glicko rating that moves after every series. */
+async function ldRender(panel,seq){
+  panel.innerHTML=`<div class="loading" style="padding:30px">Loading the ladder…</div>`;
+  const uid=await lgCurrentUserId();
+  const [{data:standings},{data:challenges},{data:recent}]=await Promise.all([
+    SB.from("ladder_standings").select("*").order("confident_rating",{ascending:false}).limit(100),
+    SB.from("ladder_challenges").select("*").in("status",["open","accepted"]).order("created_at",{ascending:false}).limit(50),
+    SB.from("ladder_matches").select("*").eq("status","done").order("played_at",{ascending:false}).limit(10),
+  ]);
+  if(seq!==undefined&&seq!==_trSeq) return;
+  const teams=standings||[];
+  const byId={}; teams.forEach(t=>byId[t.id]=t);
+  const mine=teams.find(t=>t.captain_id===uid);
+  const nm=id=>byId[id]?byId[id].name:"—";
+
+  // Challenges that involve my team, split by who has to act.
+  const mineIn=(challenges||[]).filter(c=>mine&&c.opponent_id===mine.id&&c.status==="open");
+  const mineOut=(challenges||[]).filter(c=>mine&&c.challenger_id===mine.id&&c.status==="open");
+  const mineOn=(challenges||[]).filter(c=>mine&&c.status==="accepted"&&(c.challenger_id===mine.id||c.opponent_id===mine.id));
+
+  const streakTag=s=>!s?"":`<span class="ld-streak ${s>0?'up':'down'}">${s>0?"W"+s:"L"+Math.abs(s)}</span>`;
+
+  const rows=teams.map((t,i)=>`<tr class="lb-row ${mine&&t.id===mine.id?'lb-you':''}">
+      <td class="lb-rank"><span class="lb-place">${i+1}</span></td>
+      <td><div class="lb-name">${esc(t.name)}${t.provisional?'<span class="ld-prov">provisional</span>':''}${streakTag(t.streak)}</div></td>
+      <td class="lb-acc">${t.wins}–${t.losses}</td>
+      <td class="lb-pts">${t.rating}<span class="ld-rd">±${t.rd}</span></td>
+      <td style="text-align:right">${mine&&t.id!==mine.id?`<button class="lg-btn-ghost ld-chal" data-challenge="${esc(t.id)}" data-name="${esc(t.name)}">Challenge</button>`:''}</td>
+    </tr>`).join("");
+
+  panel.innerHTML=`
+    <div class="rank-note"><b>The ladder never needs everyone free on a Saturday.</b>
+      Register once, challenge whoever you like, and carry a real rating — the same kind of maths that ranks the pro teams.
+      Beating a stronger side moves you further than beating a weaker one, and a rating we haven't tested in months counts for less.</div>
+
+    ${mine?`<div class="lg-card ld-me">
+        <div><div class="hint" style="margin:0 0 2px">Your team</div>
+          <h3 style="margin:0">${esc(mine.name)}</h3>
+          <div class="hint" style="margin:4px 0 0">${mine.rating} ±${mine.rd} · ${mine.wins}W ${mine.losses}L${mine.peak_rating>mine.rating?` · peak ${mine.peak_rating}`:''}${mine.provisional?" · still provisional":""}</div>
+        </div>
+        <div class="ld-rank-big">#${teams.findIndex(t=>t.id===mine.id)+1}</div>
+      </div>`
+    :(uid?`<div class="lg-card">
+        <h3>Put a team on the ladder</h3>
+        <div class="hint">One team per account. You can challenge anyone, any time.</div>
+        <div class="lg-field" style="margin-top:12px"><label>Team name</label>
+          <input id="ldName" maxlength="40" placeholder="e.g. Sunday Warriors"></div>
+        <button class="lg-btn" id="ldJoinBtn">Join the ladder</button>
+      </div>`
+     :`<div class="lg-card"><h3>Sign in to join the ladder</h3>
+        <div class="hint">You can browse the standings without an account.</div></div>`)}
+
+    ${mineIn.length?`<div class="td-section-label" style="margin-top:20px">Challenges waiting on you</div>
+      <div class="tr-mlist">${mineIn.map(c=>`<div class="tr-mrow mine">
+        <span class="tr-mteams"><b>${esc(nm(c.challenger_id))}</b> challenged you${c.message?` — "${esc(c.message)}"`:''}</span>
+        <span class="tr-mbo">Bo${c.best_of}</span>
+        <button class="lg-btn-ghost tr-report" data-accept="${esc(c.id)}">Accept</button>
+        <button class="linklike" data-decline="${esc(c.id)}">Decline</button>
+      </div>`).join("")}</div>`:""}
+
+    ${mineOn.length?`<div class="td-section-label" style="margin-top:20px">Agreed — play and report</div>
+      <div class="tr-mlist">${mineOn.map(c=>`<div class="tr-mrow mine">
+        <span class="tr-mteams">${esc(nm(c.challenger_id))} <span class="vs">vs</span> ${esc(nm(c.opponent_id))}</span>
+        <span class="tr-mbo">Bo${c.best_of}</span>
+        <button class="lg-btn-ghost tr-report" data-ldreport="${esc(c.id)}">Report result</button>
+      </div>`).join("")}</div>`:""}
+
+    ${mineOut.length?`<div class="td-section-label" style="margin-top:20px">Waiting for a reply</div>
+      <div class="tr-mlist">${mineOut.map(c=>`<div class="tr-mrow">
+        <span class="tr-mteams">You challenged ${esc(nm(c.opponent_id))}</span>
+        <span class="tr-mbo">Bo${c.best_of}</span></div>`).join("")}</div>`:""}
+
+    <div class="td-section-label" style="margin-top:22px">Standings</div>
+    ${teams.length?`<div class="lg-card" style="padding:0;overflow:hidden">
+      <table class="lb-table"><thead><tr><th>#</th><th>Team</th><th style="text-align:right">W–L</th><th style="text-align:right">Rating</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`
+      :`<div class="lg-empty"><div class="big">🪜</div><h3>The ladder is empty</h3>
+         <div class="hint">Be the first team on it.</div></div>`}
+
+    ${(recent||[]).length?`<div class="td-section-label" style="margin-top:22px">Recent results</div>
+      <div class="tr-mlist">${recent.map(m=>{
+        const aw=m.winner_id===m.team_a;
+        const da=(m.rating_a_after??0)-(m.rating_a_before??0);
+        const db=(m.rating_b_after??0)-(m.rating_b_before??0);
+        const sw=v=>`<span class="ld-delta ${v>=0?'up':'down'}">${v>=0?'+':''}${v}</span>`;
+        return `<div class="tr-mrow">
+          <span class="tr-mteams"><b class="${aw?'ld-win':''}">${esc(nm(m.team_a))}</b> ${m.score_a}–${m.score_b} <b class="${aw?'':'ld-win'}">${esc(nm(m.team_b))}</b></span>
+          <span class="tr-mbo">${sw(da)} / ${sw(db)}</span>
+        </div>`;}).join("")}</div>`:""}`;
+
+  // wiring
+  const jb=$("#ldJoinBtn"); if(jb) jb.onclick=async()=>{
+    const name=($("#ldName").value||"").trim();
+    if(!name){ toast("Team name","Give your team a name."); return; }
+    jb.disabled=true;
+    const {error}=await SB.from("ladder_teams").insert({name,captain_id:uid});
+    if(error){ toast("Couldn't join", /duplicate|unique/i.test(error.message||"")
+        ? "That name is taken, or you already have a ladder team." : (error.message||"Try again."));
+      jb.disabled=false; return; }
+    toast("You're on the ladder","Challenge anyone you like.");
+    renderTourney();
+  };
+  panel.querySelectorAll("[data-challenge]").forEach(b=>b.onclick=async()=>{
+    const bo=prompt(`Challenge ${b.getAttribute("data-name")} — best of? Enter 1, 3 or 5.`,"3");
+    if(!bo) return;
+    const {error}=await SB.rpc("ladder_challenge",{p_opponent:b.getAttribute("data-challenge"),p_best_of:+bo,p_message:null,p_when:null});
+    if(error){ toast("Couldn't challenge",error.message||"Try again."); return; }
+    toast("Challenge sent",`Waiting for ${b.getAttribute("data-name")} to answer.`);
+    renderTourney();
+  });
+  panel.querySelectorAll("[data-accept]").forEach(b=>b.onclick=async()=>{
+    const {error}=await SB.rpc("ladder_respond",{p_challenge:b.getAttribute("data-accept"),p_accept:true});
+    if(error){ toast("Couldn't accept",error.message||"Try again."); return; }
+    toast("Accepted","Play it, then report the result."); renderTourney();
+  });
+  panel.querySelectorAll("[data-decline]").forEach(b=>b.onclick=async()=>{
+    const {error}=await SB.rpc("ladder_respond",{p_challenge:b.getAttribute("data-decline"),p_accept:false});
+    if(error){ toast("Couldn't decline",error.message||"Try again."); return; }
+    toast("Declined",""); renderTourney();
+  });
+  panel.querySelectorAll("[data-ldreport]").forEach(b=>b.onclick=()=>{
+    const c=(challenges||[]).find(x=>x.id===b.getAttribute("data-ldreport"));
+    if(c) ldOpenReport(c,nm);
+  });
+}
+
+function ldOpenReport(c,nm){
+  const need=Math.floor(c.best_of/2)+1;
+  const chips=[]; for(let l=0;l<need;l++) chips.push([need,l]);
+  const body=$("#leagueModalBody"); if(!body) return;
+  $("#lgModalTitle").textContent="Report ladder result";
+  body.innerHTML=`
+    <div class="hint" style="margin-bottom:14px">Bo${c.best_of}. Ratings only move once the other captain confirms the same score.</div>
+    <div class="rep-who">
+      <button class="rep-team" data-repwin="a">${esc(nm(c.challenger_id))}</button>
+      <button class="rep-team" data-repwin="b">${esc(nm(c.opponent_id))}</button>
+    </div>
+    <div class="pred-score-label" style="margin-top:16px">Series score</div>
+    <div class="pred-chips">${chips.map(([w,l])=>`<button class="pred-chip" data-repscore="${w}-${l}">${w}–${l}</button>`).join("")}</div>
+    <div class="lg-field" style="margin-top:6px"><label>Dota match IDs <span style="opacity:.6">(optional)</span></label>
+      <input id="ldIds" placeholder="8912958050, 8912990112"></div>
+    <button class="lg-btn" id="ldSubmit" style="width:100%">Submit result</button>`;
+  openModal("leagueModal");
+  let win=null,score=null;
+  body.querySelectorAll("[data-repwin]").forEach(b=>b.onclick=()=>{win=b.getAttribute("data-repwin");
+    body.querySelectorAll("[data-repwin]").forEach(x=>x.classList.toggle("sel",x===b));});
+  body.querySelectorAll("[data-repscore]").forEach(b=>b.onclick=()=>{score=b.getAttribute("data-repscore");
+    body.querySelectorAll("[data-repscore]").forEach(x=>x.classList.toggle("sel",x===b));});
+  $("#ldSubmit").onclick=async()=>{
+    if(!win){ toast("Who won?","Pick the winning team."); return; }
+    if(!score){ toast("Pick a score","Choose how the series ended."); return; }
+    const [w,l]=score.split("-").map(Number);
+    const sa=win==="a"?w:l, sb=win==="a"?l:w;
+    const ids=($("#ldIds").value||"").split(/[,\s]+/).filter(Boolean);
+    const btn=$("#ldSubmit"); btn.disabled=true; btn.textContent="Submitting…";
+    const {data,error}=await SB.rpc("ladder_report",{p_challenge:c.id,p_score_a:sa,p_score_b:sb,p_dota_ids:ids});
+    if(error){ toast("Couldn't report",error.message||"Try again."); btn.disabled=false; btn.textContent="Submit result"; return; }
+    closeModals();
+    toast(data==="confirmed"?"Result confirmed":"Result reported",
+          data==="confirmed"?"Both ratings have moved.":"Waiting for the other captain to confirm.");
     renderTourney();
   };
 }
