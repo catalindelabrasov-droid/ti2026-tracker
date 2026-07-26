@@ -1815,59 +1815,30 @@ function wireAuth(){
 // Front-end + localStorage only. A real shared league (friends on other devices
 // seeing the same leaderboard) needs a backend; this is structured for that swap.
 const LS_LEAGUE="ti2026_league";
+// Every rule here is scored server-side by the league_leaderboard() RPC
+// (supabase/migrations/0001_league_core.sql). If a rule can't be scored from
+// the data we actually collect, it doesn't belong in this object — a toggle
+// that never pays out is worse than no toggle at all.
 const DEFAULT_RULES={
   // per-match
-  winner:        {on:true,  pts:10},
-  exactScore:    {on:true,  pts:15},
-  correctMargin: {on:true,  pts:5},
-  cleanSweep:    {on:false, pts:8},
-  upsetBonus:    {on:false, pts:10},
-  confidence:    {on:false, pts:0},   // multiplier toggle (×1–3), pts unused
-  firstGame:     {on:false, pts:5},   // win game 1 of the series
-  reverseSweep:  {on:false, pts:12},  // comeback from 0-1/0-2 down
-  sweepOverUnder:{on:false, pts:6},   // min games vs goes the distance
-  gameCountOU:   {on:false, pts:6},   // total games over/under
-  closestScore:  {on:false, pts:3},   // tiebreak edge among correct-winner picks
-  perfectDay:    {on:false, pts:25},  // all matches on a day correct
+  winner:        {on:true,  pts:10},  // correct series winner
+  exactScore:    {on:true,  pts:15},  // bonus for the exact series score
+  gameCountOU:   {on:false, pts:6},   // total games right, whoever won
+  loneWolf:      {on:false, pts:5},   // correct pick ≤25% of the league made
+  firstGame:     {on:false, pts:5},   // your team took game 1
+  reverseSweep:  {on:false, pts:12},  // called a series won after losing game 1
   // tournament-long
   champion:      {on:true,  pts:50},
-  grandFinalists:{on:true,  pts:25},
-  topFour:       {on:true,  pts:20},
-  topEight:      {on:false, pts:10},
-  lastPlace:     {on:false, pts:15},
-  groupWinner:   {on:false, pts:20},
-  regionPerf:    {on:false, pts:15},
-  bottomFour:    {on:false, pts:10},  // eliminated-first from groups
-  breakoutTeam:  {on:false, pts:25},  // low-seed reaches a milestone
-  regionHero:    {on:false, pts:15},  // best team from a chosen region
-  finalsRematch: {on:false, pts:30},  // a past final repeats
-  exactFinal:    {on:false, pts:40},  // both finalists, correct final
-  champFromLB:   {on:false, pts:20},  // champion wins from lower bracket
-  // spicy / fun
-  cinderella:    {on:false, pts:30},
-  perfectBracket:{on:false, pts:200},
-  streakBonus:   {on:false, pts:5},   // per extra correct in a streak
-  lockOfDay:     {on:false, pts:0},   // doubles that pick's points
-  survivorPool:  {on:false, pts:0},   // side-game, no points
-  headToHead:    {on:false, pts:0},   // friend duels, pot of points
-  weeklyMVP:     {on:false, pts:20},  // most points in a week
-  comebackBonus: {on:false, pts:10},  // climb the rankings week-over-week
-  jokerCard:     {on:false, pts:0},   // one-time doubler token
-  wildcardWeek:  {on:false, pts:0},   // admin doubles a round
-  mulligan:      {on:false, pts:0},   // one undo before deadline
+  grandFinalists:{on:true,  pts:25},  // per correct finalist
+  topFour:       {on:true,  pts:20},  // per correct semifinalist
+  topEight:      {on:false, pts:10},  // per correct playoff qualifier
+  champFromLB:   {on:false, pts:20},  // bonus if your champion came from the LB
   // scoring style (radio-like; we store the chosen mode)
-  scoreMode:     "flat",              // flat | weighted | odds
+  scoreMode:     "flat",              // flat | weighted
   negativePoints:{on:false, pts:5},   // wrong picks subtract this
-  earlyLockBonus:{on:false, pts:2},
-  diminishing:   {on:false, pts:0},   // repeated favorite picks earn less
-  stageGates:    {on:false, pts:0},   // lock all of a round before reveal
-  percentile:    {on:false, pts:0},   // beat-the-field scoring
-  bonusPool:     {on:false, pts:50},  // split pot for a hard prediction
   // tie-breakers (ordered priority list; on/off)
   tbExactHits:   {on:true},
   tbChampion:    {on:true},
-  tbFinalH2H:    {on:false},
-  tbThreshold:   {on:false},
   // timing
   lockLeadMs: 60*60*1000
 };
@@ -1981,9 +1952,22 @@ function renderLeague(){
 // For each match the user has LOCKED, pull everyone else's picks via the
 // server function (RLS-safe reveal-after-lock), then refresh the view once.
 let _othersFetching=false;
+// Which matches may we show everyone's picks for? Ours once locked, plus any
+// whose lock deadline has passed — the server enforces the same rule, this
+// just decides what we bother asking for.
+function lgRevealableIds(lg){
+  const ids=new Set(Object.entries(lg.predictions||{}).filter(([,p])=>p.locked).map(([mid])=>mid));
+  const now=Date.now(), lead=(lg.rules&&lg.rules.lockLeadMs)||3600000;
+  lgUpcomingPredictable().forEach(m=>{
+    const sched=m.scheduled?new Date(m.scheduled).getTime():null;
+    if(sched && now > sched-lead) ids.add(m.id);
+  });
+  return [...ids];
+}
+
 async function lgLoadOthersForLocked(lg){
   if(!SB_READY() || !lg.id || _othersFetching) return;
-  const locked=Object.entries(lg.predictions||{}).filter(([,p])=>p.locked).map(([mid])=>mid);
+  const locked=lgRevealableIds(lg);
   if(!locked.length) return;
   _othersFetching=true;
   try{
@@ -2110,7 +2094,8 @@ function lgPredictions(lg){
     if(locked){
       body=`<div class="pred-locked-tag">🔒 Locked: ${esc(myPred.pick)} · ${myPred.sa}–${myPred.sb}</div>${lgOthersBlock(lg,m,true)}`;
     }else if(lockPassed){
-      body=`<div class="pred-hidden">Predictions closed for this match.</div>${lgOthersBlock(lg,m,(lg.predictions||{})[m.id]&&(lg.predictions||{})[m.id].locked)}`;
+      // Deadline passed: everyone's picks are public, even if you didn't play.
+      body=`<div class="pred-hidden">Predictions closed for this match.</div>${lgOthersBlock(lg,m,true)}`;
     }else{
       body=`<div class="pred-pick">
           <div class="pred-team ${selA?'sel':''}" data-pick="${esc(a)}" data-mid="${esc(m.id)}">${teamLogo(a,22)}<span>${esc(a)}</span></div>
@@ -2172,7 +2157,7 @@ function lgOutcomesHTML(lg){
 }
 
 function lgOthersBlock(lg,m,unlockedToSee){
-  if(!unlockedToSee) return `<div class="pred-others"><h5>Other players</h5><div class="pred-hidden">Lock your prediction to reveal everyone else's picks.</div></div>`;
+  if(!unlockedToSee) return `<div class="pred-others"><h5>Other players</h5><div class="pred-hidden">Lock your prediction to reveal everyone else's picks — or wait for the deadline.</div></div>`;
   const others=(lg.otherPredictions&&lg.otherPredictions[m.id])||[];
   if(!others.length) return `<div class="pred-others"><h5>Other players</h5><div class="pred-hidden">No one else has locked this match yet.</div></div>`;
   const rows=others.map(o=>`<div class="pred-other-row"><span class="av" style="width:22px;height:22px;border-radius:50%;background:${avatarColor(o.name)};display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-family:Oswald">${esc(o.name.charAt(0).toUpperCase())}</span><span class="nm">${esc(o.name)}</span><span class="pk">${esc(o.pick)} · ${o.sa}–${o.sb}</span></div>`).join("");
@@ -2251,62 +2236,29 @@ function lgRulesView(lg){
     <div class="rule-group"><div class="rule-group-h">Per-match predictions</div>
       ${row("winner","Correct winner","Pick who wins the series.","pts",true)}
       ${row("exactScore","Exact series score","Nail the exact result (2–1, 2–0, 3–2…).","pts",true)}
-      ${row("correctMargin","Correct margin only","Right about sweep vs. went-the-distance, without the exact numbers.","pts",true)}
-      ${row("cleanSweep","Clean sweep call","Bonus for correctly calling a 2–0 / 3–0.","pts",true)}
-      ${row("upsetBonus","Upset bonus","Extra when your correct winner was the underdog/lower seed.","pts",true)}
-      ${row("confidence","Confidence multiplier","Assign 1–3★ per match; correct = pts×★, wrong high-confidence can cost you.","",false)}
-      ${row("firstGame","Win game 1","Predict which team takes the first game of the series.","pts",true)}
-      ${row("reverseSweep","Reverse sweep call","Bonus for calling a comeback from 0–1 (or 0–2) down.","pts",true)}
-      ${row("sweepOverUnder","Sweep or not (O/U)","Just predict: minimum games, or goes the distance.","pts",true)}
-      ${row("gameCountOU","Game-count over/under","Predict total games played in a series.","pts",true)}
-      ${row("closestScore","Closest-score tiebreak","Among correct-winner picks, closest score gets an edge.","pts",true)}
-      ${row("perfectDay","Perfect day","Bonus for calling every match on a given day.","pts",true)}
+      ${row("gameCountOU","Game count","Your total games matches the real one — even if you backed the wrong team.","pts",true)}
+      ${row("loneWolf","Lone wolf","Bonus when your correct pick was made by a quarter of the league or fewer.","pts",true)}
+      ${row("firstGame","Win game 1","Your team takes the opening game of the series.","pts",true)}
+      ${row("reverseSweep","Reverse sweep call","Bonus when your team wins the series after losing game 1.","pts",true)}
     </div>
 
     <div class="rule-group"><div class="rule-group-h">Tournament-long (lock before the event)</div>
       ${row("champion","Champion","Who lifts the Aegis.","pts",true)}
-      ${row("grandFinalists","Grand finalists","Both teams that reach the final.","pts",true)}
+      ${row("grandFinalists","Grand finalists","Points for each team you correctly place in the final.","each",true)}
       ${row("topFour","Top 4","The four semifinalists (order-independent).","each",true)}
       ${row("topEight","Top 8","Who makes the playoff bracket.","each",true)}
-      ${row("lastPlace","Last place","Wooden spoon — who finishes dead last.","pts",true)}
-      ${row("groupWinner","Group-stage winner","Team that tops the group/Swiss stage.","pts",true)}
-      ${row("regionPerf","Best region","Which region's teams do best overall.","pts",true)}
-      ${row("bottomFour","Bottom 4 (out first)","Predict who exits the group stage first.","each",true)}
-      ${row("breakoutTeam","Breakout team","A low-seed pick that pays if it reaches a milestone.","pts",true)}
-      ${row("regionHero","Region hero","Best-performing team from a region you choose.","pts",true)}
-      ${row("finalsRematch","Finals rematch","Two specific teams meet again from a past final.","pts",true)}
-      ${row("exactFinal","Exact final matchup","Both finalists, in the correct final.","pts",true)}
       ${row("champFromLB","Champion from lower bracket","Bonus if your champion wins from the lower bracket.","pts",true)}
     </div>
 
-    <div class="rule-group"><div class="rule-group-h">Spicy / fun bonuses</div>
-      ${row("cinderella","Cinderella run","Name an overperformer; points scale with how far they go.","pts",true)}
-      ${row("perfectBracket","Perfect bracket","Jackpot for nailing the entire playoff bracket.","pts",true)}
-      ${row("streakBonus","Streak bonus","Extra per consecutive correct match pick.","per",true)}
-      ${row("lockOfDay","Lock of the day","One banker pick per day — double points if right.","",false)}
-      ${row("survivorPool","Survivor pool","Pick one winner each day; a loss knocks you out. Last standing wins.","",false)}
-      ${row("headToHead","Head-to-head duels","Challenge a friend on a single match for a pot of points.","",false)}
-      ${row("weeklyMVP","Weekly MVP","Most points in a week earns a badge and bonus.","pts",true)}
-      ${row("comebackBonus","Comeback bonus","Points for climbing the rankings week-over-week.","pts",true)}
-      ${row("jokerCard","Joker card","One-time token that doubles the points on a pick of your choice.","",false)}
-      ${row("wildcardWeek","Wildcard week","Admin designates a round where all points are doubled.","",false)}
-      ${row("mulligan","Mulligan","Each player gets one undo to change a locked pick before its deadline.","",false)}
-    </div>
-
     <div class="rule-group"><div class="rule-group-h">Scoring style</div>
-      <div class="rule-modes">${modeBtn("flat","Flat — every match equal")}${modeBtn("weighted","Round-weighted — finals worth more")}${modeBtn("odds","Odds-based — underdogs worth more")}</div>
+      <div class="rule-modes">${modeBtn("flat","Flat — every match equal")}${modeBtn("weighted","Round-weighted — finals worth more")}</div>
       ${row("negativePoints","Negative points","Wrong picks subtract — guessing blindly hurts.","pts",true)}
-      ${row("earlyLockBonus","Early-lock bonus","Small bonus for locking well before the deadline.","pts",true)}
-      ${row("diminishing","Diminishing returns","Repeatedly picking the favorite earns slightly less over time.","",false)}
-      ${row("stageGates","Bracket-stage gates","Lock all of a round's picks before any are revealed.","",false)}
-      ${row("percentile","Percentile scoring","Points based on how many players you beat per match.","",false)}
-      ${row("bonusPool","Bonus pool","A fixed pot split among everyone who nails a hard prediction.","pts",true)}
       <div class="rule-row on"><div class="rule-info"><div class="rule-name">Lock lead time</div><div class="rule-desc">How long before a match predictions must be locked.</div></div>
         <div class="rule-pts"><input type="number" min="1" data-rulemin="lockMin" value="${Math.round(r.lockLeadMs/60000)}" ${dis}><span>min</span></div></div>
     </div>
 
     <div class="rule-group"><div class="rule-group-h">Tie-breakers (in priority order)</div>
-      <div class="tb-list">${tb("tbExactHits","Most exact-score hits")}${tb("tbChampion","Best champion/final prediction")}${tb("tbFinalH2H","Head-to-head on the final match")}${tb("tbThreshold","Earliest to reach a points threshold")}</div>
+      <div class="tb-list">${tb("tbExactHits","Most exact-score hits")}${tb("tbChampion","Best tournament-outcome picks")}</div>
     </div>
     ${editable?'<button class="lg-btn" id="lgSaveRules2" style="margin-top:6px">Save rules</button>':''}`;
 }

@@ -355,7 +355,7 @@ def aggregate_series(rows, team_names):
         s = series.setdefault(key, {
             "sid": key, "a": a, "b": b, "sa": 0, "sb": 0,
             "best_of": _BEST_OF.get(g.get("series_type") or 0, 3),
-            "start": start, "last": 0,
+            "start": start, "last": 0, "games": [],
         })
         if start:
             s["start"] = min(s["start"] or start, start)
@@ -367,7 +367,13 @@ def aggregate_series(rows, team_names):
             s["sa"] += 1
         else:
             s["sb"] += 1
-    return list(series.values())
+        # Per-game rows feed the league's first-game / reverse-sweep rules.
+        s["games"].append({"winner": winner, "duration": g.get("duration"),
+                           "start": start})
+    out = list(series.values())
+    for s in out:
+        s["games"].sort(key=lambda x: x["start"] or 0)
+    return out
 
 
 def build_series_pair_map(rows, team_names):
@@ -409,6 +415,24 @@ def _slug(s):
     return re.sub(r"[^a-z0-9]+", "-", str(s).lower()).strip("-")
 
 
+# match_id -> [{game_no, winner, duration, start_time}], collected while
+# OpenDota series are matched to matches; pushed to the league backend.
+_GAMES_BY_MATCH = {}
+
+
+def _record_games(match_id, series):
+    games = series.get("games") or []
+    if not games:
+        return
+    _GAMES_BY_MATCH[match_id] = [
+        {"match_id": match_id, "game_no": i + 1, "winner": g["winner"],
+         "duration": g.get("duration"),
+         "start_time": datetime.datetime.fromtimestamp(
+             g["start"], datetime.timezone.utc).isoformat() if g.get("start") else None}
+        for i, g in enumerate(games)
+    ]
+
+
 def synth_qualifier_matches(league_id, rows, now_ts, team_names):
     """
     Build qualifiers[].matches entries from one qualifier league's OpenDota
@@ -422,6 +446,7 @@ def synth_qualifier_matches(league_id, rows, now_ts, team_names):
         clinched = max(s["sa"], s["sb"]) >= need
         recent = (now_ts - s["last"]) < 3 * 3600
         status = "completed" if clinched else ("live" if recent else "completed")
+        _record_games(f"q{league_id}-{_slug(s['sid'])}", s)
         matches.append({
             "id": f"q{league_id}-{_slug(s['sid'])}",
             "bestOf": s["best_of"],
@@ -483,6 +508,7 @@ def run_opendota(data):
     if not OPENDOTA_LEAGUE_IDS:
         print("  · OpenDota league id not set — skipping results merge.")
         return (0, 0)
+    _GAMES_BY_MATCH.clear()
     now_ts = int(time.time())
     per_league = {}
     for lid in OPENDOTA_LEAGUE_IDS:
@@ -536,6 +562,8 @@ def merge_opendota_scores(data, series):
         s = _pick_series(series.get(_match_key(na, nb)), m.get("scheduled"))
         if not s:
             return
+        if m.get("id"):
+            _record_games(m["id"], s)
         # map series a/b back to this match's A/B by name
         if na.lower() == s["a"].lower():
             sa, sb = s["sa"], s["sb"]
@@ -1135,32 +1163,104 @@ def collect_completed_results(data):
     return rows
 
 
-def push_match_results(data):
+def _stage_of(match_id):
+    if match_id.startswith("q"):
+        return "qualifier"
+    if match_id.startswith("gs-"):
+        return "group"
+    if match_id.startswith("el-"):
+        return "elimination"
+    if match_id.startswith("me-"):
+        return "playoffs"
+    return "other"
+
+
+def collect_all_matches(data):
     """
-    Upsert decided matches into match_results via PostgREST. Skips cleanly
-    when the service-role key isn't in the environment (e.g. local runs).
+    Every known match as a `matches` row. The league backend needs these for
+    participants (outcome resolution reads team names from here) and for the
+    schedule the server-side lock deadline is enforced against.
+    """
+    rows = []
+
+    def take(m):
+        if not isinstance(m, dict) or not m.get("id"):
+            return
+        ta, tb = m.get("teamA") or {}, m.get("teamB") or {}
+        rows.append({
+            "match_id": m["id"],
+            "team_a": ta.get("name"), "team_b": tb.get("name"),
+            "best_of": m.get("bestOf") or 3,
+            "scheduled_at": m.get("scheduled"),
+            "stage": _stage_of(m["id"]),
+            "status": m.get("status") or "upcoming",
+        })
+
+    for q in data.get("qualifiers") or []:
+        for m in q.get("matches") or []:
+            take(m)
+    gs = data.get("groupStage") or {}
+    for rnd in gs.get("rounds") or []:
+        for m in rnd.get("matches") or []:
+            take(m)
+    for m in gs.get("eliminationMatches") or []:
+        take(m)
+    br = data.get("bracket") or {}
+    for side in ("upper", "lower"):
+        for rnd in (br.get("rounds") or {}).get(side) or []:
+            for m in rnd.get("matches") or []:
+                take(m)
+    if br.get("grandFinal"):
+        take(br["grandFinal"])
+    return rows
+
+
+def _supabase_upsert(table, conflict, rows):
+    """Upsert rows into a Supabase table via PostgREST, in batches."""
+    total = 0
+    for i in range(0, len(rows), 500):
+        batch = rows[i:i + 500]
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/{table}?on_conflict={conflict}",
+            data=json.dumps(batch).encode("utf-8"),
+            headers={
+                "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates,return=minimal",
+            },
+            method="POST")
+        with urllib.request.urlopen(req, timeout=30):
+            total += len(batch)
+    return total
+
+
+def push_league_backend(data):
+    """
+    Feed the prediction league: the schedule/participants (`matches`), the
+    per-game rows (`match_games`) the first-game and reverse-sweep rules need,
+    and the decided results (`match_results`) the leaderboard scores against.
+    Skips cleanly when the service-role key isn't set (e.g. local runs).
     """
     if not SUPABASE_SERVICE_ROLE_KEY:
-        print("  · Supabase service key not set — skipping match_results push.")
+        print("  · Supabase service key not set — skipping league backend push.")
         return 0
-    rows = collect_completed_results(data)
-    if not rows:
-        print("  · No decided matches to push to the league backend.")
-        return 0
-    req = urllib.request.Request(
-        f"{SUPABASE_URL}/rest/v1/match_results?on_conflict=match_id",
-        data=json.dumps(rows).encode("utf-8"),
-        headers={
-            "apikey": SUPABASE_SERVICE_ROLE_KEY,
-            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-            "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates,return=minimal",
-        },
-        method="POST")
-    with urllib.request.urlopen(req, timeout=30):
-        pass
-    print(f"  · Pushed {len(rows)} decided match result(s) to the league backend.")
-    return len(rows)
+
+    matches = collect_all_matches(data)
+    if matches:
+        _supabase_upsert("matches", "match_id", matches)
+
+    games = [g for rows in _GAMES_BY_MATCH.values() for g in rows]
+    if games:
+        _supabase_upsert("match_games", "match_id,game_no", games)
+
+    results = collect_completed_results(data)
+    if results:
+        _supabase_upsert("match_results", "match_id", results)
+
+    print(f"  · League backend: {len(matches)} match(es), {len(games)} game(s), "
+          f"{len(results)} result(s).")
+    return len(results)
 
 
 def main():
@@ -1182,9 +1282,9 @@ def main():
         data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         save(data)
         try:
-            push_match_results(data)
+            push_league_backend(data)
         except Exception as e2:
-            print(f"  ! match_results push failed: {e2}", file=sys.stderr)
+            print(f"  ! League backend push failed: {e2}", file=sys.stderr)
         return 0
 
     if not wt:
@@ -1269,11 +1369,11 @@ def main():
     save(data)
     print("  Updated sections:", ", ".join(changed) if changed else "none (timestamp only)")
 
-    # Feed the prediction-league leaderboard (independent of the git commit).
+    # Feed the prediction league (independent of the git commit).
     try:
-        push_match_results(data)
+        push_league_backend(data)
     except Exception as e:
-        print(f"  ! match_results push failed: {e}", file=sys.stderr)
+        print(f"  ! League backend push failed: {e}", file=sys.stderr)
     return 0
 
 
