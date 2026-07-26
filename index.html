@@ -2033,7 +2033,10 @@ function trBracketSection(matches,nm,title,cls){
 function trBracketHTML(matches,nm,t){
   const all=matches||[];
   const pick=b=>all.filter(m=>m.bracket===b);
-  const de=t.format==="double_elim";
+  // Whether this is a double elimination is a question about the bracket that
+  // exists, not about the tournament's format — a group stage or a Swiss can
+  // feed a double-elim playoff, and then t.format says "groups".
+  const de=pick("losers").length>0;
   return trBracketSection(pick("main"),nm,de?"Winners bracket":"",de?"tr-winners":"")
        + trBracketSection(pick("losers"),nm,"Losers bracket","tr-losers")
        + trBracketSection(pick("grand_final"),nm,"","tr-gf")
