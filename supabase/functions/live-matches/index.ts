@@ -418,6 +418,88 @@ async function fetchHeroes() {
   return _heroList;
 }
 
+// Hero abilities. The two constants files are big (3,000+ abilities), so they
+// are fetched once, cached, and only the requested hero's slice is returned.
+let _abilities: any = null;
+let _heroAbilities: any = null;
+let _constAt = 0;
+async function fetchHeroDetail(heroId: number) {
+  if (!_abilities || !_heroAbilities || Date.now() - _constAt > 24 * 60 * 60 * 1000) {
+    const [ab, ha] = await Promise.all([
+      jurl(`${OD}/constants/abilities`, UA, 20000),
+      jurl(`${OD}/constants/hero_abilities`, UA, 20000),
+    ]);
+    if (ab && ha) { _abilities = ab; _heroAbilities = ha; _constAt = Date.now(); }
+  }
+  const heroes = await fetchHeroes();
+  const hero = (heroes || []).find((h: any) => h.id === heroId);
+  if (!hero || !_heroAbilities || !_abilities) return { abilities: [], talents: [], facets: [] };
+
+  const entry = _heroAbilities["npc_dota_hero_" + hero.key] || {};
+  const CDN = "https://cdn.cloudflare.steamstatic.com";
+  const abilities = (entry.abilities || [])
+    // Valve pads the list with internal placeholders and sub-abilities.
+    .filter((k: string) => k && !k.startsWith("generic_") && !k.endsWith("_release"))
+    .map((k: string) => {
+      const a = _abilities[k];
+      if (!a || !a.dname) return null;
+      const arr = (v: any) => Array.isArray(v) ? v.join(" / ") : (v ?? null);
+      return {
+        key: k,
+        name: a.dname,
+        desc: a.desc || null,
+        lore: a.lore || null,
+        type: a.behavior ? (Array.isArray(a.behavior) ? a.behavior.join(", ") : a.behavior) : null,
+        dmgType: a.dmg_type || null,
+        pierces: a.bkbpierce || null,
+        dispellable: a.dispellable || null,
+        cooldown: arr(a.cd),
+        mana: arr(a.mc),
+        damage: arr(a.dmg),
+        img: a.img ? CDN + a.img : null,
+      };
+    })
+    .filter(Boolean);
+
+  const facets = (entry.facets || [])
+    .filter((f: any) => f && f.title && f.deprecated !== "true")
+    .map((f: any) => ({ title: f.title, desc: f.description || null, color: f.color || null }));
+
+  return { heroId, abilities, talents: entry.talents || [], facets };
+}
+
+// A team's recent record against RANKED opposition, which is what actually
+// explains its position — "beat the #3 side twice" says more than a rating.
+async function fetchTeamForm(teamId: number) {
+  if (!SB_URL || !SB_KEY) return { series: [] };
+  const h = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+  const rows = await jurl(
+    `${SB_URL}/rest/v1/pro_series?select=team_a_id,team_a,team_b_id,team_b,score_a,score_b,started_at,tier`
+    + `&or=(team_a_id.eq.${teamId},team_b_id.eq.${teamId})`
+    + `&tier=in.(premium,professional)&order=started_at.desc&limit=15`, h);
+  if (!Array.isArray(rows)) return { series: [] };
+  const rankOf: Record<number, any> = {};
+  for (const t of (_topTeams || [])) rankOf[t.id] = t;
+  return {
+    series: rows.map((r: any) => {
+      const isA = r.team_a_id === teamId;
+      const oppId = isA ? r.team_b_id : r.team_a_id;
+      const us = isA ? r.score_a : r.score_b;
+      const them = isA ? r.score_b : r.score_a;
+      const opp = rankOf[oppId];
+      return {
+        opponent: isA ? r.team_b : r.team_a,
+        opponentId: oppId,
+        opponentRank: opp ? opp.rank : null,
+        us, them,
+        won: us > them,
+        at: r.started_at,
+        tier: r.tier,
+      };
+    }),
+  };
+}
+
 async function fetchRoster(teamId: number) {
   const c = _rosterCache[teamId];
   if (c && (Date.now() - c.at < CACHE_MS)) return c.players;
@@ -461,8 +543,19 @@ Deno.serve(async (req) => {
     // On-demand roster lookup: /live-matches?roster=TEAM_ID
     const rosterId = url.searchParams.get("roster");
     if (rosterId) {
-      const players = await fetchRoster(Number(rosterId));
-      return new Response(JSON.stringify({ teamId: Number(rosterId), players }),
+      await loadLookups();                  // ranks for the opponent list
+      const [players, form] = await Promise.all([
+        fetchRoster(Number(rosterId)),
+        fetchTeamForm(Number(rosterId)),
+      ]);
+      return new Response(JSON.stringify({ teamId: Number(rosterId), players, ...form }),
+        { headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+    // One hero's abilities: /live-matches?hero=HERO_ID
+    const heroId = url.searchParams.get("hero");
+    if (heroId) {
+      const detail = await fetchHeroDetail(Number(heroId));
+      return new Response(JSON.stringify(detail),
         { headers: { ...CORS, "Content-Type": "application/json" } });
     }
     // Full hero list: /live-matches?heroes=1

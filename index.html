@@ -239,6 +239,37 @@
   .hd-sv{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink)}
   .hd-gain{color:var(--ink-faint);font-size:10.5px}
   .hd-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-faint);line-height:1.5}
+  /* hero abilities */
+  .ab-row{display:grid;grid-template-columns:56px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line-soft)}
+  .ab-row:last-child{border-bottom:none}
+  .ab-icon{width:56px;height:56px;border-radius:6px;object-fit:cover;background:var(--bg);border:1px solid var(--line)}
+  .ab-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
+  .ab-name{font-family:'Oswald',sans-serif;font-size:16px;letter-spacing:.02em;color:var(--ink)}
+  .ab-type{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+  .ab-desc{font-size:12.5px;color:var(--ink-dim);line-height:1.6;margin:0 0 8px}
+  .ab-kvs{display:flex;flex-wrap:wrap;gap:6px}
+  .ab-kv{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-dim);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:3px 8px}
+  .ab-kv b{color:var(--ink-faint);font-weight:400}
+  .ab-facet{font-size:12px;color:var(--ink-dim);line-height:1.6;padding:8px 11px;background:var(--bg);border:1px solid var(--line);border-radius:5px;margin-bottom:6px}
+  .ab-facet b{color:var(--ink)}
+  @media(max-width:520px){.ab-row{grid-template-columns:44px 1fr;gap:11px}.ab-icon{width:44px;height:44px}}
+  /* team detail: why this rank + recent form */
+  .rh-rank{color:var(--aegis-bright);font-weight:500}
+  .tm-why{font-size:12.5px;color:var(--ink-dim);line-height:1.7;background:var(--bg);border:1px solid var(--line);border-left:2px solid var(--aegis);border-radius:var(--radius);padding:13px 15px;margin-bottom:6px}
+  .tm-why b{color:var(--ink);font-weight:500}
+  .rb-sub{font-family:'Inter',sans-serif;font-size:11px;color:var(--ink-faint);text-transform:none;letter-spacing:0;margin-left:8px}
+  .tf-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .tf-row{display:grid;grid-template-columns:26px 1fr auto 56px;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--line-soft)}
+  .tf-row:last-child{border-bottom:none}
+  .tf-res{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;text-align:center;border-radius:3px;line-height:20px}
+  .tf-res.win{color:#5fbf72;background:rgba(95,191,114,.12)}
+  .tf-res.loss{color:#d4695f;background:rgba(212,105,95,.12)}
+  .tf-res.draw{color:var(--ink-faint);background:var(--bg)}
+  .tf-opp{font-size:13px;color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tf-rank{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);margin-left:6px}
+  .tf-score{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink)}
+  .tf-when{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-align:right}
+  @media(max-width:520px){.tf-row{grid-template-columns:24px 1fr auto}.tf-when{display:none}}
   @media(max-width:520px){
     .hero-grid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
     .hd-pro{grid-template-columns:repeat(2,1fr)}
@@ -1603,13 +1634,45 @@ function openHero(id){
           ${stat("Mana",v(h.mana))}
           ${stat("Legs",v(h.legs))}
         </div>
-        ${h.pubWin!=null?`<div class="hd-foot">${h.pubWin}% win rate in public matches · hero art and stats © Valve</div>`:''}
+        <div class="hd-lab">Abilities</div>
+        <div id="hdAbilities"><div class="loading" style="padding:14px 0">Loading abilities…</div></div>
+        ${h.pubWin!=null?`<div class="hd-foot">${h.pubWin}% win rate in public matches · hero art, abilities and stats © Valve</div>`:''}
       </div>
     </div>`;
   back.classList.add("show");
   back.onclick=(e)=>{ if(e.target===back) closeRoster(); };
+  loadHeroAbilities(h.id);
 }
 window.openHero=openHero;
+
+const _abilCache={};
+async function loadHeroAbilities(id){
+  const wrap=$("#hdAbilities"); if(!wrap) return;
+  try{
+    if(!_abilCache[id]){
+      const res=await fetch(LIVE_FN_URL+"?hero="+encodeURIComponent(id),{cache:"no-store"});
+      _abilCache[id]=await res.json();
+    }
+    const d=_abilCache[id];
+    if(!wrap.isConnected) return;                 // panel closed while loading
+    const abil=(d.abilities||[]);
+    if(!abil.length){ wrap.innerHTML=`<div class="hd-note">No ability data for this hero.</div>`; return; }
+    const kv=(l,v)=>v?`<span class="ab-kv"><b>${esc(l)}</b> ${esc(v)}</span>`:"";
+    wrap.innerHTML=abil.map(a=>`<div class="ab-row">
+        ${a.img?`<img class="ab-icon" src="${esc(a.img)}" alt="" loading="lazy">`:'<div class="ab-icon"></div>'}
+        <div class="ab-body">
+          <div class="ab-head"><span class="ab-name">${esc(a.name)}</span>
+            ${a.type?`<span class="ab-type">${esc(a.type)}</span>`:''}</div>
+          ${a.desc?`<p class="ab-desc">${esc(a.desc)}</p>`:''}
+          <div class="ab-kvs">${kv("Damage",a.dmgType)}${kv("Cooldown",a.cooldown)}${kv("Mana",a.mana)}${kv("Pierces BKB",a.pierces)}${kv("Dispellable",a.dispellable)}</div>
+        </div>
+      </div>`).join("")
+      +((d.facets||[]).length?`<div class="hd-lab" style="margin-top:20px">Facets</div>
+        ${d.facets.map(f=>`<div class="ab-facet"><b>${esc(f.title)}</b>${f.desc?` — ${esc(f.desc)}`:''}</div>`).join("")}`:"");
+  }catch(e){
+    if(wrap.isConnected) wrap.innerHTML=`<div class="hd-note">Couldn't load abilities.</div>`;
+  }
+}
 
 /* ---- Roster modal (on-demand fetch) ---- */
 async function openRoster(teamId,teamName,teamLogoUrl){
@@ -1621,16 +1684,53 @@ async function openRoster(teamId,teamName,teamLogoUrl){
     const res=await fetch(LIVE_FN_URL+"?roster="+encodeURIComponent(teamId),{cache:"no-store"});
     const j=await res.json();
     const players=(j.players||[]);
+    const form=(j.series||[]);
     const tm=(LIVE_FEED.topTeams||[]).find(t=>String(t.id)===String(teamId))||{};
+
+    // Explain the ranking in words. A number on its own tells you nothing
+    // about why a team sits 8th instead of 20th.
+    const decided=form.filter(s=>s.us!==s.them);
+    const wins=decided.filter(s=>s.won).length;
+    const beaten=decided.filter(s=>s.won&&s.opponentRank).sort((a,b)=>a.opponentRank-b.opponentRank)[0];
+    const lostTo=decided.filter(s=>!s.won&&s.opponentRank).sort((a,b)=>b.opponentRank-a.opponentRank)[0];
+    let why="";
+    if(tm.rank&&tm.glicko!=null){
+      const bits=[];
+      bits.push(`Rated <b>${tm.glicko}</b> from <b>${tm.seriesPlayed||decided.length}</b> series against ranked opposition.`);
+      if(beaten) bits.push(`Best recent win: <b>${esc(beaten.opponent)}</b> (#${beaten.opponentRank}).`);
+      if(lostTo) bits.push(`Worst recent loss: <b>${esc(lostTo.opponent)}</b> (#${lostTo.opponentRank}).`);
+      bits.push(tm.provisional
+        ? `Still provisional — too few recent games to be confident, so they're placed cautiously.`
+        : `Beating higher-ranked teams moves this number far more than beating lower-ranked ones.`);
+      why=`<div class="tm-why">${bits.join(" ")}</div>`;
+    }
+
+    const formRow=s=>{
+      const drawn=s.us===s.them;
+      const cls=drawn?"draw":(s.won?"win":"loss");
+      const when=s.at?new Date(s.at).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+      return `<div class="tf-row">
+        <span class="tf-res ${cls}">${drawn?"–":(s.won?"W":"L")}</span>
+        <span class="tf-opp">${esc(s.opponent||"?")}${s.opponentRank?`<span class="tf-rank">#${s.opponentRank}</span>`:''}</span>
+        <span class="tf-score">${s.us}–${s.them}</span>
+        <span class="tf-when">${esc(when)}</span>
+      </div>`;
+    };
+
     box.innerHTML=`<div class="roster-hd">${teamLogo(teamName,54,teamLogoUrl)}
-      <div><h3>${esc(teamName)}</h3><div class="rh-stat">${tm.rating?('Rating '+tm.rating+' · '):''}${tm.wins!=null?(tm.wins+'W '+tm.losses+'L · '+tm.winRate+'% WR'):''}</div></div>
+      <div style="flex:1"><h3>${esc(teamName)}</h3>
+        <div class="rh-stat">${tm.rank?`<span class="rh-rank">#${tm.rank} in the world</span> · `:''}${tm.wins!=null?(tm.wins+'W '+tm.losses+'L all-time · '+tm.winRate+'% win rate'):''}</div></div>
       <button class="rh-close" onclick="closeRoster()">×</button></div>
-      <div class="roster-body"><div class="rb-lab">Current Roster</div>
-      ${players.length?players.map(p=>`<div class="rmember">
-        <div class="rm-av">${esc((p.name||'?').slice(0,2).toUpperCase())}</div>
-        <div><div class="rm-name">${p.profile?`<a href="${esc(p.profile)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(p.name)}</a>`:esc(p.name)}</div></div>
-        <div class="rm-stat">${p.games?(p.games+' games'):''}</div>
-      </div>`).join(""):`<div class="empty" style="padding:18px"><b>No current roster listed</b>OpenDota doesn't have active members for this team.</div>`}
+      <div class="roster-body">
+        ${why}
+        ${form.length?`<div class="rb-lab">Recent form ${decided.length?`<span class="rb-sub">${wins}W ${decided.length-wins}L in the last ${decided.length}</span>`:''}</div>
+          <div class="tf-list">${form.map(formRow).join("")}</div>`:''}
+        <div class="rb-lab" style="margin-top:20px">Current roster</div>
+        ${players.length?players.map(p=>`<div class="rmember">
+          <div class="rm-av">${esc((p.name||'?').slice(0,2).toUpperCase())}</div>
+          <div><div class="rm-name">${p.profile?`<a href="${esc(p.profile)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(p.name)}</a>`:esc(p.name)}</div></div>
+          <div class="rm-stat">${p.games?(p.games+' games'):''}</div>
+        </div>`).join(""):`<div class="empty" style="padding:18px"><b>No current roster listed</b>OpenDota doesn't have active members for this team.</div>`}
       </div>`;
   }catch(e){
     box.innerHTML=`<div class="roster-hd">${teamLogo(teamName,54,teamLogoUrl)}<div><h3>${esc(teamName)}</h3></div><button class="rh-close" onclick="closeRoster()">×</button></div><div class="roster-body"><div class="empty" style="padding:18px"><b>Couldn't load roster</b>Try again in a moment.</div></div>`;
