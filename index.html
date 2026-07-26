@@ -223,6 +223,17 @@
   .tr-mbo{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint)}
   .tr-mwait{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
   .tr-report{padding:6px 12px;font-size:12px}
+  /* bracket sections */
+  .tr-bsection{margin-top:18px}
+  .tr-btitle{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.07em;font-size:13px;color:var(--ink-dim);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .tr-bsection.tr-losers .tr-bm{border-color:rgba(212,105,95,.22)}
+  .tr-bsection.tr-gf .tr-bm{border-color:var(--aegis);box-shadow:0 0 0 1px rgba(217,164,65,.18)}
+  .tr-bsection.tr-gf .tr-rlabel{color:var(--aegis-bright)}
+  /* report dialog */
+  .rep-who{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .rep-team{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink-dim);font:inherit;font-size:14px;padding:14px 12px;cursor:pointer;transition:.15s}
+  .rep-team:hover{border-color:var(--ink-faint);color:var(--ink)}
+  .rep-team.sel{border-color:var(--aegis);background:rgba(217,164,65,.12);color:var(--aegis-bright);font-weight:600}
   /* my picks history */
   .mp-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px}
   .mp-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
@@ -693,6 +704,15 @@
   .lg-field label{display:block;font-size:12px;font-weight:600;color:var(--ink-dim);margin-bottom:6px}
   .lg-field input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-size:15px;padding:11px 13px;outline:none}
   .lg-field input:focus{border-color:var(--aegis)}
+  /* selects were falling back to the browser's white default */
+  .lg-field select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    color:var(--ink);font-size:15px;font-family:inherit;padding:11px 36px 11px 13px;outline:none;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%237d8590' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 13px center;background-size:11px}
+  .lg-field select:hover{border-color:var(--ink-faint)}
+  .lg-field select:focus{border-color:var(--aegis)}
+  .lg-field select option{background:var(--bg-2);color:var(--ink)}
   /* league switcher + join/create */
   .lg-switchbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .lg-chips{display:flex;gap:8px;flex-wrap:wrap}
@@ -1650,7 +1670,7 @@ async function trFetchList(){
   return (data||[]).map(t=>({...t,teamCount:counts[t.id]||0}));
 }
 
-const TR_FORMAT_NAME={single_elim:"Single elimination",round_robin:"Round robin"};
+const TR_FORMAT_NAME={single_elim:"Single elimination",double_elim:"Double elimination",round_robin:"Round robin"};
 const TR_STATUS_NAME={registration:"Open for teams",running:"In progress",finished:"Finished",cancelled:"Cancelled"};
 
 function trSeriesSummary(sf){
@@ -1724,6 +1744,7 @@ function trCreateForm(){
       <div class="lg-field"><label>Format</label>
         <select id="trFormat">
           ${opt("single_elim","Single elimination — lose once, you're out",true)}
+          ${opt("double_elim","Double elimination — two lives, like TI",false)}
           ${opt("round_robin","Round robin — everyone plays everyone",false)}
         </select></div>
       <div class="lg-field"><label>Maximum teams</label>
@@ -1817,20 +1838,29 @@ async function trRenderDetail(panel,seq){
   wireTourneyPanel(t,teams,matches);
 }
 
-function trBracketHTML(matches,nm,t){
-  const main=(matches||[]).filter(m=>m.bracket==="main");
-  if(!main.length) return "";
-  const rounds=[...new Set(main.map(m=>m.round))].sort((a,b)=>a-b);
-  const third=(matches||[]).filter(m=>m.bracket==="third_place");
-  return `<div class="tr-bracket">${rounds.map(r=>{
-    const ms=main.filter(m=>m.round===r);
-    return `<div class="tr-round">
-      <div class="tr-rlabel">${esc(ms[0].label||("Round "+r))}</div>
-      ${ms.map(m=>trBracketMatch(m,nm)).join("")}
-    </div>`;
-  }).join("")}
-  ${third.length?`<div class="tr-round"><div class="tr-rlabel">Third place</div>${third.map(m=>trBracketMatch(m,nm)).join("")}</div>`:""}
+function trBracketSection(matches,nm,title,cls){
+  if(!matches.length) return "";
+  const rounds=[...new Set(matches.map(m=>m.round))].sort((a,b)=>a-b);
+  return `<div class="tr-bsection ${cls||''}">
+    ${title?`<div class="tr-btitle">${esc(title)}</div>`:""}
+    <div class="tr-bracket">${rounds.map(r=>{
+      const ms=matches.filter(m=>m.round===r);
+      return `<div class="tr-round">
+        <div class="tr-rlabel">${esc(ms[0].label||("Round "+r))}</div>
+        ${ms.map(m=>trBracketMatch(m,nm)).join("")}
+      </div>`;
+    }).join("")}</div>
   </div>`;
+}
+
+function trBracketHTML(matches,nm,t){
+  const all=matches||[];
+  const pick=b=>all.filter(m=>m.bracket===b);
+  const de=t.format==="double_elim";
+  return trBracketSection(pick("main"),nm,de?"Winners bracket":"",de?"tr-winners":"")
+       + trBracketSection(pick("losers"),nm,"Losers bracket","tr-losers")
+       + trBracketSection(pick("grand_final"),nm,"","tr-gf")
+       + trBracketSection(pick("third_place"),nm,"","");
 }
 
 function trBracketMatch(m,nm){
@@ -1932,8 +1962,64 @@ function wireTourneyPanel(t,teams,matches){
       setTimeout(()=>shb.textContent=o,1400); });
   };
 
-  document.querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>
-    toast("Almost there","Result reporting lands next — the bracket engine is already wired for it."));
+  document.querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>{
+    const m=(matches||[]).find(x=>x.id===b.getAttribute("data-report"));
+    if(m) trOpenReport(m,teams||[]);
+  });
+}
+
+// Reporting a result. Scores are chips, so an impossible Bo3 can't be typed.
+function trOpenReport(m,teams){
+  const byId={}; teams.forEach(x=>byId[x.id]=x);
+  const A=(byId[m.team_a]||{}).name||"Team A", B=(byId[m.team_b]||{}).name||"Team B";
+  const need=Math.floor(m.best_of/2)+1;
+  const chips=[];
+  for(let l=0;l<need;l++) chips.push([need,l]);
+  const body=$("#leagueModalBody"); if(!body) return;
+  $("#lgModalTitle").textContent="Report result";
+  body.innerHTML=`
+    <div class="hint" style="margin-bottom:14px">${esc(m.label||"")} · Bo${m.best_of}. The other captain confirms before the bracket moves.</div>
+    <div class="rep-who">
+      <button class="rep-team" data-repwin="a">${esc(A)}</button>
+      <button class="rep-team" data-repwin="b">${esc(B)}</button>
+    </div>
+    <div class="pred-score-label" style="margin-top:16px">Series score</div>
+    <div class="pred-chips" id="repChips">
+      ${chips.map(([w,l])=>`<button class="pred-chip" data-repscore="${w}-${l}">${w}–${l}</button>`).join("")}
+    </div>
+    <div class="lg-field" style="margin-top:6px">
+      <label>Dota match IDs <span style="opacity:.6">(optional, comma separated)</span></label>
+      <input id="repIds" placeholder="8912958050, 8912990112">
+    </div>
+    <div class="hint" style="margin:-6px 0 14px">Paste them and we'll check the games against Dota's own match history. Hidden profiles don't matter — we look up the match, not the players.</div>
+    <button class="lg-btn" id="repSubmit" style="width:100%">Submit result</button>`;
+  openModal("leagueModal");
+
+  let win=null, score=null;
+  body.querySelectorAll("[data-repwin]").forEach(b=>b.onclick=()=>{
+    win=b.getAttribute("data-repwin");
+    body.querySelectorAll("[data-repwin]").forEach(x=>x.classList.toggle("sel",x===b));
+  });
+  body.querySelectorAll("[data-repscore]").forEach(b=>b.onclick=()=>{
+    score=b.getAttribute("data-repscore");
+    body.querySelectorAll("[data-repscore]").forEach(x=>x.classList.toggle("sel",x===b));
+  });
+  $("#repSubmit").onclick=async()=>{
+    if(!win){ toast("Who won?","Pick the winning team."); return; }
+    if(!score){ toast("Pick a score","Choose how the series ended."); return; }
+    const [w,l]=score.split("-").map(Number);
+    const sa=win==="a"?w:l, sb=win==="a"?l:w;
+    const ids=($("#repIds").value||"").split(/[,\s]+/).filter(Boolean);
+    const btn=$("#repSubmit"); btn.disabled=true; btn.textContent="Submitting…";
+    const {data,error}=await SB.rpc("tournament_report",
+      {p_match:m.id,p_score_a:sa,p_score_b:sb,p_dota_ids:ids});
+    if(error){ toast("Couldn't report",error.message||"Try again."); btn.disabled=false; btn.textContent="Submit result"; return; }
+    closeModals();
+    toast(data==="confirmed"?"Result confirmed":"Result reported",
+          data==="confirmed"?"The bracket has moved on."
+                            :"Waiting for the other captain to confirm.");
+    renderTourney();
+  };
 }
 
 /* ---- Heroes tab ----
