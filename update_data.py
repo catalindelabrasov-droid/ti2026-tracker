@@ -1163,6 +1163,113 @@ def collect_completed_results(data):
     return rows
 
 
+# ---------------------------------------------------------------------------
+# World ranking + tournament tiers (datdota -> Supabase).
+#
+# datdota publishes a curated Glicko-2 for the ~35 teams that actually matter.
+# OpenDota's own team rating is a raw Elo that rewards match volume: on
+# 2026-07-26 its top 10 contained defunct orgs (VGJ Storm, Team NP), academy
+# squads (Aurora.1xBet) and grinders — not a ranking a Dota player would
+# recognise. So datdota drives the ladder and OpenDota supplies names/logos.
+#
+# This lives in the Action rather than the Edge Function because datdota's
+# Cloudflare 403s Supabase's egress by IP (verified from the deployed runtime).
+# ---------------------------------------------------------------------------
+
+DATDOTA_API = "https://api.datdota.com/api"
+# A non-browser User-Agent is refused outright.
+DATDOTA_HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"),
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://www.datdota.com/",
+}
+
+
+def datdota_get(path):
+    """GET a datdota endpoint. Returns parsed JSON or None (never raises)."""
+    req = urllib.request.Request(DATDOTA_API + path, headers=DATDOTA_HEADERS)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            ctype = resp.headers.get("Content-Type") or ""
+            if "json" not in ctype.lower():
+                print(f"  ! datdota{path}: non-JSON response ({ctype})", file=sys.stderr)
+                return None
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"  ! datdota{path} unreachable: {e}", file=sys.stderr)
+        return None
+
+
+def _iso(v):
+    return v or None
+
+
+def push_world_ratings():
+    """
+    Refresh team_ratings + league_tiers from datdota. Skips cleanly without the
+    service key, and leaves the previous rows in place on any failure.
+    """
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        print("  · Supabase service key not set — skipping world ratings.")
+        return 0
+
+    ratings = datdota_get("/ratings")
+    rows = (ratings or {}).get("data")
+    n_teams = 0
+    if isinstance(rows, list) and rows:
+        out = []
+        for r in rows:
+            g = r.get("glicko2") or {}
+            # The legacy `glicko` block is all-null upstream; only glicko2 is real.
+            if g.get("rating") is None or not r.get("valveId"):
+                continue
+            out.append({
+                "valve_id": r["valveId"],
+                "name": r.get("teamName"),
+                "glicko": round(g["rating"]),
+                "glicko_prev": round(g["ratingSevenDaysAgo"]) if g.get("ratingSevenDaysAgo") is not None else None,
+                "rd": round(g["phi"]) if g.get("phi") is not None else None,
+                "region": r.get("region"),
+                "as_of": _iso(r.get("glickoRatingDate")),
+            })
+        if out:
+            _supabase_upsert("team_ratings", "valve_id", out)
+            n_teams = len(out)
+    else:
+        print("  · datdota ratings unavailable — keeping the stored ranking.")
+
+    time.sleep(3.2)   # datdota asks for >= 3s between requests
+
+    leagues = datdota_get("/leagues")
+    lrows = (leagues or {}).get("data")
+    n_leagues = 0
+    if isinstance(lrows, list) and lrows:
+        out = []
+        for l in lrows:
+            tier = (l.get("tier") or {}).get("name")
+            if not l.get("leagueId") or not tier:
+                continue
+            out.append({
+                "league_id": l["leagueId"],
+                "name": l.get("name"),
+                "tier": tier,
+                "first_game": _iso(l.get("first")),
+                "last_game": _iso(l.get("last")),
+                "games": l.get("count") or 0,
+                "tags": l.get("tags") or [],
+            })
+        if out:
+            _supabase_upsert("league_tiers", "league_id", out)
+            n_leagues = len(out)
+    else:
+        print("  · datdota leagues unavailable — keeping the stored tiers.")
+
+    if n_teams or n_leagues:
+        print(f"  · World ranking: {n_teams} rated team(s), {n_leagues} tiered league(s).")
+    return n_teams
+
+
 def _stage_of(match_id):
     if match_id.startswith("q"):
         return "qualifier"
@@ -1260,6 +1367,12 @@ def push_league_backend(data):
 
     print(f"  · League backend: {len(matches)} match(es), {len(games)} game(s), "
           f"{len(results)} result(s).")
+
+    # The Dota hub's world ranking / tournament tiers (independent of the league).
+    try:
+        push_world_ratings()
+    except Exception as e:
+        print(f"  ! World ratings push failed: {e}", file=sys.stderr)
     return len(results)
 
 

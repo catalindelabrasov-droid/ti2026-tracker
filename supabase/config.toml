@@ -1,0 +1,5 @@
+project_id = "hqpynfzatnmwvlxdfhsw"
+
+[functions.live-matches]
+# Public data endpoint the static site calls directly — no user session exists.
+verify_jwt = false

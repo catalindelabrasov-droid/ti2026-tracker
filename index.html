@@ -143,10 +143,27 @@
   .tmcard .tm-info{min-width:0;flex:1}
   .tmcard .tm-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tmcard .tm-stat{font-size:11.5px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;margin-top:2px}
-  .tmcard .tm-rating{font-family:'Oswald',sans-serif;font-weight:600;color:var(--aegis-bright);font-size:15px;flex:0 0 auto}
+  .tmcard .tm-rating{font-family:'Oswald',sans-serif;font-weight:600;color:var(--aegis-bright);font-size:15px;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+  .tmcard .tm-rank.top{color:var(--aegis-bright);font-weight:700}
+  .tm-trend{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:400}
+  .tm-trend.up{color:#5fbf72}.tm-trend.down{color:#d4695f}.tm-trend.flat{color:var(--ink-faint)}
+  .tm-prov{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);border:1px solid var(--line);border-radius:3px;padding:1px 4px;margin-left:7px;vertical-align:middle}
+  /* rank explainers + tier grouping */
+  .rank-note{font-size:12px;color:var(--ink-dim);line-height:1.6;padding:12px 14px;border:1px solid var(--line);border-left:2px solid var(--aegis);border-radius:var(--radius);background:var(--panel);margin-bottom:4px}
+  .rank-note.sub{border-left-color:var(--line);margin-top:20px;color:var(--ink-faint)}
+  .rank-note b{color:var(--ink)}
+  .trn-tier-head{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--ink-dim);border-bottom:1px solid var(--line);padding:14px 0 8px;margin-top:8px}
+  .trn-tier-head:first-child{margin-top:0}
+  /* players grouped under their team's world rank */
+  .ply-group{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px}
+  .ply-ghead{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .ply-grank{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--aegis-bright)}
+  .ply-gname{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.02em;flex:1}
+  .ply-grating{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-faint)}
+  .ply-role{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim)}
   /* ---- players table ---- */
   .ply-table{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .ply-row{display:grid;grid-template-columns:46px 1fr 1fr 60px;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line-soft);transition:.12s;cursor:pointer;text-decoration:none;color:inherit}
+  .ply-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line-soft);transition:.12s;cursor:pointer;text-decoration:none;color:inherit}
   .ply-row:last-child{border-bottom:none}
   .ply-row:hover{background:var(--panel-2)}
   .ply-row.head{background:var(--panel);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:var(--ink-faint);cursor:default;position:sticky;top:54px}
@@ -1176,13 +1193,17 @@ function flagEmoji(cc){
   const up=cc.toUpperCase();
   return String.fromCodePoint(A+(up.charCodeAt(0)-base))+String.fromCodePoint(A+(up.charCodeAt(1)-base));
 }
+// Tier vocabulary. datdota curates PREMIUM / PROFESSIONAL / SEMI_PRO /
+// AMATEUR, which is the only source still classifying events properly —
+// OpenDota and Valve label almost everything "professional".
+const TIER_ORDER={international:0,premium:1,premier:1,major:2,professional:3,pro:3,semi_pro:4,amateur:5};
+const TIER_LABEL={international:"International",premium:"Premier",premier:"Premier",major:"Major",professional:"Pro",pro:"Pro",semi_pro:"Semi-pro",amateur:"Amateur"};
+const TIER_CLASS={international:"tier-int",premium:"tier-prem",premier:"tier-prem",major:"tier-major",professional:"tier-pro",pro:"tier-pro",semi_pro:"tier-pro",amateur:"tier-pro"};
+function tierKey(tier){ return (tier||"").toLowerCase(); }
 function tierBadge(tier){
-  const t=(tier||"").toLowerCase();
-  if(t==="international") return `<span class="tcard-tier tier-int">International</span>`;
-  if(t==="major") return `<span class="tcard-tier tier-major">Major</span>`;
-  if(t==="premium"||t==="premier") return `<span class="tcard-tier tier-prem">Premier</span>`;
-  if(t==="professional"||t==="pro") return `<span class="tcard-tier tier-pro">Pro</span>`;
-  return tier?`<span class="tcard-tier tier-pro">${esc(tier)}</span>`:"";
+  const t=tierKey(tier);
+  if(!t) return "";
+  return `<span class="tcard-tier ${TIER_CLASS[t]||"tier-pro"}">${esc(TIER_LABEL[t]||tier)}</span>`;
 }
 function timeAgo(unixSec){
   if(!unixSec) return "";
@@ -1237,16 +1258,31 @@ function renderTournamentsInto(){
   const grid=$("#trnGrid"); if(!grid) return;
   let list=(LIVE_FEED.tournaments||[]).slice();
   if(_tournamentFilter==="live") list=list.filter(t=>t.live);
-  else if(_tournamentFilter==="big") list=list.filter(t=>["international","major","premium","premier"].includes((t.tier||"").toLowerCase())||t.prizePool>=100000);
+  else if(_tournamentFilter==="big") list=list.filter(t=>["international","major","premium","premier"].includes(tierKey(t.tier))||t.prizePool>=100000);
   if(!list.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>No tournaments to show</b>${LIVE_FEED.tournaments&&LIVE_FEED.tournaments.length?'Try a different filter.':'Check back soon — events populate from live pro play.'}</div>`; return; }
-  grid.innerHTML=list.map(t=>`<div class="tcard ${t.live?'is-live':''}" onclick="window.open('${esc(t.watch)}','_blank')">
+  // Biggest events first, live ones ahead of finished ones within a tier.
+  list.sort((a,b)=>{
+    const ta=TIER_ORDER[tierKey(a.tier)]??9, tb=TIER_ORDER[tierKey(b.tier)]??9;
+    if(ta!==tb) return ta-tb;
+    if(!!b.live!==!!a.live) return b.live?1:-1;
+    return (b.lastMatch||0)-(a.lastMatch||0);
+  });
+  const card=t=>`<a class="tcard ${t.live?'is-live':''}" href="${esc(t.watch||'#')}" target="_blank" rel="noopener" data-teams="${esc(t.name)}">
     <div class="tcard-top"><div class="tcard-name">${esc(t.name)}</div>${tierBadge(t.tier)}</div>
     <div class="tcard-meta">${t.prizePool?`<span class="tcard-prize">${fmt(t.prizePool)}</span>`:'<span style="color:var(--ink-faint)">Prize TBD</span>'}<span>${t.recentGames} recent games</span></div>
     <div class="tcard-foot">
       ${t.live?`<span class="tcard-live"><span class="pulse"></span>Live now</span>`:`<span class="tcard-when">${t.lastMatch?'Last match '+timeAgo(t.lastMatch):''}</span>`}
       <span class="tcard-when">View →</span>
     </div>
-  </div>`).join("");
+  </a>`;
+  // Group under tier headings so the page reads as a hierarchy, not a pile.
+  const seenTier=new Set();
+  grid.innerHTML=list.map(t=>{
+    const k=tierKey(t.tier), label=TIER_LABEL[k]||t.tier||"Other";
+    let head="";
+    if(!seenTier.has(label)){ seenTier.add(label); head=`<div class="trn-tier-head" style="grid-column:1/-1">${esc(label)} events</div>`; }
+    return head+card(t);
+  }).join("");
   // wire filter buttons
   document.querySelectorAll("[data-trn]").forEach(b=>b.onclick=()=>{
     _tournamentFilter=b.getAttribute("data-trn");
@@ -1255,18 +1291,31 @@ function renderTournamentsInto(){
   });
 }
 
-/* ---- Teams tab ---- */
+/* ---- Teams tab: the world ranking ---- */
+const REGION_NAME={eu:"Europe",cis:"Eastern Europe",cn:"China",sea:"SE Asia",sa:"S. America",na:"N. America"};
+function ratingTrend(d){
+  if(d==null||d===0) return `<span class="tm-trend flat">–</span>`;
+  return d>0?`<span class="tm-trend up">▲${d}</span>`:`<span class="tm-trend down">▼${Math.abs(d)}</span>`;
+}
 function renderTeamsTabInto(){
   const grid=$("#teamGrid"); if(!grid) return;
   const teams=LIVE_FEED.topTeams||[];
-  if(!teams.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>No team data yet</b>Teams load from OpenDota — check back shortly.</div>`; return; }
-  grid.innerHTML=teams.map((t,i)=>`<div class="tmcard" data-team="${t.id}" data-tname="${esc(t.name)}" data-tlogo="${esc(t.logo||'')}">
-    <span class="tm-rank">${i+1}</span>
+  if(!teams.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>No team data yet</b>Rankings load from datdota + OpenDota — check back shortly.</div>`; return; }
+  const ranked=teams.filter(t=>t.ratingSource==="datdota");
+  const rest=teams.filter(t=>t.ratingSource!=="datdota");
+  const card=t=>`<div class="tmcard" data-team="${t.id}" data-tname="${esc(t.name)}" data-tlogo="${esc(t.logo||'')}" data-teams="${esc(t.name)}">
+    <span class="tm-rank ${t.rank<=3?'top':''}">${t.rank}</span>
     ${teamLogo(t.name,40,t.logo)}
-    <div class="tm-info"><div class="tm-name">${esc(t.name)}</div>
-      <div class="tm-stat">${t.wins}W ${t.losses}L · ${t.winRate}% WR</div></div>
-    <span class="tm-rating">${t.rating}</span>
-  </div>`).join("");
+    <div class="tm-info">
+      <div class="tm-name">${esc(t.name)}${t.provisional?'<span class="tm-prov" title="Few recent matches — rating still settling">provisional</span>':''}</div>
+      <div class="tm-stat">${t.region?esc(REGION_NAME[t.region]||t.region)+' · ':''}${t.wins}W ${t.losses}L · ${t.winRate}% WR</div>
+    </div>
+    <span class="tm-rating">${t.glicko!=null?t.glicko:t.rating}${t.glicko!=null?ratingTrend(t.glickoDelta):''}</span>
+  </div>`;
+  const asOf=LIVE_FEED.ratingsUpdatedAt?new Date(LIVE_FEED.ratingsUpdatedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):null;
+  const head=ranked.length?`<div class="rank-note" style="grid-column:1/-1"><b>World ranking</b> — Glicko-2 rating from datdota${asOf?`, as of ${esc(asOf)}`:''}. ▲▼ is the 7-day move.</div>`:"";
+  const restHead=rest.length?`<div class="rank-note sub" style="grid-column:1/-1">Other active teams — ordered by OpenDota's match rating, not world-ranked.</div>`:"";
+  grid.innerHTML=head+ranked.map(card).join("")+restHead+rest.map(card).join("");
   grid.querySelectorAll(".tmcard").forEach(c=>c.onclick=()=>openRoster(c.getAttribute("data-team"),c.getAttribute("data-tname"),c.getAttribute("data-tlogo")));
 }
 
@@ -1275,15 +1324,24 @@ function renderPlayersTabInto(){
   const wrap=$("#playerList"); if(!wrap) return;
   const players=LIVE_FEED.topPlayers||[];
   if(!players.length){ wrap.innerHTML=`<div class="empty"><b>No player data yet</b>Players load from OpenDota — check back shortly.</div>`; return; }
-  wrap.innerHTML=`<div class="ply-table">
-    <div class="ply-row head"><span>#</span><span>Player</span><span>Team</span><span style="text-align:center">Nat.</span></div>
-    ${players.map(p=>`<a class="ply-row" href="${esc(p.profile||'#')}" target="_blank" rel="noopener">
-      <span class="ply-rank ${p.rank<=10?'top':''}">${p.rank}</span>
+  // OpenDota publishes no per-player skill rating at all (rank_tier is null on
+  // every one of its ~5000 pro rows), so the only honest ordering is by the
+  // strength of the team they play for — grouped, so the page doesn't pretend
+  // five team-mates are individually ranked 12th through 16th.
+  const groups=[];
+  players.forEach(p=>{
+    const g=groups[groups.length-1];
+    if(g&&g.teamId===p.teamId) g.players.push(p);
+    else groups.push({teamId:p.teamId,team:p.team,rank:p.teamRank,rating:p.teamRating,players:[p]});
+  });
+  wrap.innerHTML=`<div class="rank-note">Pro players grouped by their team's world ranking — Dota publishes no public per-player rating.</div>
+  ${groups.map(g=>`<div class="ply-group">
+    <div class="ply-ghead"><span class="ply-grank">#${g.rank}</span><span class="ply-gname">${esc(g.team||'—')}</span>${g.rating?`<span class="ply-grating">${g.rating}</span>`:''}</div>
+    ${g.players.map(p=>`<a class="ply-row" href="${esc(p.profile||'#')}" target="_blank" rel="noopener" data-teams="${esc((p.name||'')+' '+(p.team||''))}">
       <span class="ply-name">${p.avatar?`<img src="${esc(p.avatar)}" alt="" loading="lazy">`:`<span style="width:30px;height:30px;border-radius:50%;background:var(--line);display:inline-block"></span>`}<span class="pn-nick">${esc(p.name)}</span></span>
-      <span class="ply-team">${esc(p.team||'—')}</span>
-      <span class="ply-country">${p.country?flagEmoji(p.country):''}</span>
+      <span class="ply-role">${p.role?esc(p.role):''}</span>
     </a>`).join("")}
-  </div>`;
+  </div>`).join("")}`;
 }
 
 /* ---- Roster modal (on-demand fetch) ---- */
@@ -1431,12 +1489,35 @@ function wireQualifiers(d){
     }
   }
 }
+// World rank for a TI team, by name, from the live ranking feed.
+function worldRankOf(name){
+  if(!name) return null;
+  const n=name.toLowerCase();
+  const hit=(LIVE_FEED.topTeams||[]).find(t=>t.ratingSource==="datdota"&&(t.name||"").toLowerCase()===n);
+  return hit?{rank:hit.rank,glicko:hit.glicko}:null;
+}
 function renderTeams(d){
-  const t=d.teams||[];if(!t.length)return secEmpty("03","Teams","teams","Team list fills in as direct invites and qualifier winners are confirmed.");
-  const rows=t.map((tm,i)=>`<tr class="clickable" data-team="${esc(tm.name)}" data-teams="${esc(tm.name)}"><td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${teamLogo(tm.name,22)}${esc(tm.name)}</td><td class="reg-tag">${esc(tm.region||"—")}</td><td class="reg-tag">${esc(tm.qualification||"—")}</td></tr>`).join("");
+  const t=(d.teams||[]).slice();
+  if(!t.length)return secEmpty("03","Teams","teams","Team list fills in as direct invites and qualifier winners are confirmed.");
+  // Strongest first where we have a world ranking; unranked teams keep their
+  // order but sit below. The old table numbered rows 01..16 by array position,
+  // which read like a seeding and meant nothing.
+  const withRank=t.map((tm,i)=>({tm,i,wr:worldRankOf(tm.name)}));
+  withRank.sort((a,b)=>{
+    if(a.wr&&b.wr) return a.wr.rank-b.wr.rank;
+    if(a.wr) return -1;
+    if(b.wr) return 1;
+    return a.i-b.i;
+  });
+  const anyRanked=withRank.some(x=>x.wr);
+  const rows=withRank.map(({tm,wr})=>`<tr class="clickable" data-team="${esc(tm.name)}" data-teams="${esc(tm.name)}">
+    <td class="rank">${wr?"#"+wr.rank:"—"}</td>
+    <td class="team-name">${teamLogo(tm.name,22)}${esc(tm.name)}</td>
+    <td class="reg-tag">${esc(tm.region||"—")}</td>
+    <td class="reg-tag">${esc(tm.qualification||"—")}</td></tr>`).join("");
   return`<section id="teams"><div class="sec-head"><span class="sec-num">03</span><h2>Teams</h2><span class="reg-tag">${t.length} qualified</span></div>
-    <p class="sec-note">Click a team to see its roster and coach.</p>
-    <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>Region</th><th>Qualified via</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+    <p class="sec-note">${anyRanked?"Ordered by world ranking (Glicko-2). ":""}Click a team to see its roster and coach.</p>
+    <table class="tbl"><thead><tr><th>World</th><th>Team</th><th>Region</th><th>Qualified via</th></tr></thead><tbody>${rows}</tbody></table></section>`;
 }
 
 function teamRecord(d,name){
@@ -1559,11 +1640,16 @@ function applySearchFilter(){
   const term=searchTerm.trim().toLowerCase();
   document.querySelectorAll("[data-teams]").forEach(el=>{
     const teams=(el.getAttribute("data-teams")||"").toLowerCase();
+    const hasStatus=el.hasAttribute("data-status");
     const status=(el.getAttribute("data-status")||"");
     let show=true;
     if(term&&!teams.includes(term))show=false;
-    if(activeFilter==="live"&&status!=="live")show=false;
-    if(activeFilter==="upcoming"&&status!=="upcoming")show=false;
+    // Live/Upcoming are match filters; team, player and tournament cards carry
+    // no status and must not be swept away by them — only by the text search.
+    if(hasStatus){
+      if(activeFilter==="live"&&status!=="live")show=false;
+      if(activeFilter==="upcoming"&&status!=="upcoming")show=false;
+    }
     el.classList.toggle("hidden",!show);
   });
 }
@@ -1715,7 +1801,7 @@ async function fetchLiveFeed(){
     const live=j.liveMatches||[];
     // register any team logos the feed provides, so teamWithLogo picks them up
     try{ live.forEach(m=>{ [m.teamA,m.teamB].forEach(t=>{ if(t&&t.name&&t.logo&&!_logoMap[t.name.toLowerCase()]) _logoMap[t.name.toLowerCase()]=t.logo; }); }); }catch(e){}
-    return {liveMatches:live, events:j.events||[], tournaments:j.tournaments||[], meta:j.meta||[], topTeams:j.topTeams||[], topPlayers:j.topPlayers||[], tiPrize:j.tiPrize||null, updatedAt:j.updatedAt};
+    return {liveMatches:live, events:j.events||[], tournaments:j.tournaments||[], meta:j.meta||[], topTeams:j.topTeams||[], topPlayers:j.topPlayers||[], tiPrize:j.tiPrize||null, ladder:j.ladder||null, ratingSource:j.ratingSource||null, ratingsUpdatedAt:j.ratingsUpdatedAt||null, updatedAt:j.updatedAt};
   }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
@@ -2862,7 +2948,11 @@ async function refreshNow(){
   const oldLiveSig=liveSignature(DATA);
   try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
   renderLiveStrip();
+  // Keep whichever hub tab is open in sync — these used to render once on
+  // first activation and then sit frozen while the rest of the page ticked.
   const _tv=$("#view-tournaments"); if(_tv&&_tv.classList.contains("on")) renderTournamentsInto();
+  const _tm=$("#view-teams"); if(_tm&&_tm.classList.contains("on")) renderTeamsTabInto();
+  const _pl=$("#view-players"); if(_pl&&_pl.classList.contains("on")) renderPlayersTabInto();
   if(localStorage.getItem(LS_DATA)){
     // manual data override in effect: still refresh the live rail from STRATZ
     updateLiveRail(DATA,oldLiveSig); setLiveStatus("ok",Date.now()); return;
