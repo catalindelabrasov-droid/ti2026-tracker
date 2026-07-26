@@ -162,40 +162,6 @@ def parse_prize_distribution(wt):
     return rows or None
 
 
-def parse_qualifiers(wt):
-    """
-    Best-effort: detect regional qualifier winners referenced on the page.
-    Layout varies; returns None if we can't find structured data so seed
-    data is preserved.
-    """
-    # Look for a "qualified" style section listing region -> team.
-    regions = ["Western Europe", "Eastern Europe", "China",
-               "Southeast Asia", "North America", "South America"]
-    found = {}
-    for reg in regions:
-        # crude: find region name followed nearby by a TeamOpponent
-        pat = re.escape(reg) + r".{0,400}?\{\{TeamOpponent\|([^|}\n]+)"
-        m = re.search(pat, wt, re.I | re.S)
-        if m:
-            found[reg] = clean(m.group(1))
-    if not found:
-        return None
-    out = []
-    for reg in regions:
-        out.append({
-            "region": reg,
-            "status": "completed" if reg in found else "pending",
-            "winners": [found[reg]] if reg in found else [],
-            "dates": "2026-06-15 to 2026-06-28",
-        })
-    # The region detail views (modal + page) also read optional per-region
-    # "teams" (list of names) and "matches" (list of
-    # {id, stage, status, teamA:{name,score}, teamB:{name,score}}) plus
-    # "slots" (int). Populate these from the regional qualifier subpages when
-    # you wire up Match2 parsing; the UI fills in automatically.
-    return out
-
-
 def parse_teams(wt):
     """Collect participating team names from {{TeamCard}} / participant tables."""
     teams = []
@@ -406,15 +372,37 @@ def aggregate_series(rows, team_names):
 
 def build_series_pair_map(rows, team_names):
     """
-    Aggregate game rows into { "team_a_lower|team_b_lower": {a,b,sa,sb} } for
-    merging scores into existing bracket/grand-final matches by team names.
+    Aggregate game rows into { "team_a_lower|team_b_lower": [series, ...] }.
+    A LIST per pair, because the same two teams can meet more than once in
+    one league (Swiss group stage + elimination + playoffs all share league
+    19719) — the merge step picks the series closest in time to the match.
     """
     out = {}
     for s in aggregate_series(rows, team_names):
-        out[f"{s['a'].lower()}|{s['b'].lower()}"] = s
+        out.setdefault(f"{s['a'].lower()}|{s['b'].lower()}", []).append(s)
     if out:
-        print(f"  · OpenDota: aggregated {len(out)} main-event series.")
+        print(f"  · OpenDota: aggregated {sum(len(v) for v in out.values())} main-event series.")
     return out
+
+
+def _pick_series(candidates, scheduled_iso):
+    """Choose the right series for a match when a team pair met repeatedly."""
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0]
+    if scheduled_iso:
+        try:
+            ts = datetime.datetime.fromisoformat(scheduled_iso).timestamp()
+            best = min(candidates, key=lambda s: abs((s["start"] or 0) - ts))
+            # Only trust the time match within a generous window (36h);
+            # otherwise this match's series probably hasn't been played yet.
+            if abs((best["start"] or 0) - ts) <= 36 * 3600:
+                return best
+            return None
+        except ValueError:
+            pass
+    return max(candidates, key=lambda s: s.get("start") or 0)
 
 
 def _slug(s):
@@ -545,7 +533,7 @@ def merge_opendota_scores(data, series):
         na, nb = ta.get("name"), tb.get("name")
         if not na or not nb or na == "TBD" or nb == "TBD":
             return
-        s = series.get(_match_key(na, nb))
+        s = _pick_series(series.get(_match_key(na, nb)), m.get("scheduled"))
         if not s:
             return
         # map series a/b back to this match's A/B by name
@@ -564,6 +552,12 @@ def merge_opendota_scores(data, series):
     for q in data.get("qualifiers", []):
         for m in (q.get("matches") or []):
             apply(m)
+    gs = data.get("groupStage") or {}
+    for rnd in gs.get("rounds") or []:
+        for m in (rnd.get("matches") or []):
+            apply(m)
+    for m in gs.get("eliminationMatches") or []:
+        apply(m)
     br = data.get("bracket", {}) or {}
     for side in ("upper", "lower"):
         for rnd in (br.get("rounds", {}) or {}).get(side, []) or []:
@@ -572,6 +566,525 @@ def merge_opendota_scores(data, series):
     if br.get("grandFinal"):
         apply(br["grandFinal"])
     return updated
+
+
+# ---------------------------------------------------------------------------
+# Liquipedia Match2 parsing — group stage, playoff bracket, participants.
+#
+# How TI pages actually store matches (verified against live pages 2026-07-26):
+# - DURING an event the stage pages carry inline {{Match ...}} skeletons that
+#   editors fill (opponents, per-{{Map}} winners, dates).
+# - AFTER Liquipedia migrates an event, every slot collapses to a bare
+#   {{Match}} stub and the data moves to standalone "Match:" namespace pages
+#   (Match:ID_<containerid>_R01-M001 style) — we batch-fetch those as a
+#   fallback. Even there, scores may live behind {{ApiMap|matchid=...}} with
+#   no wikitext winner; OpenDota remains the score authority and merges by
+#   team names. Liquipedia gives us STRUCTURE: pairings, rounds, dates.
+# ---------------------------------------------------------------------------
+
+GROUP_STAGE_PAGE = PAGE + "/Group_Stage"
+MAIN_EVENT_PAGE = PAGE + "/Main_Event"
+
+# Bracket/8U4L2DSL1D slot map (TI playoff bracket). Keys are NOT contiguous
+# per side — R1M5 is LOWER bracket, R4M1 upper vs R4M2 lower. Hardcoded per
+# the template's layout; do not derive side from the R number.
+MAIN_BRACKET_SLOTS = {
+    "R1M1": ("upper", 0, "Upper Bracket Quarterfinals"),
+    "R1M2": ("upper", 0, "Upper Bracket Quarterfinals"),
+    "R1M3": ("upper", 0, "Upper Bracket Quarterfinals"),
+    "R1M4": ("upper", 0, "Upper Bracket Quarterfinals"),
+    "R2M1": ("upper", 1, "Upper Bracket Semifinals"),
+    "R2M2": ("upper", 1, "Upper Bracket Semifinals"),
+    "R4M1": ("upper", 2, "Upper Bracket Final"),
+    "R1M5": ("lower", 0, "Lower Bracket Round 1"),
+    "R1M6": ("lower", 0, "Lower Bracket Round 1"),
+    "R2M3": ("lower", 1, "Lower Bracket Quarterfinals"),
+    "R2M4": ("lower", 1, "Lower Bracket Quarterfinals"),
+    "R3M1": ("lower", 2, "Lower Bracket Semifinal"),
+    "R4M2": ("lower", 3, "Lower Bracket Final"),
+    "R5M1": ("final", 0, "Grand Final"),
+}
+
+# Rough tz-abbreviation offsets for Liquipedia date strings ("{{Abbr/CEST}}").
+# Only needs to cover what TI pages realistically use.
+_TZ_OFFSETS = {"UTC": 0, "GMT": 0, "CET": 1, "CEST": 2, "EET": 2, "EEST": 3,
+               "MSK": 3, "SGT": 8, "CST": 8, "HKT": 8, "KST": 9, "JST": 9,
+               "PST": -8, "PDT": -7, "EST": -5, "EDT": -4, "BST": 1}
+
+
+def strip_html_comments(wt):
+    return re.sub(r"<!--.*?-->", "", wt or "", flags=re.S)
+
+
+def find_templates(wt, name_re):
+    """
+    Return [(name, full_template_text)] for every {{Name ...}} whose name
+    matches name_re, extracted by brace counting — nested {{TeamOpponent}} /
+    {{Map}} templates make non-greedy regex capture impossible.
+    """
+    out = []
+    for m in re.finditer(r"\{\{(" + name_re + r")\s*(?=[|}\s])", wt):
+        i, depth, n = m.start(), 0, len(wt)
+        while i < n:
+            if wt.startswith("{{", i):
+                depth += 1
+                i += 2
+            elif wt.startswith("}}", i):
+                depth -= 1
+                i += 2
+                if depth == 0:
+                    break
+            else:
+                i += 1
+        out.append((m.group(1), wt[m.start():i]))
+    return out
+
+
+def split_template_params(body):
+    """
+    Split one {{...}} template (braces included) into (positional, named),
+    cutting only at pipes that sit at the template's own depth.
+    """
+    inner = body[2:-2] if body.startswith("{{") and body.endswith("}}") else body
+    parts, cur, depth, i, n = [], [], 0, 0, len(inner)
+    while i < n:
+        if inner.startswith("{{", i):
+            depth += 1; cur.append("{{"); i += 2; continue
+        if inner.startswith("}}", i):
+            depth -= 1; cur.append("}}"); i += 2; continue
+        ch = inner[i]
+        if ch == "|" and depth == 0:
+            parts.append("".join(cur)); cur = []
+        else:
+            cur.append(ch)
+        i += 1
+    parts.append("".join(cur))
+    positional, named = [], {}
+    for p in parts[1:]:  # parts[0] is the template name
+        m = re.match(r"^\s*([A-Za-z][\w ]*?)\s*=(.*)$", p, re.S)
+        if m:
+            named[m.group(1).strip()] = m.group(2).strip()
+        elif p.strip():
+            positional.append(p.strip())
+    return positional, named
+
+
+def _liqui_date_to_iso(raw):
+    """'June 24, 2026 - 19:00 {{Abbr/CEST}}' -> ISO string, or None."""
+    if not raw or not raw.strip():
+        return None
+    tz_m = re.search(r"\{\{[Aa]bbr/(\w+)\}\}", raw)
+    offset = _TZ_OFFSETS.get(tz_m.group(1).upper(), 0) if tz_m else 0
+    s = re.sub(r"\{\{[^}]*\}\}", "", raw).replace(" - ", " ").strip()
+    for fmt in ("%B %d, %Y %H:%M", "%B %d, %Y", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            dt = datetime.datetime.strptime(s, fmt)
+            tz = datetime.timezone(datetime.timedelta(hours=offset))
+            return dt.replace(tzinfo=tz).isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def parse_match_block(body):
+    """
+    Parse one {{Match ...}} / {{MatchPage ...}} into
+    {teamA, teamB, scoreA, scoreB, finished, played, date_iso, best_of}
+    or None for a bare data-less stub.
+    """
+    positional, p = split_template_params(body)
+    if not p and not positional:
+        return None  # {{Match}} stub — data lives on a Match: page / LPDB
+
+    def opponent(key):
+        ts = find_templates(p.get(key, ""), "TeamOpponent")
+        if not ts:
+            return "", None
+        po, pn = split_template_params(ts[0][1])
+        name = clean(po[0]).strip() if po else ""
+        if name.upper() == "TBD":
+            name = ""
+        return name, (pn.get("score") or "").strip() or None
+
+    a_name, a_score = opponent("opponent1")
+    b_name, b_score = opponent("opponent2")
+
+    map_keys = sorted(k for k in p if re.fullmatch(r"map\d+", k))
+    bo_param = (p.get("bestof") or "").strip()
+    best_of = int(bo_param) if bo_param.isdigit() else (5 if len(map_keys) >= 5 else 3)
+
+    w1 = w2 = 0
+    for k in map_keys:
+        ts = find_templates(p[k], "Map|ApiMap")
+        if not ts:
+            continue
+        _, mp = split_template_params(ts[0][1])
+        wv = (mp.get("winner") or "").strip()
+        if wv == "1":
+            w1 += 1
+        elif wv == "2":
+            w2 += 1
+
+    def to_int(s):
+        try:
+            return int(s)
+        except (TypeError, ValueError):
+            return None
+
+    sa, sb = to_int(a_score), to_int(b_score)
+    if sa is None or sb is None:
+        sa, sb = w1, w2
+
+    need = best_of // 2 + 1
+    finished = ((p.get("finished") or "").strip().lower() in ("true", "1")
+                or (p.get("winner") or "").strip() in ("1", "2")
+                or max(sa, sb) >= need)
+    # Forfeit/walkover markers
+    if (a_score or "").upper() in ("W",) or (b_score or "").upper() in ("FF", "L", "DQ"):
+        sa, sb, finished = need, 0, True
+    elif (b_score or "").upper() in ("W",) or (a_score or "").upper() in ("FF", "L", "DQ"):
+        sa, sb, finished = 0, need, True
+
+    return {
+        "teamA": a_name, "teamB": b_name, "scoreA": sa, "scoreB": sb,
+        "finished": finished, "played": w1 + w2,
+        "date_iso": _liqui_date_to_iso(p.get("date")), "best_of": best_of,
+    }
+
+
+def parse_stage_containers(wt):
+    """
+    All {{Matchlist}} and {{Bracket}} containers on a stage page.
+    Returns (matchlists, brackets) where each entry is
+    {id, title/type, entries: [(slotkey, match_template_text_or_None)]}.
+    """
+    wt = strip_html_comments(wt)
+    matchlists, brackets = [], []
+    for name, body in find_templates(wt, "Matchlist|Bracket"):
+        po, p = split_template_params(body)
+        slot_re = r"M\d+" if name == "Matchlist" else r"R\d+M\d+"
+        entries = []
+        for k, v in p.items():
+            if re.fullmatch(slot_re, k):
+                ts = find_templates(v, "Match")
+                block = ts[0][1] if ts else None
+                entries.append((k, block))
+        if name == "Matchlist":
+            m = re.search(r"(\d+)", p.get("title") or p.get("matchsection") or "")
+            matchlists.append({"id": (p.get("id") or "").strip(),
+                               "round": int(m.group(1)) if m else len(matchlists) + 1,
+                               "entries": entries})
+        else:
+            brackets.append({"id": (p.get("id") or "").strip(),
+                             "type": po[0] if po else "",
+                             "entries": entries})
+    matchlists.sort(key=lambda r: r["round"])
+    return matchlists, brackets
+
+
+def fetch_match_pages(container_id, keys):
+    """
+    Batch-fetch standalone Match: pages for stub slots (one API call per 40
+    titles — polite). Returns {slotkey: match_template_text}.
+    """
+    def page_suffix(k):
+        m = re.fullmatch(r"R(\d+)M(\d+)", k)
+        if m:
+            return f"R{int(m.group(1)):02d}-M{int(m.group(2)):03d}"
+        m = re.fullmatch(r"M(\d+)", k)
+        if m:
+            return f"M{int(m.group(1)):03d}"
+        return k
+
+    title_to_key = {f"Match:ID_{container_id}_{page_suffix(k)}": k for k in keys}
+    out = {}
+    titles = list(title_to_key)
+    for i in range(0, len(titles), 40):
+        batch = titles[i:i + 40]
+        try:
+            data = api_get({"action": "query", "prop": "revisions",
+                            "rvprop": "content", "rvslots": "main",
+                            "titles": "|".join(batch)})
+        except Exception as e:
+            print(f"  ! Match-page batch failed: {e}", file=sys.stderr)
+            continue
+        for _, pg in data.get("query", {}).get("pages", {}).items():
+            title = (pg.get("title") or "").replace(" ", "_")
+            try:
+                wt = pg["revisions"][0]["slots"]["main"]["*"]
+            except (KeyError, IndexError, TypeError):
+                continue
+            key = title_to_key.get(title)
+            if key:
+                ts = find_templates(wt, "MatchPage|Match")
+                if ts:
+                    out[key] = ts[0][1]
+    if out:
+        print(f"  · Fetched {len(out)} standalone match page(s) for {container_id}.")
+    return out
+
+
+def _build_match(mid, block, page_block, best_default, prev_by_id):
+    """
+    Turn parsed wikitext (inline block, else Match: page block) into the
+    data.json match shape. Preserves previously-known scores when Liquipedia
+    has none yet (OpenDota re-merges each run anyway).
+    """
+    parsed = parse_match_block(block) if block else None
+    if parsed is None and page_block:
+        parsed = parse_match_block(page_block)
+    prev = prev_by_id.get(mid) or {}
+    prev_a = (prev.get("teamA") or {})
+    prev_b = (prev.get("teamB") or {})
+
+    name_a = (parsed or {}).get("teamA") or prev_a.get("name") or "TBD"
+    name_b = (parsed or {}).get("teamB") or prev_b.get("name") or "TBD"
+    if name_a == "TBD" or name_b == "TBD":
+        sa = sb = None
+        status = "upcoming"
+    elif parsed and (parsed["finished"] or parsed["played"] > 0
+                     or parsed["scoreA"] or parsed["scoreB"]):
+        sa, sb = parsed["scoreA"], parsed["scoreB"]
+        status = "completed" if parsed["finished"] else "live"
+    elif isinstance(prev_a.get("score"), int) or isinstance(prev_b.get("score"), int):
+        sa, sb = prev_a.get("score"), prev_b.get("score")
+        status = prev.get("status") or "upcoming"
+    else:
+        sa = sb = None
+        status = "upcoming"
+
+    out = {
+        "id": mid,
+        "bestOf": (parsed or {}).get("best_of") or prev.get("bestOf") or best_default,
+        "status": status,
+        "scheduled": (parsed or {}).get("date_iso") or prev.get("scheduled"),
+        "teamA": {"name": name_a, "score": sa},
+        "teamB": {"name": name_b, "score": sb},
+    }
+    if prev.get("streamUrl"):
+        out["streamUrl"] = prev["streamUrl"]
+    return out
+
+
+def _prev_matches_by_id(*collections):
+    out = {}
+    for coll in collections:
+        for m in coll or []:
+            if isinstance(m, dict) and m.get("id"):
+                out[m["id"]] = m
+    return out
+
+
+def _needs_page_fetch(entries, prev_by_id, id_fn):
+    """Stub slots whose match we don't already have as completed."""
+    keys = []
+    for key, block in entries:
+        if block is not None and parse_match_block(block) is not None:
+            continue  # inline data exists
+        prev = prev_by_id.get(id_fn(key)) or {}
+        if prev.get("status") == "completed":
+            continue  # final result already known — result never changes
+        keys.append(key)
+    return keys
+
+
+def compute_group_standings(rounds):
+    """W-L per team from decided group matches, sorted for the Swiss table."""
+    rec = {}
+    for rnd in rounds:
+        for m in rnd.get("matches") or []:
+            a, b = m["teamA"]["name"], m["teamB"]["name"]
+            sa, sb = m["teamA"].get("score"), m["teamB"].get("score")
+            for t in (a, b):
+                if t and t != "TBD":
+                    rec.setdefault(t, [0, 0])
+            if (m.get("status") == "completed" and isinstance(sa, int)
+                    and isinstance(sb, int) and sa != sb):
+                w, l = (a, b) if sa > sb else (b, a)
+                rec[w][0] += 1
+                rec[l][1] += 1
+    rows = [{"team": t, "wins": wl[0], "losses": wl[1]} for t, wl in rec.items()]
+    rows.sort(key=lambda r: (-r["wins"], r["losses"], r["team"].lower()))
+    return rows
+
+
+def update_stages_from_liquipedia(data):
+    """
+    Refresh groupStage (rounds + standings + elimination round) and the
+    playoff bracket from the Liquipedia stage subpages. Returns
+    (group_matches, bracket_matches) counts of matches carrying real data.
+    """
+    n_gs = n_br = 0
+
+    # ---- Group stage (Swiss rounds + elimination bracket) ----
+    try:
+        gs_wt = get_wikitext(GROUP_STAGE_PAGE)
+    except Exception as e:
+        print(f"  ! Group Stage page unreachable: {e}", file=sys.stderr)
+        gs_wt = None
+    if gs_wt:
+        matchlists, brackets = parse_stage_containers(gs_wt)
+        gs = data.setdefault("groupStage", {})
+        prev = _prev_matches_by_id(
+            *[r.get("matches") for r in gs.get("rounds") or []],
+            gs.get("eliminationMatches"))
+        rounds_out = []
+        for ml in matchlists:
+            def gid(key, _r=ml["round"]):
+                return f"gs-r{_r}-{key.lower()}"
+            pages = {}
+            stub_keys = _needs_page_fetch(ml["entries"], prev, gid)
+            if ml["id"] and stub_keys and any(
+                    b is None or parse_match_block(b) is None
+                    for _, b in ml["entries"]):
+                pages = fetch_match_pages(ml["id"], stub_keys)
+            matches = []
+            for key, block in sorted(ml["entries"],
+                                     key=lambda kv: int(kv[0][1:])):
+                m = _build_match(gid(key), block, pages.get(key), 3, prev)
+                matches.append(m)
+                if m["teamA"]["name"] != "TBD":
+                    n_gs += 1
+            rounds_out.append({"name": f"Round {ml['round']}",
+                               "matches": matches})
+        if rounds_out:
+            gs["rounds"] = rounds_out
+            standings = compute_group_standings(rounds_out)
+            if standings:
+                gs["standings"] = standings
+        # Elimination round (3-2 vs 2-3 for the last playoff spots)
+        for br in brackets:
+            if "8U4L2DSL1D" in br["type"]:
+                continue  # that's the playoff bracket, lives on Main Event page
+            def eid(key):
+                return f"el-{key.lower()}"
+            pages = {}
+            stub_keys = _needs_page_fetch(br["entries"], prev, eid)
+            if br["id"] and stub_keys and any(
+                    b is None or parse_match_block(b) is None
+                    for _, b in br["entries"]):
+                pages = fetch_match_pages(br["id"], stub_keys)
+            elim = []
+            for key, block in sorted(br["entries"]):
+                m = _build_match(eid(key), block, pages.get(key), 3, prev)
+                elim.append(m)
+                if m["teamA"]["name"] != "TBD":
+                    n_gs += 1
+            if elim:
+                gs["eliminationMatches"] = elim
+
+    # ---- Playoff bracket ----
+    try:
+        me_wt = get_wikitext(MAIN_EVENT_PAGE)
+    except Exception as e:
+        print(f"  ! Main Event page unreachable: {e}", file=sys.stderr)
+        me_wt = None
+    if me_wt:
+        _, brackets = parse_stage_containers(me_wt)
+        main_br = next((b for b in brackets if "8U4L2DSL1D" in b["type"]),
+                       None)
+        if main_br:
+            br_data = data.setdefault("bracket", {})
+            rounds_data = br_data.setdefault("rounds", {})
+            prev = _prev_matches_by_id(
+                *[r.get("matches") for r in rounds_data.get("upper") or []],
+                *[r.get("matches") for r in rounds_data.get("lower") or []],
+                [br_data.get("grandFinal")] if br_data.get("grandFinal") else [])
+
+            def bid(key):
+                return f"me-{key.lower()}"
+            pages = {}
+            stub_keys = _needs_page_fetch(main_br["entries"], prev, bid)
+            if main_br["id"] and stub_keys and any(
+                    b is None or parse_match_block(b) is None
+                    for _, b in main_br["entries"]):
+                pages = fetch_match_pages(main_br["id"], stub_keys)
+
+            sides = {"upper": {}, "lower": {}}
+            grand_final = None
+            for key, block in main_br["entries"]:
+                slot = MAIN_BRACKET_SLOTS.get(key)
+                if not slot:
+                    continue
+                side, rnd_idx, rnd_name = slot
+                best = 5 if side == "final" else 3
+                m = _build_match(bid(key), block, pages.get(key), best, prev)
+                if m["teamA"]["name"] != "TBD":
+                    n_br += 1
+                if side == "final":
+                    grand_final = m
+                else:
+                    sides[side].setdefault(rnd_idx, {"name": rnd_name,
+                                                     "matches": []})
+                    sides[side][rnd_idx]["matches"].append(m)
+            for side in ("upper", "lower"):
+                if sides[side]:
+                    rounds_data[side] = [sides[side][i]
+                                         for i in sorted(sides[side])]
+            if grand_final:
+                br_data["grandFinal"] = grand_final
+            br_data.setdefault(
+                "format", "Double elimination — top 8 from the group stage")
+
+    return n_gs, n_br
+
+
+def parse_participants(wt):
+    """
+    The main page's {{TeamParticipants}} block: 16 teams with rosters
+    ({{Person|role=N|Nick}}) and qualification info. Returns
+    (teams_list_or_None, {region: [qualified team names]}).
+    """
+    roles = {"1": "Carry", "2": "Mid", "3": "Offlane",
+             "4": "Support", "5": "Hard Support"}
+    blocks = find_templates(strip_html_comments(wt), "TeamParticipants")
+    if not blocks:
+        return None, {}
+    positional, _ = split_template_params(blocks[0][1])
+    teams, region_winners = [], {}
+    for chunk in positional:
+        ts = find_templates(chunk, "Opponent")
+        if not ts:
+            continue
+        po, pn = split_template_params(ts[0][1])
+        if not po:
+            continue
+        name = clean(po[0].splitlines()[0]).strip()
+        if not name:
+            continue
+        team = {"name": name, "region": None, "qualification": None}
+        players, coaches = [], []
+        for pm in re.finditer(r"\{\{Person\|([^{}]*)\}\}", pn.get("players", "")):
+            parts = [x.strip() for x in pm.group(1).split("|")]
+            role = next((x.split("=", 1)[1] for x in parts
+                         if x.startswith("role=")), "")
+            ign = next((x for x in parts if x and "=" not in x), None)
+            if not ign:
+                continue
+            if role == "coach":
+                coaches.append(ign)  # teams may list more than one coach
+            else:
+                players.append({"ign": ign, "role": roles.get(role, "Player")})
+        if players:
+            team["players"] = players
+        if coaches:
+            team["coach"] = " & ".join(coaches)
+        qm = re.search(r"\{\{Qualification\|([^{}]*)\}\}",
+                       pn.get("qualification", ""))
+        if qm:
+            qp = dict(x.split("=", 1) for x in qm.group(1).split("|")
+                      if "=" in x)
+            if qp.get("method") == "invite":
+                team["qualification"] = "Direct Invite"
+            elif qp.get("method") == "qual":
+                region = (qp.get("text")
+                          or (qp.get("page") or "").strip("/")).strip()
+                team["qualification"] = "Regional Qualifier"
+                team["region"] = region or None
+                if region:
+                    region_winners.setdefault(region, []).append(name)
+        teams.append(team)
+    return (teams or None), region_winners
 
 
 # ---------------------------------------------------------------------------
@@ -606,6 +1119,12 @@ def collect_completed_results(data):
     for q in data.get("qualifiers") or []:
         for m in q.get("matches") or []:
             take(m)
+    gs = data.get("groupStage") or {}
+    for rnd in gs.get("rounds") or []:
+        for m in rnd.get("matches") or []:
+            take(m)
+    for m in gs.get("eliminationMatches") or []:
+        take(m)
     br = data.get("bracket") or {}
     for side in ("upper", "lower"):
         for rnd in (br.get("rounds") or {}).get(side) or []:
@@ -687,14 +1206,12 @@ def main():
         data["prizePool"]["distribution"] = dist
         changed.append("prizePool.distribution")
 
-    # Qualifiers
-    quals = parse_qualifiers(wt)
-    if quals:
-        data["qualifiers"] = quals
-        changed.append("qualifiers")
-
-    # Teams (with official logos resolved from Liquipedia)
-    teams = parse_teams(wt)
+    # Teams, rosters and qualifier winners — the participants table on the
+    # main page carries all three ({{Opponent|Name|players=...{{Person}}...
+    # |qualification={{Qualification|method=qual|text=Europe|placement=1-2}}}).
+    teams, region_winners = parse_participants(wt)
+    if not teams:
+        teams = parse_teams(wt)  # legacy {{TeamCard}} fallback
     if teams:
         attach_team_logos(teams)  # adds a `logo` URL where resolvable
         data["teams"] = teams
@@ -707,33 +1224,28 @@ def main():
             data["logos"] = {**(data.get("logos") or {}), **logos}
             changed.append("logos")
 
-    # NOTE: Group-stage standings and the playoff bracket live on Liquipedia
-    # subpages and use Match2 storage that is non-trivial to parse from
-    # wikitext. Hooks are left here intentionally. When you implement them,
-    # write into these shapes (the front end already renders them):
-    #
-    #   data["groupStage"]["standings"] = [
-    #       {"team": "...", "wins": 3, "losses": 0, "status": "advanced"}, ...
-    #   ]
-    #
-    #   data["bracket"]["rounds"]["upper"] = [
-    #       {"name": "Upper Quarterfinals", "matches": [
-    #           {"id": "ubqf1", "bestOf": 3, "status": "completed",
-    #            "teamA": {"name": "...", "score": 2},
-    #            "teamB": {"name": "...", "score": 0}}, ...
-    #       ]}, ...
-    #   ]
-    #   data["bracket"]["rounds"]["lower"] = [ ...same shape... ]
-    #   data["bracket"]["grandFinal"] = {"id": "gf", "bestOf": 5, "status": "...",
-    #            "teamA": {...}, "teamB": {...}}
-    #
-    # The team detail view (click a team in Teams or Group Stage) reads optional
-    # per-team "players" and "coach":
-    #   "players": [{"ign": "...", "role": "Carry"}, ... up to 5],
-    #   "coach": "..."   (use "—" or omit if none)
-    # Liquipedia team pages list the active roster + role; populate these from
-    # the team page when wiring up parsing. Until then the UI shows a tidy
-    # "Roster will fill in from Liquipedia" placeholder.
+    # Region winners: mark qualifiers completed once the main page lists the
+    # qualified teams (matches[] stay OpenDota-synthesized with stable ids).
+    if region_winners:
+        marked = 0
+        for q in data.get("qualifiers", []):
+            winners = region_winners.get(q.get("region"))
+            if winners:
+                q["winners"] = winners
+                q["status"] = "completed"
+                marked += 1
+        if marked:
+            changed.append(f"qualifierWinners({marked})")
+
+    # Group stage + playoff bracket from the stage subpages (Match2).
+    try:
+        n_gs, n_br = update_stages_from_liquipedia(data)
+        if n_gs:
+            changed.append(f"groupStage({n_gs})")
+        if n_br:
+            changed.append(f"bracket({n_br})")
+    except Exception as e:
+        print(f"  ! Stage parsing failed (continuing): {e}", file=sys.stderr)
 
     # Live match results from OpenDota (independent secondary source).
     # Liquipedia stays authoritative for structure; OpenDota fills the live

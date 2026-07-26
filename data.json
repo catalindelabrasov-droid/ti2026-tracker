@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-07-26T05:54:56.147497+00:00",
+    "lastUpdated": "2026-07-26T06:22:46.755760+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -80,51 +80,479 @@
   },
   "teams": [
     {
-      "name": "Team Falcons",
-      "region": "Western Europe",
+      "name": "Aurora Gaming",
+      "region": null,
       "qualification": "Direct Invite",
-      "note": "Defending TI champions"
+      "players": [
+        {
+          "ign": "Nightfall",
+          "role": "Carry"
+        },
+        {
+          "ign": "Mikoto",
+          "role": "Mid"
+        },
+        {
+          "ign": "Ws",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Mira",
+          "role": "Support"
+        },
+        {
+          "ign": "kaori",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "kpii",
+      "logo": "https://liquipedia.net/commons/images/3/32/Aurora_Gaming_2025_full_allmode.png"
+    },
+    {
+      "name": "BetBoom Team",
+      "region": null,
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Kiritych~",
+          "role": "Carry"
+        },
+        {
+          "ign": "gpk~",
+          "role": "Mid"
+        },
+        {
+          "ign": "MieRo",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Save-",
+          "role": "Support"
+        },
+        {
+          "ign": "Kataomi",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "boolk",
+      "logo": "https://liquipedia.net/commons/images/5/5b/BetBoom_Team_2024_allmode.png"
+    },
+    {
+      "name": "1w Team",
+      "region": null,
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Pure",
+          "role": "Carry"
+        },
+        {
+          "ign": "bzm",
+          "role": "Mid"
+        },
+        {
+          "ign": "33",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Ari",
+          "role": "Support"
+        },
+        {
+          "ign": "Whitemon",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "MoonMeander"
+    },
+    {
+      "name": "Team Falcons",
+      "region": null,
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "skiter",
+          "role": "Carry"
+        },
+        {
+          "ign": "Malr1ne",
+          "role": "Mid"
+        },
+        {
+          "ign": "ATF",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Cr1t-",
+          "role": "Support"
+        },
+        {
+          "ign": "Sneyking",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Aui_2000",
+      "logo": "https://liquipedia.net/commons/images/e/e9/Team_Falcons_2022_full_lightmode.png"
     },
     {
       "name": "Team Liquid",
-      "region": "Western Europe",
-      "qualification": "Direct Invite"
-    },
-    {
-      "name": "Tundra Esports",
-      "region": "Western Europe",
-      "qualification": "Direct Invite"
-    },
-    {
-      "name": "Aurora Gaming",
-      "region": "Eastern Europe",
-      "qualification": "Direct Invite"
+      "region": null,
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "m1CKe",
+          "role": "Carry"
+        },
+        {
+          "ign": "Nisha",
+          "role": "Mid"
+        },
+        {
+          "ign": "Ace",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Boxi",
+          "role": "Support"
+        },
+        {
+          "ign": "tOfu",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Blitz & Jabbz",
+      "logo": "https://liquipedia.net/commons/images/f/f5/Team_Liquid_2024_full_lightmode.png"
     },
     {
       "name": "Team Yandex",
-      "region": "Eastern Europe",
-      "qualification": "Direct Invite"
-    },
-    {
-      "name": "BoomBoys",
-      "region": "Eastern Europe",
+      "region": null,
       "qualification": "Direct Invite",
-      "note": "BetBoom Team (renamed for TI)"
+      "players": [
+        {
+          "ign": "watson",
+          "role": "Carry"
+        },
+        {
+          "ign": "CHIRA_JUNIOR",
+          "role": "Mid"
+        },
+        {
+          "ign": "DM",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Saksa",
+          "role": "Support"
+        },
+        {
+          "ign": "Malady",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Accell"
     },
     {
       "name": "Xtreme Gaming",
+      "region": null,
+      "qualification": "Direct Invite",
+      "players": [
+        {
+          "ign": "Ame",
+          "role": "Carry"
+        },
+        {
+          "ign": "NothingToSay",
+          "role": "Mid"
+        },
+        {
+          "ign": "Xxs",
+          "role": "Offlane"
+        },
+        {
+          "ign": "fy",
+          "role": "Support"
+        },
+        {
+          "ign": "xNova",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "xiao8",
+      "logo": "https://liquipedia.net/commons/images/9/97/Xtreme_Gaming_%28China%29_full_allmode.png"
+    },
+    {
+      "name": "Team Spirit",
+      "region": "Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Yatoro",
+          "role": "Carry"
+        },
+        {
+          "ign": "Larl",
+          "role": "Mid"
+        },
+        {
+          "ign": "Collapse",
+          "role": "Offlane"
+        },
+        {
+          "ign": "not me",
+          "role": "Support"
+        },
+        {
+          "ign": "rue",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Miposhka & MiLAN",
+      "logo": "https://liquipedia.net/commons/images/f/f2/Team_Spirit_2022_full_lightmode.png"
+    },
+    {
+      "name": "TEAM VISION",
+      "region": "Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Satanic",
+          "role": "Carry"
+        },
+        {
+          "ign": "No[o]ne-",
+          "role": "Mid"
+        },
+        {
+          "ign": "Noticed",
+          "role": "Offlane"
+        },
+        {
+          "ign": "9Class",
+          "role": "Support"
+        },
+        {
+          "ign": "Dukalis",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Puppey",
+      "logo": "https://liquipedia.net/commons/images/9/9d/PARIVISION_allmode.png"
+    },
+    {
+      "name": "Nigma Galaxy",
+      "region": "Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "SumaiL",
+          "role": "Carry"
+        },
+        {
+          "ign": "lorenof",
+          "role": "Mid"
+        },
+        {
+          "ign": "Davai",
+          "role": "Offlane"
+        },
+        {
+          "ign": "OmaR",
+          "role": "Support"
+        },
+        {
+          "ign": "GH",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "KuroKy",
+      "logo": "https://liquipedia.net/commons/images/e/e8/Nigma_Galaxy_full_lightmode.png"
+    },
+    {
+      "name": "HULIGANI",
+      "region": "Europe",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "ssnovv1",
+          "role": "Carry"
+        },
+        {
+          "ign": "Mirage`",
+          "role": "Mid"
+        },
+        {
+          "ign": "Corrupted",
+          "role": "Offlane"
+        },
+        {
+          "ign": "sayuw",
+          "role": "Support"
+        },
+        {
+          "ign": "RESPECT",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "TheChosenOne"
+    },
+    {
+      "name": "Team Resilience",
       "region": "China",
-      "qualification": "Direct Invite"
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "YSR-04E",
+          "role": "Carry"
+        },
+        {
+          "ign": "Echozz",
+          "role": "Mid"
+        },
+        {
+          "ign": "niu",
+          "role": "Offlane"
+        },
+        {
+          "ign": "planet",
+          "role": "Support"
+        },
+        {
+          "ign": "zzq",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Super",
+      "logo": "https://liquipedia.net/commons/images/b/bf/Team_Resilience_%28DOTA2%29_full_lightmode.png"
+    },
+    {
+      "name": "Vici Gaming",
+      "region": "China",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "shiro",
+          "role": "Carry"
+        },
+        {
+          "ign": "Xm",
+          "role": "Mid"
+        },
+        {
+          "ign": "Bach",
+          "role": "Offlane"
+        },
+        {
+          "ign": "XinQ",
+          "role": "Support"
+        },
+        {
+          "ign": "y`",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Yao",
+      "logo": "https://liquipedia.net/commons/images/2/24/VICI_Gaming_full_allmode.png"
+    },
+    {
+      "name": "OG",
+      "region": "Southeast Asia",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Natsumi",
+          "role": "Carry"
+        },
+        {
+          "ign": "Yopaj-",
+          "role": "Mid"
+        },
+        {
+          "ign": "Raven",
+          "role": "Offlane"
+        },
+        {
+          "ign": "TIMS",
+          "role": "Support"
+        },
+        {
+          "ign": "skem",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "343"
+    },
+    {
+      "name": "GamerLegion",
+      "region": "North America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Ghost",
+          "role": "Carry"
+        },
+        {
+          "ign": "RCY",
+          "role": "Mid"
+        },
+        {
+          "ign": "Fayde",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Bignum",
+          "role": "Support"
+        },
+        {
+          "ign": "Speeed",
+          "role": "Hard Support"
+        }
+      ],
+      "coach": "Mangusu"
+    },
+    {
+      "name": "LGD Gaming",
+      "region": "South America",
+      "qualification": "Regional Qualifier",
+      "players": [
+        {
+          "ign": "Yuma",
+          "role": "Carry"
+        },
+        {
+          "ign": "TaiLung",
+          "role": "Mid"
+        },
+        {
+          "ign": "Wisper",
+          "role": "Offlane"
+        },
+        {
+          "ign": "Thiolicor",
+          "role": "Support"
+        },
+        {
+          "ign": "KJ",
+          "role": "Hard Support"
+        },
+        {
+          "ign": "fcr",
+          "role": "Player"
+        }
+      ],
+      "coach": "kaffs"
     }
   ],
   "qualifiers": [
     {
       "region": "China",
-      "status": "live",
+      "status": "completed",
       "slots": 2,
       "dates": "2026-06-15 to 2026-06-18",
       "format": "8 teams · Double-elimination · Bo3 (GF Bo5)",
-      "winners": [],
+      "winners": [
+        "Team Resilience",
+        "Vici Gaming"
+      ],
       "teams": [
         "Cloud Rising",
         "Game Master",
@@ -322,11 +750,13 @@
     },
     {
       "region": "South America",
-      "status": "live",
+      "status": "completed",
       "slots": 1,
       "dates": "2026-06-15 to 2026-06-19",
       "format": "10 teams · Double-elimination · Bo3 (GF Bo5)",
-      "winners": [],
+      "winners": [
+        "LGD Gaming"
+      ],
       "teams": [
         "Amaru Gaming",
         "Estar Backs",
@@ -582,11 +1012,13 @@
     },
     {
       "region": "Southeast Asia",
-      "status": "live",
+      "status": "completed",
       "slots": 1,
       "dates": "2026-06-19 to 2026-06-23",
       "format": "Double-elimination · Bo3 (GF Bo5)",
-      "winners": [],
+      "winners": [
+        "OG"
+      ],
       "teams": [
         "Carstensz Esports",
         "DIREBORN",
@@ -856,11 +1288,16 @@
     },
     {
       "region": "Europe",
-      "status": "live",
+      "status": "completed",
       "slots": 4,
       "dates": "2026-06-21 to 2026-06-28",
       "format": "16 teams · Double-elimination · merged EU qualifier",
-      "winners": [],
+      "winners": [
+        "Team Spirit",
+        "TEAM VISION",
+        "Nigma Galaxy",
+        "HULIGANI"
+      ],
       "teams": [
         "_PowerRangers",
         "enjoy",
@@ -1248,11 +1685,13 @@
     },
     {
       "region": "North America",
-      "status": "live",
+      "status": "completed",
       "slots": 1,
       "dates": "2026-06-24 to 2026-06-26",
       "format": "Double-elimination · Bo3 (GF Bo5)",
-      "winners": [],
+      "winners": [
+        "GamerLegion"
+      ],
       "teams": [
         "4 Anchors + Ilmeria",
         "GamerLegion",
@@ -1350,16 +1789,893 @@
   "groupStage": {
     "format": "Swiss-system (16 teams) · Aug 13-16",
     "note": "Top 8 advance to the Main Event playoffs. Field finalized after qualifiers (June 28).",
-    "standings": []
+    "standings": [],
+    "rounds": [
+      {
+        "name": "Round 1",
+        "matches": [
+          {
+            "id": "gs-r1-m1",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m2",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m3",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m4",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m5",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m6",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m7",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r1-m8",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "Round 2",
+        "matches": [
+          {
+            "id": "gs-r2-m1",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m2",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m3",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m4",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m5",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m6",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m7",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r2-m8",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "Round 3",
+        "matches": [
+          {
+            "id": "gs-r3-m1",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m2",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m3",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m4",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m5",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m6",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m7",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r3-m8",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "Round 4",
+        "matches": [
+          {
+            "id": "gs-r4-m1",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m2",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m3",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m4",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m5",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m6",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m7",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r4-m8",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "Round 5",
+        "matches": [
+          {
+            "id": "gs-r5-m1",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r5-m2",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r5-m3",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r5-m4",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r5-m5",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r5-m6",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          },
+          {
+            "id": "gs-r5-m7",
+            "bestOf": 3,
+            "status": "upcoming",
+            "scheduled": null,
+            "teamA": {
+              "name": "TBD",
+              "score": null
+            },
+            "teamB": {
+              "name": "TBD",
+              "score": null
+            }
+          }
+        ]
+      }
+    ],
+    "eliminationMatches": [
+      {
+        "id": "el-r1m1",
+        "bestOf": 3,
+        "status": "upcoming",
+        "scheduled": null,
+        "teamA": {
+          "name": "TBD",
+          "score": null
+        },
+        "teamB": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": "el-r1m2",
+        "bestOf": 3,
+        "status": "upcoming",
+        "scheduled": null,
+        "teamA": {
+          "name": "TBD",
+          "score": null
+        },
+        "teamB": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": "el-r1m3",
+        "bestOf": 3,
+        "status": "upcoming",
+        "scheduled": null,
+        "teamA": {
+          "name": "TBD",
+          "score": null
+        },
+        "teamB": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": "el-r1m4",
+        "bestOf": 3,
+        "status": "upcoming",
+        "scheduled": null,
+        "teamA": {
+          "name": "TBD",
+          "score": null
+        },
+        "teamB": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": "el-r1m5",
+        "bestOf": 3,
+        "status": "upcoming",
+        "scheduled": null,
+        "teamA": {
+          "name": "TBD",
+          "score": null
+        },
+        "teamB": {
+          "name": "TBD",
+          "score": null
+        }
+      }
+    ]
   },
   "bracket": {
     "format": "Double elimination — top 8 from the group stage · Aug 20-23",
     "note": "Bracket fills in once the group stage seeds the top 8.",
     "rounds": {
-      "upper": [],
-      "lower": []
+      "upper": [
+        {
+          "name": "Upper Bracket Quarterfinals",
+          "matches": [
+            {
+              "id": "me-r1m1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            },
+            {
+              "id": "me-r1m2",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            },
+            {
+              "id": "me-r1m3",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            },
+            {
+              "id": "me-r1m4",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upper Bracket Semifinals",
+          "matches": [
+            {
+              "id": "me-r2m1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            },
+            {
+              "id": "me-r2m2",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upper Bracket Final",
+          "matches": [
+            {
+              "id": "me-r4m1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        }
+      ],
+      "lower": [
+        {
+          "name": "Lower Bracket Round 1",
+          "matches": [
+            {
+              "id": "me-r1m5",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            },
+            {
+              "id": "me-r1m6",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lower Bracket Quarterfinals",
+          "matches": [
+            {
+              "id": "me-r2m3",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            },
+            {
+              "id": "me-r2m4",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lower Bracket Semifinal",
+          "matches": [
+            {
+              "id": "me-r3m1",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lower Bracket Final",
+          "matches": [
+            {
+              "id": "me-r4m2",
+              "bestOf": 3,
+              "status": "upcoming",
+              "scheduled": null,
+              "teamA": {
+                "name": "TBD",
+                "score": null
+              },
+              "teamB": {
+                "name": "TBD",
+                "score": null
+              }
+            }
+          ]
+        }
+      ]
     },
-    "grandFinal": null
+    "grandFinal": {
+      "id": "me-r5m1",
+      "bestOf": 5,
+      "status": "upcoming",
+      "scheduled": null,
+      "teamA": {
+        "name": "TBD",
+        "score": null
+      },
+      "teamB": {
+        "name": "TBD",
+        "score": null
+      }
+    }
   },
   "logos": {
     "GamerLegion": "https://cdn.steamusercontent.com/ugc/13245379764580870318/1048428BEFAC87EC1C64E15706A4758A173B5BFB/",
@@ -1382,8 +2698,8 @@
     "MODUS": "https://cdn.steamusercontent.com/ugc/14077644708670505334/36409D625C55D97991C01963AC36494B78953C5A/",
     "HULIGANI": "https://cdn.steamusercontent.com/ugc/14844266645370842778/47230D9640A722EAF06548C2EEB813ED4296AE3F/",
     "Virtus.pro": "https://cdn.steamusercontent.com/ugc/13061694558372404982/7AC363D410AC6F2F4B016EE7D73B7C266D0113F9/",
-    "Nigma Galaxy": "https://cdn.steamusercontent.com/ugc/16959999218725724364/1D334B91A52606CA3E0027832D6F646E2A094391/",
-    "Team Spirit": "https://cdn.steamusercontent.com/ugc/1839179120711951766/CD7E0885CB527334205CC7885E9C101B7BC17702/",
+    "Nigma Galaxy": "https://liquipedia.net/commons/images/e/e8/Nigma_Galaxy_full_lightmode.png",
+    "Team Spirit": "https://liquipedia.net/commons/images/f/f2/Team_Spirit_2022_full_lightmode.png",
     "Natus Vincere": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/36.png",
     "Rune Eaters": "https://cdn.steamusercontent.com/ugc/11845515088670662060/69AF28B666A859915784A1FF3C77F23E29057C3F/",
     "Yellow Submarine": "https://cdn.steamusercontent.com/ugc/2506900380361558769/01D7A1FC1156B0550B4EF9EA2A3A2AF84D9BF884/",
@@ -1391,15 +2707,15 @@
     "Inner Circle x Insanity": "https://cdn.steamusercontent.com/ugc/9964979241844276783/64DDB27F8A50FEA6869CFD8392ED29CE674E26C1/",
     "Team Bald": "https://cdn.steamusercontent.com/ugc/10103089601142700428/E8171E7A59C63DAD149EF899532CFE125209E982/",
     "VP.Prodigy": "https://cdn.steamusercontent.com/ugc/14581250409270220011/5671D3A28C6BBBDFCF9962555BAF48D3EFFED120/",
-    "TEAM VISION": "https://cdn.steamusercontent.com/ugc/10380389074903512947/5D074799695A862D17D4205285315FE20399B28D/",
+    "TEAM VISION": "https://liquipedia.net/commons/images/9/9d/PARIVISION_allmode.png",
     "Team Refuser": "https://cdn.steamusercontent.com/ugc/13167292190185607570/FE3D86EA91DCA49AF9D671BA3B8F340A4C966C04/",
     "Cloud Rising": "https://cdn.steamusercontent.com/ugc/11588857874785581595/93D3B9C89923AEDE0CB786D02F37D718728B08C7/",
     "Game Master": "https://cdn.steamusercontent.com/ugc/10502392439287170768/D351D750A5AA0D6627DD892E19978FB35216AF43/",
     "Grey Track": "https://cdn.steamusercontent.com/ugc/13447454937986331509/B3AE65B7A8898416105CDDFCD0192EEA18460814/",
-    "Team Resilience": "https://cdn.steamusercontent.com/ugc/15907413066975203049/68C9F7C15D104837639C65B11E95D0DF81D268F2/",
+    "Team Resilience": "https://liquipedia.net/commons/images/b/bf/Team_Resilience_%28DOTA2%29_full_lightmode.png",
     "Roar": "https://cdn.steamusercontent.com/ugc/18408146465981986437/CCA9A02305890B647AD50B62CC974C83CC87B551/",
     "Yakult Brothers": "https://cdn.steamusercontent.com/ugc/18179376480673513766/A3EDE6125A651D94E1DAAF0F3361ACEB9FB858C4/",
-    "Vici Gaming": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/726228.png",
+    "Vici Gaming": "https://liquipedia.net/commons/images/2/24/VICI_Gaming_full_allmode.png",
     "GLYPH": "https://cdn.steamusercontent.com/ugc/17521324169419112276/F3F4EBC942578E127594737DB79BF3087A18C1DF/",
     "Carstensz Esports": "https://cdn.steamusercontent.com/ugc/18170046277262960383/ECC4AAB63228E40A72F5A25D4D8A2F1A9E8622F9/",
     "Yangon Galacticos": "https://cdn.steamusercontent.com/ugc/2473119197018013407/9F54FB2ED4476EA67C55994F5FB7CDAC3B882809/",
@@ -1409,6 +2725,11 @@
     "OG": "https://steamcdn-a.akamaihd.net/apps/dota2/images/team_logos/2586976.png",
     "REKONIX": "https://cdn.steamusercontent.com/ugc/16170413258693955016/5ABDC787F5CF4BBDD603F15933D9F5B0F8EB0D8A/",
     "Mentality Monsters": "https://cdn.steamusercontent.com/ugc/17321954060516939025/298416D591C688A447C7662D97997E20225D5916/",
-    "InterActive Philippines": "https://cdn.steamusercontent.com/ugc/2027237398680799842/956E1BD2F9D917430D3813A799CBFBAF443F169F/"
+    "InterActive Philippines": "https://cdn.steamusercontent.com/ugc/2027237398680799842/956E1BD2F9D917430D3813A799CBFBAF443F169F/",
+    "Aurora Gaming": "https://liquipedia.net/commons/images/3/32/Aurora_Gaming_2025_full_allmode.png",
+    "BetBoom Team": "https://liquipedia.net/commons/images/5/5b/BetBoom_Team_2024_allmode.png",
+    "Team Falcons": "https://liquipedia.net/commons/images/e/e9/Team_Falcons_2022_full_lightmode.png",
+    "Team Liquid": "https://liquipedia.net/commons/images/f/f5/Team_Liquid_2024_full_lightmode.png",
+    "Xtreme Gaming": "https://liquipedia.net/commons/images/9/97/Xtreme_Gaming_%28China%29_full_allmode.png"
   }
 }
