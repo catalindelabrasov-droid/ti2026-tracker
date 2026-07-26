@@ -184,6 +184,63 @@
   .ev-score{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--aegis-bright);white-space:nowrap}
   .ev-when{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint);text-align:right}
   @media(max-width:560px){.ev-match{grid-template-columns:1fr auto 1fr;}.ev-when{display:none}}
+  /* ---- heroes ---- */
+  :root{--str:#e5623d;--agi:#6fbe49;--int:#40c0e7;--uni:#b57bee}
+  .hero-filters{display:flex;flex-wrap:wrap;gap:16px;margin:18px 0 22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .hf-group{display:flex;gap:6px;flex-wrap:wrap}
+  .hf-btn{background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.04em;padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .hf-btn:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .hf-btn.on{background:var(--aegis);border-color:var(--aegis);color:#14100a;font-weight:500}
+  .hf-btn.str.on{background:var(--str);border-color:var(--str);color:#fff}
+  .hf-btn.agi.on{background:var(--agi);border-color:var(--agi);color:#0d1408}
+  .hf-btn.int.on{background:var(--int);border-color:var(--int);color:#04161c}
+  .hf-btn.uni.on{background:var(--uni);border-color:var(--uni);color:#fff}
+  .hero-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;padding-bottom:40px}
+  .hcard{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;padding:0;text-align:left;transition:.18s;display:flex;flex-direction:column}
+  .hcard:hover{transform:translateY(-3px);border-color:var(--ink-faint);box-shadow:0 8px 22px rgba(0,0,0,.4)}
+  .hcard .hc-art{position:relative;display:block;aspect-ratio:16/9;background:#0c0f14;overflow:hidden}
+  .hcard .hc-art img{width:100%;height:100%;object-fit:cover;display:block;transition:.25s}
+  .hcard:hover .hc-art img{transform:scale(1.06)}
+  .hcard .hc-contest{position:absolute;top:6px;right:6px;background:rgba(10,12,16,.82);border:1px solid rgba(255,255,255,.14);color:var(--aegis-bright);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 6px;border-radius:4px;backdrop-filter:blur(3px)}
+  .hcard .hc-name{font-family:'Oswald',sans-serif;font-size:13.5px;letter-spacing:.02em;color:var(--ink);padding:9px 10px 0;line-height:1.25}
+  .hcard .hc-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);padding:3px 10px 10px}
+  .hcard .hc-meta b{color:var(--aegis-bright);font-weight:400}
+  /* attribute stripe down the left edge */
+  .hcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;z-index:2}
+  .hcard.str::before{background:var(--str)}.hcard.agi::before{background:var(--agi)}
+  .hcard.int::before{background:var(--int)}.hcard.uni::before{background:var(--uni)}
+  /* hero detail */
+  .hero-detail{position:relative}
+  .hd-close{position:absolute;top:12px;right:12px;z-index:3}
+  .hd-hero{position:relative;padding:0}
+  .hd-art{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
+  .hd-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--panel) 4%,rgba(12,15,20,.35) 55%,transparent)}
+  .hd-title{position:absolute;left:22px;right:22px;bottom:14px;z-index:2}
+  .hd-title h3{font-family:'Oswald',sans-serif;font-size:30px;text-transform:uppercase;letter-spacing:.02em;margin:2px 0 8px;line-height:1}
+  .hd-attr{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
+  .hero-detail.str .hd-attr{color:var(--str)}.hero-detail.agi .hd-attr{color:var(--agi)}
+  .hero-detail.int .hd-attr{color:var(--int)}.hero-detail.uni .hd-attr{color:var(--uni)}
+  .hd-roles{display:flex;gap:6px;flex-wrap:wrap}
+  .hd-role{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);border:1px solid var(--line);background:rgba(10,12,16,.6);border-radius:3px;padding:2px 7px}
+  .hd-body{padding:18px 22px 24px}
+  .hd-lab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:18px 0 10px}
+  .hd-lab:first-child{margin-top:0}
+  .hd-pro{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .hd-pro-item{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px 8px;text-align:center}
+  .hd-pro-item .v{display:block;font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;color:var(--aegis-bright);line-height:1}
+  .hd-pro-item .l{display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-faint);margin-top:5px;letter-spacing:.04em}
+  .hd-note{font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.5}
+  .hd-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .hd-stat{display:flex;justify-content:space-between;align-items:baseline;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 11px}
+  .hd-sl{font-size:11.5px;color:var(--ink-dim)}
+  .hd-sv{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink)}
+  .hd-gain{color:var(--ink-faint);font-size:10.5px}
+  .hd-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-faint);line-height:1.5}
+  @media(max-width:520px){
+    .hero-grid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+    .hd-pro{grid-template-columns:repeat(2,1fr)}
+    .hd-title h3{font-size:23px}
+  }
   .trn-tier-head{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--ink-dim);border-bottom:1px solid var(--line);padding:14px 0 8px;margin-top:8px}
   .trn-tier-head:first-child{margin-top:0}
   /* players grouped under their team's world rank */
@@ -1026,6 +1083,7 @@ function render(d){
     <button class="hubtab" data-hubtab="tournaments"><span class="ht-ico">🌐</span>Tournaments</button>
     <button class="hubtab" data-hubtab="teams"><span class="ht-ico">🛡️</span>Teams</button>
     <button class="hubtab" data-hubtab="players"><span class="ht-ico">⭐</span>Players</button>
+    <button class="hubtab" data-hubtab="heroes"><span class="ht-ico">⚔️</span>Heroes</button>
   </div></div>
   <div class="livestrip"><div class="wrap"><div class="livestrip-inner" id="liveStrip">
     <span class="ls-tag"><span class="pulse"></span>Live</span>
@@ -1046,6 +1104,31 @@ function render(d){
     <div class="tabview" id="view-players">
       <div class="trn-head"><div><h2>Top Players</h2><div class="trn-sub">Pros on the highest-rated teams in the world</div></div></div>
       <div id="playerList"><div class="loading" style="padding:30px">Loading players…</div></div>
+    </div>
+    <div class="tabview" id="view-heroes">
+      <div class="trn-head">
+        <div><h2>Heroes</h2><div class="trn-sub">Every hero — with what the pros are actually picking and banning</div></div>
+      </div>
+      <div class="hero-filters" id="heroFilters">
+        <div class="hf-group" data-hf="attr">
+          <button class="hf-btn on" data-attr="all">All</button>
+          <button class="hf-btn str" data-attr="str">Strength</button>
+          <button class="hf-btn agi" data-attr="agi">Agility</button>
+          <button class="hf-btn int" data-attr="int">Intelligence</button>
+          <button class="hf-btn uni" data-attr="uni">Universal</button>
+        </div>
+        <div class="hf-group" data-hf="atk">
+          <button class="hf-btn on" data-atk="all">Any range</button>
+          <button class="hf-btn" data-atk="Melee">Melee</button>
+          <button class="hf-btn" data-atk="Ranged">Ranged</button>
+        </div>
+        <div class="hf-group" data-hf="sort">
+          <button class="hf-btn on" data-hsort="contested">Most contested</button>
+          <button class="hf-btn" data-hsort="winrate">Best pro win %</button>
+          <button class="hf-btn" data-hsort="name">A–Z</button>
+        </div>
+      </div>
+      <div class="hero-grid" id="heroGrid"><div class="loading" style="padding:30px">Loading heroes…</div></div>
     </div>
   </div>
   <div class="roster-back" id="rosterBack"><div class="roster-box" id="rosterBox"></div></div>`;
@@ -1195,7 +1278,7 @@ function renderPrize(d,champion){
 /* ============ HUB: tabs, live strip, tournaments, meta ============ */
 function wireHubTabs(){
   const tabs=[...document.querySelectorAll(".hubtab")];
-  const views={ti:$("#view-ti"),tournaments:$("#view-tournaments"),teams:$("#view-teams"),players:$("#view-players")};
+  const views={ti:$("#view-ti"),tournaments:$("#view-tournaments"),teams:$("#view-teams"),players:$("#view-players"),heroes:$("#view-heroes")};
   const nav=document.querySelector("nav");
   const valid=Object.keys(views);
   function activate(k,push){
@@ -1207,6 +1290,7 @@ function wireHubTabs(){
     if(k==="tournaments") renderTournamentsInto();
     if(k==="teams") renderTeamsTabInto();
     if(k==="players") renderPlayersTabInto();
+    if(k==="heroes"){ wireHeroFilters(); renderHeroesTabInto(); }
   }
   tabs.forEach(t=>t.onclick=()=>{ activate(t.getAttribute("data-hubtab"),true); window.scrollTo({top:0,behavior:"smooth"}); });
   // respond to back/forward and direct links (#tab=tournaments)
@@ -1383,6 +1467,110 @@ function renderPlayersTabInto(){
     </a>`).join("")}
   </div>`).join("")}`;
 }
+
+/* ---- Heroes tab ----
+   Hero art and stats are Valve's own, served from their CDN; the pick/ban
+   numbers are what makes this ours — a hero page that tells you what is
+   actually strong in pro play right now, not a static description. */
+let HEROES=null,_heroAttr="all",_heroAtk="all",_heroSort="contested";
+const ATTR_NAME={str:"Strength",agi:"Agility",int:"Intelligence",all:"Universal"};
+const ATTR_CLASS={str:"str",agi:"agi",int:"int",all:"uni"};
+
+async function renderHeroesTabInto(){
+  const grid=$("#heroGrid"); if(!grid) return;
+  if(!HEROES){
+    try{
+      const res=await fetch(LIVE_FN_URL+"?heroes=1",{cache:"no-store"});
+      HEROES=(await res.json()).heroes||[];
+    }catch(e){ HEROES=[]; }
+    if(!HEROES.length){
+      grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>Couldn't load heroes</b>Try again in a moment.</div>`;
+      return;
+    }
+  }
+  let list=HEROES.slice();
+  if(_heroAttr!=="all") list=list.filter(h=>ATTR_CLASS[h.attr]===_heroAttr||h.attr===_heroAttr);
+  if(_heroAtk!=="all") list=list.filter(h=>h.attack===_heroAtk);
+  const contested=h=>(h.proPick||0)+(h.proBan||0);
+  if(_heroSort==="contested") list.sort((a,b)=>contested(b)-contested(a)||a.name.localeCompare(b.name));
+  else if(_heroSort==="winrate") list.sort((a,b)=>(b.proWin??-1)-(a.proWin??-1)||contested(b)-contested(a));
+  else list.sort((a,b)=>a.name.localeCompare(b.name));
+
+  grid.innerHTML=list.map(h=>{
+    const c=contested(h);
+    return `<button class="hcard ${ATTR_CLASS[h.attr]||''}" data-hero="${h.id}" data-teams="${esc(h.name)}">
+      <span class="hc-art">${h.img?`<img src="${esc(h.img)}" alt="" loading="lazy">`:''}
+        ${c?`<span class="hc-contest" title="Picked or banned in ${c} pro games">${c}</span>`:''}</span>
+      <span class="hc-name">${esc(h.name)}</span>
+      <span class="hc-meta">${esc(h.attack||'')}${h.proWin!=null&&c>=5?` · <b>${h.proWin}%</b> pro win`:''}</span>
+    </button>`;
+  }).join("")||`<div class="empty" style="grid-column:1/-1"><b>No heroes match those filters</b>Try widening them.</div>`;
+  grid.querySelectorAll("[data-hero]").forEach(b=>b.onclick=()=>openHero(+b.getAttribute("data-hero")));
+}
+
+function wireHeroFilters(){
+  const rewire=(sel,set)=>document.querySelectorAll(sel).forEach(b=>b.onclick=()=>{
+    set(b);
+    b.parentElement.querySelectorAll(".hf-btn").forEach(x=>x.classList.toggle("on",x===b));
+    renderHeroesTabInto();
+  });
+  rewire("[data-attr]",b=>_heroAttr=b.getAttribute("data-attr"));
+  rewire("[data-atk]",b=>_heroAtk=b.getAttribute("data-atk"));
+  rewire("[data-hsort]",b=>_heroSort=b.getAttribute("data-hsort"));
+}
+
+function openHero(id){
+  const h=(HEROES||[]).find(x=>x.id===id); if(!h) return;
+  const back=$("#rosterBack"),box=$("#rosterBox"); if(!back||!box) return;
+  const contested=(h.proPick||0)+(h.proBan||0);
+  // stat() takes ready-made HTML so the growth-per-level markup survives;
+  // every value that comes from the API is escaped at the call site.
+  const v=x=>esc(String(x==null?"—":x));
+  const stat=(label,html)=>`<div class="hd-stat"><span class="hd-sl">${esc(label)}</span><span class="hd-sv">${html}</span></div>`;
+  const gain=(base,per)=>`${v(base)} <span class="hd-gain">+${v(per)}</span>`;
+  box.innerHTML=`<div class="hero-detail ${ATTR_CLASS[h.attr]||''}">
+      <button class="rh-close hd-close" onclick="closeRoster()">×</button>
+      <div class="hd-hero">
+        ${h.img?`<img class="hd-art" src="${esc(h.img)}" alt="">`:''}
+        <div class="hd-title">
+          <div class="hd-attr">${esc(ATTR_NAME[h.attr]||'')}</div>
+          <h3>${esc(h.name)}</h3>
+          <div class="hd-roles">${(h.roles||[]).map(r=>`<span class="hd-role">${esc(r)}</span>`).join("")}</div>
+        </div>
+      </div>
+      <div class="hd-body">
+        <div class="hd-lab">In pro play right now</div>
+        <div class="hd-pro">
+          <div class="hd-pro-item"><span class="v">${h.proPick||0}</span><span class="l">picked</span></div>
+          <div class="hd-pro-item"><span class="v">${h.proBan||0}</span><span class="l">banned</span></div>
+          <div class="hd-pro-item"><span class="v">${contested}</span><span class="l">contested</span></div>
+          <div class="hd-pro-item"><span class="v">${h.proWin!=null?h.proWin+'%':'—'}</span><span class="l">pro win rate</span></div>
+        </div>
+        ${contested<5?`<div class="hd-note">Barely touched in pro games recently — that win rate is off a tiny sample.</div>`:''}
+        <div class="hd-lab">Attributes</div>
+        <div class="hd-stats">
+          ${stat("Strength",gain(h.str,h.strGain))}
+          ${stat("Agility",gain(h.agi,h.agiGain))}
+          ${stat("Intelligence",gain(h.int,h.intGain))}
+        </div>
+        <div class="hd-lab">Combat</div>
+        <div class="hd-stats">
+          ${stat("Attack",`${v(h.dmgMin)}–${v(h.dmgMax)}`)}
+          ${stat("Attack type",v(h.attack))}
+          ${stat("Range",v(h.attackRange))}
+          ${stat("Armour",v(h.armor))}
+          ${stat("Move speed",v(h.moveSpeed))}
+          ${stat("Health",v(h.hp))}
+          ${stat("Mana",v(h.mana))}
+          ${stat("Legs",v(h.legs))}
+        </div>
+        ${h.pubWin!=null?`<div class="hd-foot">${h.pubWin}% win rate in public matches · hero art and stats © Valve</div>`:''}
+      </div>
+    </div>`;
+  back.classList.add("show");
+  back.onclick=(e)=>{ if(e.target===back) closeRoster(); };
+}
+window.openHero=openHero;
 
 /* ---- Roster modal (on-demand fetch) ---- */
 async function openRoster(teamId,teamName,teamLogoUrl){

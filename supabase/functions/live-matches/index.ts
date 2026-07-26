@@ -380,6 +380,44 @@ async function fetchLeagueDetail(leagueId: number) {
   return data;
 }
 
+// Full hero list for the Heroes page. Served from its own endpoint rather
+// than the main payload — 127 heroes is a lot of JSON to ship to everyone who
+// only wants the scoreboard.
+let _heroList: any[] | null = null;
+let _heroListAt = 0;
+async function fetchHeroes() {
+  if (_heroList && Date.now() - _heroListAt < META_MS) return _heroList;
+  const hs = await jget("/heroStats");
+  if (!Array.isArray(hs)) return _heroList || [];
+  const CDN = "https://cdn.cloudflare.steamstatic.com";
+  _heroList = hs.map((h: any) => {
+    const pp = h.pro_pick || 0, pb = h.pro_ban || 0, pw = h.pro_win || 0;
+    const ub = h.pub_pick || 0, uw = h.pub_win || 0;
+    return {
+      id: h.id,
+      key: (h.name || "").replace("npc_dota_hero_", ""),
+      name: h.localized_name,
+      attr: h.primary_attr,                     // str | agi | int | all
+      attack: h.attack_type,                    // Melee | Ranged
+      roles: h.roles || [],
+      img: h.img ? CDN + h.img : null,
+      icon: h.icon ? CDN + h.icon : null,
+      proPick: pp, proBan: pb,
+      proWin: pp ? Math.round((pw / pp) * 100) : null,
+      pubWin: ub ? Math.round((uw / ub) * 100) : null,
+      // Base stats for the detail panel.
+      hp: h.base_health, mana: h.base_mana, armor: h.base_armor,
+      dmgMin: h.base_attack_min, dmgMax: h.base_attack_max,
+      moveSpeed: h.move_speed, attackRange: h.attack_range,
+      str: h.base_str, agi: h.base_agi, int: h.base_int,
+      strGain: h.str_gain, agiGain: h.agi_gain, intGain: h.int_gain,
+      legs: h.legs,
+    };
+  }).sort((a: any, b: any) => a.name.localeCompare(b.name));
+  _heroListAt = Date.now();
+  return _heroList;
+}
+
 async function fetchRoster(teamId: number) {
   const c = _rosterCache[teamId];
   if (c && (Date.now() - c.at < CACHE_MS)) return c.players;
@@ -424,6 +462,12 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ teamId: Number(rosterId), players }),
         { headers: { ...CORS, "Content-Type": "application/json" } });
     }
+    // Full hero list: /live-matches?heroes=1
+    if (url.searchParams.get("heroes")) {
+      const heroes = await fetchHeroes();
+      return new Response(JSON.stringify({ heroes }),
+        { headers: { ...CORS, "Content-Type": "application/json" } });
+    }
     // On-demand event detail: /live-matches?league=LEAGUE_ID
     const leagueId = url.searchParams.get("league");
     if (leagueId) {
@@ -436,8 +480,19 @@ Deno.serve(async (req) => {
     await Promise.all([loadLookups(), loadMeta(), loadLadder()]);
     await loadPlayers(); // needs _topTeams from loadLookups
     const games = await jget("/live");
-    const liveMatches = (Array.isArray(games) ? games : [])
-      .filter(isPro)
+    // OpenDota's /live keeps finished games around for a while, so the same
+    // two teams can appear twice — the game that just ended alongside the one
+    // actually being played. Keep only the newest game per pairing
+    // (match_id increases over time), then sort by audience.
+    const newestByPair: Record<string, any> = {};
+    for (const g of (Array.isArray(games) ? games : [])) {
+      if (!isPro(g)) continue;
+      const pair = [String(g.team_name_radiant), String(g.team_name_dire)]
+        .sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1).join("|");
+      const prev = newestByPair[pair];
+      if (!prev || (g.match_id || 0) > (prev.match_id || 0)) newestByPair[pair] = g;
+    }
+    const liveMatches = Object.values(newestByPair)
       .sort((a: any, b: any) => (b.spectators ?? 0) - (a.spectators ?? 0))
       .slice(0, 25)
       .map(shapeLive);
