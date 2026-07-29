@@ -885,6 +885,9 @@
   .install-txt span{color:var(--ink-dim)}
   .install-bar .lg-btn{padding:9px 16px;font-size:13px;white-space:nowrap;min-height:0}
   .install-x{background:none;border:0;color:var(--ink-faint);font-size:15px;cursor:pointer;padding:4px 2px;line-height:1}
+  .foot-app{display:inline-block;margin-bottom:8px;color:var(--aegis-bright);text-decoration:none;
+    border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:12px;transition:.15s}
+  .foot-app:hover{border-color:var(--aegis)}
 
   /* ---------------------------------------------------------------- phones --
      Tables are the problem on a narrow screen. These cards clip rather than
@@ -1340,7 +1343,8 @@ function render(d){
   <div class="wrap">
     <div class="tabview on" id="view-ti">
       ${renderLive(d)}${renderPrize(d,champion)}${renderQualifiers(d)}${renderTeams(d)}${renderGroups(d)}${renderBracket(d)}
-      <footer>${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA) &amp; OpenDota.<br>
+      <footer><a href="/app" class="foot-app">📱 Put it on your phone</a><br>
+        ${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA) &amp; OpenDota.<br>
         Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
         Fan-made tracker, not affiliated with Valve.</footer>
     </div>

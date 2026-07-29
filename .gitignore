@@ -12,3 +12,6 @@ supabase/.temp/
 keystore.properties
 *.apk
 *.aab
+
+# ...except the one APK we publish for sideloading.
+!downloads/*.apk

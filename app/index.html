@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Get the app — Dota 2 TI League</title>
+<meta name="description" content="Install Dota 2 TI League on your phone — from the browser in two taps, or as a direct Android download.">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0b0e13">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e13;--panel:#151b26;--panel-2:#1b2230;--line:#28303f;--line-soft:#1f2632;
+    --ink:#e9eef5;--ink-dim:#8e99ac;--ink-faint:#5b6478;--aegis:#d9a441;--aegis-bright:#f3c764;
+    --win:#4ec98f;--radius:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(900px 480px at 80% -12%,rgba(217,164,65,.10),transparent 60%)}
+  .wrap{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:0 20px}
+  a{color:var(--aegis-bright)}
+
+  header{padding:44px 0 26px;text-align:center}
+  .mark{width:72px;height:72px;border-radius:18px;margin:0 auto 16px;display:block}
+  h1{font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;letter-spacing:.01em;line-height:1.15}
+  .sub{color:var(--ink-dim);font-size:14.5px;margin-top:8px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+  .card.best{border-color:rgba(217,164,65,.45);box-shadow:0 0 0 1px rgba(217,164,65,.10)}
+  .tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--aegis-bright);background:rgba(217,164,65,.12);padding:3px 8px;border-radius:20px;margin-bottom:10px}
+  .tag.plain{color:var(--ink-faint);background:rgba(255,255,255,.05)}
+  h2{font-family:'Oswald',sans-serif;font-weight:600;font-size:19px;letter-spacing:.01em}
+  .card p{color:var(--ink-dim);font-size:14px;margin-top:8px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:16px;
+    padding:14px 18px;min-height:48px;border:0;border-radius:var(--radius);cursor:pointer;
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;
+    text-decoration:none;background:var(--aegis);color:#171006;transition:.15s}
+  .btn:hover{background:var(--aegis-bright)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--aegis)}
+
+  ol{margin:14px 0 0 18px;color:var(--ink-dim);font-size:14px}
+  ol li{margin-bottom:7px}
+  ol li b{color:var(--ink)}
+
+  .meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft);
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint)}
+  .meta b{color:var(--ink-dim);font-weight:500}
+  .hash{word-break:break-all;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);margin-top:10px;line-height:1.5}
+
+  .note{border:1px solid var(--line);border-left:2px solid var(--win);border-radius:var(--radius);
+    padding:16px 18px;margin:22px 0;background:rgba(78,201,143,.035)}
+  .note h3{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--win)}
+  .note p{color:var(--ink-dim);font-size:13.5px;margin-top:7px}
+
+  footer{text-align:center;padding:30px 0 44px;color:var(--ink-faint);font-size:13px}
+  .hidden{display:none}
+  @media(max-width:520px){
+    header{padding:32px 0 20px}
+    h1{font-size:25px}
+    .card{padding:18px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="/icons/icon-192.png" alt="" class="mark" width="72" height="72">
+    <h1>Put TI League on your phone</h1>
+    <p class="sub">Tournaments, the ladder and your league — full screen, one tap from the home screen.</p>
+  </header>
+
+  <!-- Browser install. Works on Android and iPhone, needs no file and no
+       permission prompt, so it leads. -->
+  <div class="card best" id="cardPwa">
+    <span class="tag">Easiest — any phone</span>
+    <h2>Install from your browser</h2>
+    <p>No download, no security warning. It behaves like any other app once it's on your home screen.</p>
+    <button class="btn" id="pwaBtn">Install</button>
+    <ol id="iosSteps" class="hidden">
+      <li>Tap the <b>Share</b> button at the bottom of Safari.</li>
+      <li>Scroll down and choose <b>Add to Home Screen</b>.</li>
+      <li>Tap <b>Add</b>. That's it.</li>
+    </ol>
+    <ol id="genericSteps" class="hidden">
+      <li>Open <b>dota2tileague.com</b> in Chrome on your phone.</li>
+      <li>Open the <b>⋮</b> menu.</li>
+      <li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li>
+    </ol>
+  </div>
+
+  <!-- Direct APK. Android only. -->
+  <div class="card" id="cardApk">
+    <span class="tag plain">Android only</span>
+    <h2>Download the Android app</h2>
+    <p>A proper installed app, handy if you want to pass it round a Discord. Android 6 and up.</p>
+    <a class="btn ghost" href="/downloads/ti-league-1.0.0.apk" download>Download APK · 1.2 MB</a>
+    <ol>
+      <li>Tap the file once it's downloaded.</li>
+      <li>Android will say it can't install from this source — tap <b>Settings</b> and turn on <b>Allow from this source</b>. It asks because the app didn't come from the Play Store, not because anything is wrong with it.</li>
+      <li>Go back and tap <b>Install</b>.</li>
+    </ol>
+    <div class="meta">
+      <span><b>Version</b> 1.0.0</span>
+      <span><b>Size</b> 1.2 MB</span>
+      <span><b>Package</b> com.dota2tileague.app</span>
+    </div>
+    <div class="hash"><b>SHA-256</b><br>cbff8b2fd561cd968b2ff38da3b0c7fcf5c6d3041c69fb8929296ef38929311e</div>
+  </div>
+
+  <div class="note">
+    <h3>It updates itself</h3>
+    <p>Both versions are the website, not a copy of it. When something changes — a new format, a fixed bracket, anything on the server — it's there the next time you open the app. You will never be asked to reinstall to get the latest version.</p>
+  </div>
+
+  <footer>
+    <a href="/">← Back to dota2tileague.com</a>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var ua = navigator.userAgent || "";
+  var isAndroid = /Android/i.test(ua);
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+
+  var btn = document.getElementById('pwaBtn');
+  var iosSteps = document.getElementById('genericSteps');
+
+  // Already installed: say so rather than offering it again.
+  if (standalone) {
+    document.getElementById('cardPwa').innerHTML =
+      '<span class="tag">Installed</span><h2>You\'re already running the app</h2>' +
+      '<p>Nothing else to do. <a href="/">Open the tracker</a>.</p>';
+  }
+
+  // Android APK only makes sense on Android; elsewhere it is noise.
+  if (!isAndroid) {
+    var apk = document.getElementById('cardApk');
+    if (isIOS) apk.style.display = 'none';
+    else apk.querySelector('p').textContent =
+      'A proper installed app for Android phones. Open this page on your phone to install it, or send yourself the file.';
+  }
+
+  // Chrome hands us the install prompt only when the site qualifies, and only
+  // lets us show it from a real tap. Everything else gets instructions.
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferred = e;
+    btn.classList.remove('hidden');
+    btn.textContent = 'Install';
+  });
+
+  btn.addEventListener('click', async function(){
+    if (deferred) {
+      deferred.prompt();
+      var choice = await deferred.userChoice;
+      deferred = null;
+      if (choice.outcome === 'accepted') btn.textContent = 'Installed ✓';
+      return;
+    }
+    // No prompt available: show the manual route for this browser instead.
+    btn.style.display = 'none';
+    document.getElementById(isIOS ? 'iosSteps' : 'genericSteps').classList.remove('hidden');
+  });
+
+  window.addEventListener('appinstalled', function(){ btn.textContent = 'Installed ✓'; });
+})();
+</script>
+</body>
+</html>
