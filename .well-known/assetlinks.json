@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.dota2tileague.app",
+      "sha256_cert_fingerprints": [
+        "11:51:44:99:C9:8A:CA:63:99:F3:88:BF:13:E9:BC:26:0B:24:DB:6C:30:97:53:E2:1D:BE:E9:45:4C:66:6B:FD"
+      ]
+    }
+  }
+]

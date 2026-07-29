@@ -3,3 +3,12 @@ __pycache__/
 data.json.tmp
 .DS_Store
 supabase/.temp/
+
+# Signing material must never reach the repo. The Android keystore lives in
+# C:\Users\Azog\android-tools\ and losing it means no signed update is
+# possible ever again — see ti2026-SIGNING-README.txt next to it.
+*.jks
+*.keystore
+keystore.properties
+*.apk
+*.aab
