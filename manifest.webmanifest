@@ -1,0 +1,37 @@
+{
+  "name": "Dota 2 TI League",
+  "short_name": "TI League",
+  "description": "Tournaments, an amateur ladder, and prediction leagues for Dota 2 — plus live results from The International.",
+  "id": "/",
+  "start_url": "/?src=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0e13",
+  "theme_color": "#0b0e13",
+  "categories": ["sports", "games", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tournaments",
+      "short_name": "Tournaments",
+      "description": "Open tournaments, the ladder, and your own events",
+      "url": "/?go=tournaments",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My league",
+      "short_name": "League",
+      "description": "Your prediction league and picks",
+      "url": "/?go=league",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>The International 2026 — Results Tracker</title>
+<meta name="description" content="Tournaments, an amateur ladder and prediction leagues for Dota 2, plus live results from The International.">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0b0e13">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TI League">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -863,6 +871,68 @@
   .form-ok{background:rgba(78,201,143,.1);border:1px solid rgba(78,201,143,.35);color:#9fe0c0;border-radius:var(--radius);padding:11px 13px;font-size:13px;line-height:1.5;display:none}
   .form-ok.show{display:block}
   @media(max-width:640px){header{padding:34px 0 22px}section{padding:34px 0}.toast-host{left:18px;right:18px;max-width:none}}
+
+  /* Installed on a phone there is no browser chrome, so the page has to keep
+     clear of the notch and the home indicator itself. */
+  body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  .install-bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:400;
+    display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);
+    transform:translateY(140%);transition:transform .3s cubic-bezier(.2,.8,.3,1);max-width:520px;margin:0 auto}
+  .install-bar.on{transform:none}
+  .install-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.35}
+  .install-txt b{font-size:13.5px}
+  .install-txt span{color:var(--ink-dim)}
+  .install-bar .lg-btn{padding:9px 16px;font-size:13px;white-space:nowrap;min-height:0}
+  .install-x{background:none;border:0;color:var(--ink-faint);font-size:15px;cursor:pointer;padding:4px 2px;line-height:1}
+
+  /* ---------------------------------------------------------------- phones --
+     Tables are the problem on a narrow screen. These cards clip rather than
+     scroll, so anything past the right edge is not merely awkward — it is
+     invisible. On the ladder that was the rating and the Challenge button,
+     which is the whole reason the page exists.
+
+     So: drop the columns that are context rather than substance, tighten the
+     spacing, and let the remaining columns fit honestly. Nothing is hidden
+     that a captain needs to act on. */
+  @media(max-width:600px){
+    .hide-sm{display:none !important}
+
+    .tbl{font-size:13px}
+    .tbl th{padding:9px 10px;font-size:9.5px;letter-spacing:.08em}
+    .tbl td{padding:11px 10px}
+    .tbl .rank{width:34px}
+
+    .lb-table th{padding:9px 7px;font-size:9px;letter-spacing:.06em}
+    .lb-table td{padding:11px 7px}
+    .lb-rank{width:26px;font-size:16px}
+    .lb-pts{font-size:16px}
+    .lb-name{font-size:13.5px;gap:7px}
+    .lb-name .av{width:24px;height:24px;font-size:11px}
+    .lb-acc{font-size:11px}
+    .ld-rd{display:none}
+    .ld-chal{padding:6px 9px;font-size:11px;white-space:nowrap}
+
+    /* Badges wrap onto their own line rather than shoving the name out. */
+    .tr-thru,.tr-st,.tr-bye,.ld-prov{margin-left:6px;font-size:8.5px;padding:1px 4px}
+    .lb-name{flex-wrap:wrap}
+
+    /* Match rows become two lines: who is playing, then what to do about it. */
+    .tr-mrow{flex-wrap:wrap;gap:8px}
+    .tr-mteams{flex:1 1 100%}
+    .tr-mrow .lg-btn-ghost{flex:1 1 auto;min-height:40px}
+    .tr-stakes{margin-left:0;margin-top:4px;display:inline-block}
+
+    .tr-groups{grid-template-columns:1fr}
+    .tr-round{min-width:158px}
+    .tr-bracket{gap:10px}
+
+    /* Every control a thumb has to hit gets a real target. */
+    .lg-btn,.lg-btn-ghost,.rep-team,.pred-chip,.rep-evenbtn{min-height:42px}
+    .lg-tab{padding:9px 12px;font-size:12px}
+    .rep-even{grid-template-columns:1fr;gap:6px}
+    .rep-evenbtn{flex-direction:row;justify-content:space-between;padding:10px 14px}
+  }
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none !important}}
 </style>
 </head>
@@ -1957,7 +2027,7 @@ function trTableHTML(rows,myTeam,cutAfter,title){
     <div class="lg-card tr-gcard" style="padding:0;overflow:hidden">
       <table class="lb-table tr-gtable"><thead><tr>
         <th>#</th><th>Team</th>
-        <th style="text-align:right">P</th>
+        <th style="text-align:right" class="hide-sm">P</th>
         <th style="text-align:right">W–D–L</th>
         <th style="text-align:right">Pts</th>
         <th style="text-align:right">GD</th>
@@ -1965,7 +2035,7 @@ function trTableHTML(rows,myTeam,cutAfter,title){
         <tr class="lb-row ${myTeam&&r.team_id===myTeam.id?'lb-you':''} ${cutAfter&&i+1===cutAfter?'tr-cut':''}">
           <td class="lb-rank"><span class="lb-place">${r.pos}</span></td>
           <td><div class="lb-name">${esc(r.team_name)}${cutAfter&&r.pos<=cutAfter?'<span class="tr-thru">through</span>':''}</div></td>
-          <td class="lb-acc">${r.played}</td>
+          <td class="lb-acc hide-sm">${r.played}</td>
           <td class="lb-acc">${r.won}–${r.drawn}–${r.lost}</td>
           <td class="lb-pts">${r.points}</td>
           <td class="lb-acc">${r.game_diff>0?"+":""}${r.game_diff}</td>
@@ -2001,14 +2071,14 @@ function trSwissHTML(standings,matches,t,myTeam){
       <table class="lb-table tr-gtable"><thead><tr>
         <th>#</th><th>Team</th>
         <th style="text-align:right">W–L</th>
-        <th style="text-align:right">Opp. win rate</th>
+        <th style="text-align:right" class="hide-sm">Opp. win rate</th>
         <th style="text-align:right">GD</th>
       </tr></thead><tbody>${standings.map(r=>`
         <tr class="lb-row ${myTeam&&r.team_id===myTeam.id?'lb-you':''} ${r.state==='eliminated'?'tr-dim':''}">
           <td class="lb-rank"><span class="lb-place">${r.rank}</span></td>
           <td><div class="lb-name">${esc(r.name)}${pill(r.state)}${r.byes?'<span class="tr-bye">bye</span>':''}</div></td>
           <td class="lb-acc">${r.wins}–${r.losses}</td>
-          <td class="lb-acc">${pct(r.omw)}</td>
+          <td class="lb-acc hide-sm">${pct(r.omw)}</td>
           <td class="lb-pts">${r.game_diff>0?"+":""}${r.game_diff}</td>
         </tr>`).join("")}</tbody></table>
     </div>
@@ -2835,10 +2905,10 @@ function renderTeams(d){
     <td class="rank">${wr?"#"+wr.rank:"—"}</td>
     <td class="team-name">${teamLogo(tm.name,22)}${esc(tm.name)}</td>
     <td class="reg-tag">${esc(tm.region||"—")}</td>
-    <td class="reg-tag">${esc(tm.qualification||"—")}</td></tr>`).join("");
+    <td class="reg-tag hide-sm">${esc(tm.qualification||"—")}</td></tr>`).join("");
   return`<section id="teams"><div class="sec-head"><span class="sec-num">03</span><h2>Teams</h2><span class="reg-tag">${t.length} qualified</span></div>
     <p class="sec-note">${anyRanked?"Ordered by world ranking (Glicko-2). ":""}Click a team to see its roster and coach.</p>
-    <table class="tbl"><thead><tr><th>World</th><th>Team</th><th>Region</th><th>Qualified via</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+    <table class="tbl"><thead><tr><th>World</th><th>Team</th><th>Region</th><th class="hide-sm">Qualified via</th></tr></thead><tbody>${rows}</tbody></table></section>`;
 }
 
 function teamRecord(d,name){
@@ -4527,6 +4597,70 @@ function setupAutoRefresh(){
   window.addEventListener("online",()=>{ setLiveStatus("idle"); refreshNow(); });
   window.addEventListener("offline",()=>setLiveStatus("offline"));
 }
+/* ===================== INSTALLING IT AS AN APP =====================
+   On Android, Chrome fires beforeinstallprompt when the site qualifies as a
+   PWA. Browsers only let you show that prompt in response to a real tap, so
+   the event is stashed and a button offered instead. iOS never fires it at
+   all — Safari installs through Share → Add to Home Screen — so iPhone users
+   get told that rather than a button that cannot work. */
+let _installEvent=null;
+
+function installBanner(){
+  if(document.getElementById("installBar")) return;
+  const bar=document.createElement("div");
+  bar.id="installBar"; bar.className="install-bar";
+  bar.innerHTML=`<div class="install-txt"><b>Install TI League</b>
+      <span>Add it to your home screen — opens full screen, works on a bad connection.</span></div>
+    <button class="lg-btn" id="installGo">Install</button>
+    <button class="install-x" id="installNo" aria-label="Not now">✕</button>`;
+  document.body.appendChild(bar);
+  requestAnimationFrame(()=>bar.classList.add("on"));
+  document.getElementById("installNo").onclick=()=>{
+    bar.remove();
+    try{ localStorage.setItem("installDismissed", String(Date.now())); }catch(e){}
+  };
+  document.getElementById("installGo").onclick=async()=>{
+    if(!_installEvent) return;
+    bar.remove();
+    _installEvent.prompt();
+    const {outcome}=await _installEvent.userChoice;
+    _installEvent=null;
+    if(outcome==="accepted") toast("Installed","Look for TI League on your home screen.");
+  };
+}
+
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  _installEvent=e;
+  // Don't nag: once dismissed, leave it a fortnight.
+  let last=0; try{ last=+(localStorage.getItem("installDismissed")||0); }catch(e2){}
+  if(Date.now()-last < 14*24*3600*1000) return;
+  if(matchMedia("(display-mode: standalone)").matches) return;
+  setTimeout(installBanner,2500);
+});
+window.addEventListener("appinstalled",()=>{
+  _installEvent=null;
+  const b=document.getElementById("installBar"); if(b) b.remove();
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("/sw.js").then(reg=>{
+      // A new build is live while the old one is open: take it on the next
+      // navigation rather than swapping the page out from under somebody.
+      reg.addEventListener("updatefound",()=>{
+        const sw=reg.installing;
+        if(!sw) return;
+        sw.addEventListener("statechange",()=>{
+          if(sw.state==="installed" && navigator.serviceWorker.controller){
+            sw.postMessage("skip-waiting");
+          }
+        });
+      });
+    }).catch(()=>{});
+  });
+}
+
 init();
 </script>
 </body>

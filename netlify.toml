@@ -5,3 +5,29 @@
 [build]
   publish = "."
   command = "rm -f test_no_login.html"
+
+# The service worker must never be served from cache. If it is, a stale worker
+# keeps serving a stale app and no deploy can dislodge it.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# Digital Asset Links, so the Android wrapper is trusted by this domain and
+# opens without a browser address bar.
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
