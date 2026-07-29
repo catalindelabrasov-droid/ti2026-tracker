@@ -162,6 +162,7 @@
   .rank-note b{color:var(--ink)}
   /* bell shrunk to an icon; the count rides on it */
   .tbtn-bell{position:relative;padding:8px 11px;font-size:14px;line-height:1}
+  .tbtn-bell.on{border-color:var(--aegis);background:rgba(217,164,65,.14)}
   .bell-count{position:absolute;top:-4px;right:-4px;background:var(--aegis);color:#14100a;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
   /* rules presets + member-facing summary */
   .rule-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:4px 0 2px}
@@ -3059,6 +3060,115 @@ function toast(title,body){
   host.appendChild(el);setTimeout(()=>el.remove(),6000);
 }
 function fireBrowserNotification(title,body){if("Notification"in window&&Notification.permission==="granted"){try{new Notification(title,{body});}catch(e){}}}
+
+/* ==================== NOTIFICATIONS THAT ARRIVE WITH THE APP SHUT ==========
+   The bell used to call new Notification() from this page, which only works
+   while the page is open — the one moment you do not need telling that a match
+   has started. This registers the device with a push service instead, so the
+   server can reach it whether or not anybody has the site open.
+
+   Everything is best-effort: no push service, no permission, or a browser that
+   does not do this at all should never break the page. */
+const VAPID_PUBLIC_KEY="BFiilIkkO8pWUR9lvlcDfd_veWbmMWjDIHjJRF4Vi-DlnRpbAoSco5_CepurUjPz8OPjPYnbpzgzrENpUIfcfxE";
+
+function b64ToUint8(b64){
+  const pad="=".repeat((4-b64.length%4)%4);
+  const raw=atob((b64+pad).replace(/-/g,"+").replace(/_/g,"/"));
+  const out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+  return out;
+}
+
+function pushSupported(){
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+}
+
+async function pushRegister(sub){
+  if(!SB_READY()) return false;
+  const j=sub.toJSON();
+  const {error}=await SB.rpc("push_subscribe",{
+    p_endpoint:j.endpoint, p_p256dh:j.keys.p256dh, p_auth:j.keys.auth,
+    p_topics:["ti"], p_user_agent:navigator.userAgent.slice(0,200)});
+  if(error){ console.warn("push_subscribe failed",error); return false; }
+  return true;
+}
+
+async function pushState(){
+  if(!pushSupported()) return "unsupported";
+  if(Notification.permission==="denied") return "blocked";
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    return sub?"on":"off";
+  }catch(e){ return "off"; }
+}
+
+async function togglePush(){
+  if(!pushSupported()){
+    toast("Not supported","This browser can't deliver notifications when the app is closed. Install the app and try again.");
+    return;
+  }
+  if(Notification.permission==="denied"){
+    toast("Notifications blocked","Your browser is blocking them. Turn them back on for this site in its settings.");
+    return;
+  }
+  const reg=await navigator.serviceWorker.ready;
+  const existing=await reg.pushManager.getSubscription();
+
+  if(existing){
+    try{ await SB.rpc("push_unsubscribe",{p_endpoint:existing.endpoint}); }catch(e){}
+    await existing.unsubscribe();
+    setBellState("off");
+    toast("Notifications off","You won't be told when TI matches start.");
+    return;
+  }
+
+  const perm=Notification.permission==="granted"?"granted":await Notification.requestPermission();
+  if(perm!=="granted"){
+    toast("Not enabled","Notifications need permission before they can be sent.");
+    return;
+  }
+  try{
+    const sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,                      // required, and honest: every push shows something
+      applicationServerKey:b64ToUint8(VAPID_PUBLIC_KEY)});
+    const ok=await pushRegister(sub);
+    setBellState(ok?"on":"off");
+    toast(ok?"Notifications on":"Couldn't turn them on",
+          ok?"You'll get a notification when a TI match is about to start, and when it goes live."
+            :"The subscription didn't reach the server. Try again in a moment.");
+  }catch(e){
+    console.warn("subscribe failed",e);
+    toast("Couldn't turn them on",(e&&e.message)||"Your browser refused the subscription.");
+  }
+}
+
+function setBellState(state){
+  const nb=$("#notifBtn");
+  if(!nb) return;
+  nb.classList.toggle("on",state==="on");
+  nb.title=state==="on"?"TI match notifications are on — tap to turn off"
+                       :"Get notified when a TI match starts";
+}
+
+async function initPush(){
+  if(!pushSupported()) return;
+  const state=await pushState();
+  setBellState(state);
+  // A subscription the browser kept but the server has forgotten (database
+  // restored, row pruned after failures) would silently receive nothing, so
+  // re-register the one we already have on every load. It is an upsert.
+  if(state==="on"){
+    try{
+      const reg=await navigator.serviceWorker.ready;
+      const sub=await reg.pushManager.getSubscription();
+      if(sub) pushRegister(sub);
+    }catch(e){}
+  }
+  navigator.serviceWorker.addEventListener("message",e=>{
+    if(e.data&&e.data.type==="resubscribe") pushState().then(setBellState);
+  });
+}
 function checkForResultChanges(newData){
   const seen=JSON.parse(localStorage.getItem(LS_SEEN)||"{}");const next={};let fired=0;
   allMatches(newData).forEach(m=>{
@@ -3150,11 +3260,7 @@ function wireToolbar(){
   document.querySelectorAll(".filt").forEach(b=>b.addEventListener("click",()=>{activeFilter=b.getAttribute("data-filter");render(DATA);}));
   document.querySelectorAll("[data-notif]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleNotif(b.getAttribute("data-notif"));}));
   const nb=$("#notifBtn");
-  if(nb)nb.addEventListener("click",()=>{
-    if(!("Notification"in window)){toast("Not supported","This browser can't show notifications.");return;}
-    if(Notification.permission==="granted")toast("Notifications on",`Watching ${notifIds.size} match${notifIds.size===1?"":"es"}. Tap a 🔔 on any match.`);
-    else Notification.requestPermission().then(p=>toast(p==="granted"?"Notifications enabled":"Notifications blocked",p==="granted"?"Tap the 🔔 on matches you care about.":"Allow notifications in your browser settings to use this."));
-  });
+  if(nb)nb.addEventListener("click",togglePush);
   const eb=$("#editBtn");if(eb)eb.addEventListener("click",openEditor);
 }
 function wireNav(){
@@ -4650,6 +4756,7 @@ window.addEventListener("appinstalled",()=>{
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("/sw.js").then(reg=>{
+      initPush();
       // A new build is live while the old one is open: take it on the next
       // navigation rather than swapping the page out from under somebody.
       reg.addEventListener("updatefound",()=>{

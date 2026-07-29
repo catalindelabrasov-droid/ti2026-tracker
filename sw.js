@@ -14,7 +14,7 @@
  *     already moved.
  */
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL   = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -78,6 +78,64 @@ async function cacheFirst(request, cacheName) {
   if (fresh && fresh.ok) cache.put(request, fresh.clone());
   return fresh;
 }
+
+/* ------------------------------------------------------------------ push --
+ * This is the part that works with the app shut. The page cannot do it: a
+ * notification fired from the page only exists while the page does, which is
+ * precisely when you do not need telling that a match started.
+ */
+self.addEventListener('push', event => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) { d = { body: event.data && event.data.text() }; }
+
+  const title = d.title || 'Dota 2 TI League';
+  const options = {
+    body: d.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/favicon-32.png',
+    // Same tag replaces rather than stacks, so a phone left alone all evening
+    // does not come back to forty separate notifications.
+    tag: d.tag || 'ti',
+    renotify: true,
+    data: { url: d.url || '/' },
+    vibrate: [80, 40, 80],
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    // Reuse a window that is already open rather than piling up new ones.
+    for (const c of all) {
+      if (new URL(c.url).origin === self.location.origin) {
+        await c.focus();
+        if ('navigate' in c) await c.navigate(target);
+        return;
+      }
+    }
+    await self.clients.openWindow(target);
+  })());
+});
+
+// The browser can retire a subscription on its own; re-register silently so
+// the user does not quietly stop receiving anything.
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil((async () => {
+    try {
+      const old = event.oldSubscription || await self.registration.pushManager.getSubscription();
+      const key = old && old.options && old.options.applicationServerKey;
+      if (!key) return;
+      const fresh = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true, applicationServerKey: key,
+      });
+      const clients = await self.clients.matchAll({ includeUncontrolled: true });
+      clients.forEach(c => c.postMessage({ type: 'resubscribe', sub: fresh.toJSON() }));
+    } catch (e) { /* nothing useful to do here */ }
+  })());
+});
 
 self.addEventListener('fetch', event => {
   const { request } = event;
