@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-07-30T07:29:52.771147+00:00",
+    "lastUpdated": "2026-07-30T10:15:27.407867+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -275,9 +275,16 @@
         {
           "ign": "xNova",
           "role": "Hard Support"
+        },
+        {
+          "ign": "LaNm",
+          "role": "Player"
+        },
+        {
+          "ign": "Maps",
+          "role": "Player"
         }
       ],
-      "coach": "xiao8",
       "logo": "https://liquipedia.net/commons/images/9/97/Xtreme_Gaming_%28China%29_full_allmode.png"
     },
     {
