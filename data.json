@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-07-31T08:47:14.514186+00:00",
+    "lastUpdated": "2026-07-31T11:23:24.479648+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -57,22 +57,17 @@
         "team": null
       },
       {
-        "place": "9-12",
+        "place": "9-13",
         "amount": null,
         "team": null
       },
       {
-        "place": "13-16",
+        "place": "14-15",
         "amount": null,
         "team": null
       },
       {
-        "place": "17-18",
-        "amount": null,
-        "team": null
-      },
-      {
-        "place": "19-20",
+        "place": "16",
         "amount": null,
         "team": null
       }
