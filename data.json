@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-04T21:03:41.573004+00:00",
+    "lastUpdated": "2026-08-04T22:54:56.922323+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -133,7 +133,7 @@
       "logo": "https://liquipedia.net/commons/images/5/5b/BetBoom_Team_2024_allmode.png"
     },
     {
-      "name": "1w Team",
+      "name": "Iron Wing TI 2026",
       "region": null,
       "qualification": "Direct Invite",
       "players": [
