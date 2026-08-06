@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-06T10:32:47.985616+00:00",
+    "lastUpdated": "2026-08-06T12:52:23.769796+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -129,7 +129,8 @@
           "role": "Hard Support"
         }
       ],
-      "coach": "boolk"
+      "coach": "boolk",
+      "logo": "https://liquipedia.net/commons/images/5/5b/BetBoom_Team_2024_allmode.png"
     },
     {
       "name": "Iron Wing TI 2026",
@@ -307,7 +308,8 @@
           "role": "Hard Support"
         }
       ],
-      "coach": "Miposhka & MiLAN"
+      "coach": "Miposhka & MiLAN",
+      "logo": "https://liquipedia.net/commons/images/f/f2/Team_Spirit_2022_full_lightmode.png"
     },
     {
       "name": "TEAM VISION",
@@ -335,7 +337,8 @@
           "role": "Hard Support"
         }
       ],
-      "coach": "Puppey"
+      "coach": "Puppey",
+      "logo": "https://liquipedia.net/commons/images/9/9d/PARIVISION_allmode.png"
     },
     {
       "name": "Nigma Galaxy",
