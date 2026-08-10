@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-10T07:15:00.859286+00:00",
+    "lastUpdated": "2026-08-10T09:10:27.035783+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1795,7 +1795,88 @@
   "groupStage": {
     "format": "Swiss-system (16 teams) · Aug 13-16",
     "note": "Top 8 advance to the Main Event playoffs. Field finalized after qualifiers (June 28).",
-    "standings": [],
+    "standings": [
+      {
+        "team": "Aurora",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "BoomBoys",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "GamerLegion",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "HULIGANI",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Iron Wing",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "LGD Gaming",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Nigma Galaxy",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "OG",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Team Falcons",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Team Liquid",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Team Resilience",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Team Spirit",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "TEAM VISION",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Team Yandex",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Vici Gaming",
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "team": "Xtreme Gaming",
+        "wins": 0,
+        "losses": 0
+      }
+    ],
     "rounds": [
       {
         "name": "Round 1",
@@ -1804,13 +1885,13 @@
             "id": "gs-r1-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Falcons",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "LGD Gaming",
               "score": null
             }
           },
@@ -1818,13 +1899,13 @@
             "id": "gs-r1-m2",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Iron Wing",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Nigma Galaxy",
               "score": null
             }
           },
@@ -1832,13 +1913,13 @@
             "id": "gs-r1-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "BoomBoys",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "OG",
               "score": null
             }
           },
@@ -1846,13 +1927,13 @@
             "id": "gs-r1-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "TEAM VISION",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Team Resilience",
               "score": null
             }
           },
@@ -1860,13 +1941,13 @@
             "id": "gs-r1-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Spirit",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Xtreme Gaming",
               "score": null
             }
           },
@@ -1874,13 +1955,13 @@
             "id": "gs-r1-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Liquid",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Vici Gaming",
               "score": null
             }
           },
@@ -1888,13 +1969,13 @@
             "id": "gs-r1-m7",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Aurora",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "GamerLegion",
               "score": null
             }
           },
@@ -1902,13 +1983,13 @@
             "id": "gs-r1-m8",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Yandex",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "HULIGANI",
               "score": null
             }
           }
@@ -1921,7 +2002,7 @@
             "id": "gs-r2-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -1935,7 +2016,7 @@
             "id": "gs-r2-m2",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -1949,7 +2030,7 @@
             "id": "gs-r2-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -1963,7 +2044,7 @@
             "id": "gs-r2-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-13T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
