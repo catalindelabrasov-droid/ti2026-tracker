@@ -92,14 +92,25 @@ async function send(subs: Sub[], payload: Record<string, unknown>) {
   return { ok, pruned: dead.length };
 }
 
+// The schedule is rewritten once an hour by the updater, but this function
+// runs every two minutes. Re-downloading 70 KB thirty times an hour to read a
+// file that has not changed is 1.5 GB a month of nothing; hold it for five.
+let _sched: { at: number; data: any } | null = null;
+const SCHED_TTL = 5 * 60 * 1000;
+
 // --- what is about to start, from the published schedule ---------------------
 async function upcoming(minutes: number) {
   const out: { key: string; a: string; b: string; mins: number; bo: number }[] = [];
   let data: any;
-  try {
-    const r = await fetch(`${SITE}/data.json`, { headers: { "Cache-Control": "no-cache" } });
-    data = await r.json();
-  } catch (_e) { return out; }
+  if (_sched && Date.now() - _sched.at < SCHED_TTL) {
+    data = _sched.data;
+  } else {
+    try {
+      const r = await fetch(`${SITE}/data.json`, { headers: { "Cache-Control": "no-cache" } });
+      data = await r.json();
+      _sched = { at: Date.now(), data };
+    } catch (_e) { return out; }
+  }
 
   const rounds: any[] = [];
   if (data?.groupStage?.rounds) rounds.push(...data.groupStage.rounds);
@@ -187,35 +198,60 @@ Deno.serve(async (req) => {
     const soonMins = Number(await config("push_soon_minutes", 10)) || 10;
     const leagues: number[] = (await config("ti_league_ids", [])).map(Number).filter(Boolean);
 
-    const jobs: { key: string; title: string; body: string }[] = [];
+    // A TI round starts four matches at the same minute. Announcing each one
+    // separately means four buzzes at five in the morning, which is how people
+    // learn to turn notifications off for good. So: claim each match on its
+    // own — that is what keeps "announce once" honest — but send ONE
+    // notification per tick per kind, listing whatever was claimed.
+    const jobs: { key: string; kind: string; line: string; mins?: number }[] = [];
 
     for (const m of await upcoming(soonMins)) {
-      jobs.push({
-        key: m.key,
-        title: "TI starts soon",
-        body: m.mins <= 1 ? `${m.a} vs ${m.b} is about to start · Bo${m.bo}`
-                          : `${m.a} vs ${m.b} in ${m.mins} min · Bo${m.bo}`,
-      });
+      jobs.push({ key: m.key, kind: "soon", line: `${m.a} vs ${m.b}`, mins: m.mins });
     }
     for (const m of await liveNow(leagues)) {
-      jobs.push({ key: m.key, title: "Live now", body: `${m.a} vs ${m.b} has started` });
+      jobs.push({ key: m.key, kind: "live", line: `${m.a} vs ${m.b}` });
     }
 
     if (dryRun) return Response.json({ dryRun: true, subs: subs.length, leagues, jobs });
 
+    const fresh: typeof jobs = [];
+    for (const j of jobs) if (await claim(j.key, j.kind)) fresh.push(j);
+
+    // Three fixtures is as much as a notification can show before the phone
+    // truncates it; the rest become "+2 more".
+    const summarise = (lines: string[]) =>
+      lines.length <= 3 ? lines.join(" · ")
+                        : `${lines.slice(0, 3).join(" · ")} +${lines.length - 3} more`;
+
     let sent = 0;
-    const done: string[] = [];
-    for (const j of jobs) {
-      const [kind] = j.key.split(":");
-      if (!await claim(j.key, kind)) continue;
-      const res = await send(subs, { title: j.title, body: j.body, url: "/", tag: j.key });
-      await fetch(`${SB_URL}/rest/v1/push_log?match_key=eq.${encodeURIComponent(j.key)}&kind=eq.${kind}`,
-        { method: "PATCH", headers: { ...H, Prefer: "return=minimal" },
-          body: JSON.stringify({ sent_to: res.ok }) });
+    const announced: string[] = [];
+    for (const kind of ["soon", "live"]) {
+      const group = fresh.filter((j) => j.kind === kind);
+      if (!group.length) continue;
+
+      const mins = Math.min(...group.map((j) => j.mins ?? 0));
+      const title = kind === "live"
+        ? (group.length > 1 ? `${group.length} TI matches are live` : "Live now")
+        : (mins <= 1 ? "TI is starting" : `TI starts in ${mins} min`);
+
+      const res = await send(subs, {
+        title,
+        body: summarise(group.map((j) => j.line)),
+        url: "/",
+        // One tag per kind per burst, so a later round replaces the last
+        // rather than stacking up behind it.
+        tag: `ti-${kind}`,
+      });
+      for (const j of group) {
+        await fetch(
+          `${SB_URL}/rest/v1/push_log?match_key=eq.${encodeURIComponent(j.key)}&kind=eq.${j.kind}`,
+          { method: "PATCH", headers: { ...H, Prefer: "return=minimal" },
+            body: JSON.stringify({ sent_to: res.ok }) });
+        announced.push(j.key);
+      }
       sent += res.ok;
-      done.push(j.key);
     }
-    return Response.json({ subs: subs.length, announced: done, sent });
+    return Response.json({ subs: subs.length, announced, sent });
   } catch (e) {
     console.error(e);
     return Response.json({ error: String(e) }, { status: 500 });
