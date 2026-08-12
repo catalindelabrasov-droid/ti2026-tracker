@@ -886,6 +886,26 @@
   .install-txt span{color:var(--ink-dim)}
   .install-bar .lg-btn{padding:9px 16px;font-size:13px;white-space:nowrap;min-height:0}
   .install-x{background:none;border:0;color:var(--ink-faint);font-size:15px;cursor:pointer;padding:4px 2px;line-height:1}
+  /* Rules, explained. The chips say what a rule is worth; these say what it is. */
+  .rx-wrap{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .rx-group{margin-bottom:20px}
+  .rx-group:last-child{margin-bottom:0}
+  .rx-head{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;
+    font-size:12px;color:var(--aegis-bright);margin-bottom:4px}
+  .rx-note{font-size:12px;color:var(--ink-faint);margin-bottom:10px;line-height:1.5}
+  .rx-row{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line-soft)}
+  .rx-row:first-of-type{border-top:0}
+  .rx-pts{flex:0 0 62px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:15px;
+    color:var(--aegis-bright);line-height:1.2}
+  .rx-pts span{display:block;font-size:9px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase}
+  .rx-txt{flex:1;min-width:0}
+  .rx-txt b{display:block;font-size:13.5px;color:var(--ink);margin-bottom:2px}
+  .rx-txt span{font-size:12.5px;color:var(--ink-dim);line-height:1.5}
+  @media(max-width:600px){
+    .rx-pts{flex-basis:52px;font-size:14px}
+    .rx-txt b{font-size:13px}
+    .rx-txt span{font-size:12px}
+  }
   .foot-app{display:inline-block;margin-bottom:8px;color:var(--aegis-bright);text-decoration:none;
     border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:12px;transition:.15s}
   .foot-app:hover{border-color:var(--aegis)}
@@ -4096,6 +4116,38 @@ function lgComputeLeaderboard(lg){
 
 // Your own picks, checked against the real results. The leaderboard is just a
 // number until you can see which calls earned it.
+/* Champion and top-four picks live in lg.outcomes, keyed by kind, while match
+   predictions live in lg.predictions, keyed by match id. My Picks only ever
+   walked the second one — so locking a champion showed the padlock on the
+   Predictions tab and then vanished, which reads exactly like losing the pick.
+   These settle only when TI finishes, so until then they show as pending. */
+function lgOutcomePickRows(lg){
+  const o=lg.outcomes||{};
+  const dist=((DATA||{}).prizePool||{}).distribution||[];
+  const teamAt=(place)=>{ const e=dist.find(x=>x.place===place&&x.team); return e?e.team:null; };
+  const champ=teamAt("1st");
+  const top4=["1st","2nd","3rd","4th"].map(teamAt);
+  const top4Known=top4.every(Boolean);
+  const rows=[];
+
+  if(o.champion&&o.champion.locked&&o.champion.pick){
+    const done=!!champ, hit=done&&champ===o.champion.pick;
+    rows.push({
+      label:"🏆 Champion", pick:o.champion.pick, done, hit,
+      result: done?`${champ} lifted the Aegis`:"Settles when TI finishes",
+      earned: (done&&hit&&rOn(lg.rules,"champion"))?rPts(lg.rules,"champion"):0 });
+  }
+  if(o.topFour&&o.topFour.locked&&(o.topFour.teams||[]).filter(Boolean).length){
+    const picks=(o.topFour.teams||[]).filter(Boolean);
+    const hits=top4Known?picks.filter(t=>top4.includes(t)).length:0;
+    rows.push({
+      label:"🎖️ Top 4", pick:picks.join(", "), done:top4Known, hit:top4Known&&hits>0,
+      result: top4Known?`${hits} of 4 right — ${top4.join(", ")}`:"Settles when TI finishes",
+      earned: (top4Known&&rOn(lg.rules,"topFour"))?hits*rPts(lg.rules,"topFour"):0 });
+  }
+  return rows;
+}
+
 function lgMyPicks(lg){
   const preds=lg.predictions||{};
   const byId={}; allMatches(DATA).forEach(m=>byId[m.id]=m);
@@ -4122,7 +4174,9 @@ function lgMyPicks(lg){
     pts+=earned; settled++; if(hit) correct++;
     rows.push({m,p,done:true,winner,hit,earned});
   });
-  if(!rows.length) return `<div class="lg-empty"><div class="big">🗒️</div><h3>No locked picks yet</h3>
+  const outRows=lgOutcomePickRows(lg);
+  outRows.forEach(o=>{ if(o.done){ pts+=o.earned; settled++; if(o.hit) correct++; } else pending++; });
+  if(!rows.length&&!outRows.length) return `<div class="lg-empty"><div class="big">🗒️</div><h3>No locked picks yet</h3>
     <div class="hint">Lock a prediction and it'll show up here with the result and the points it earned.</div></div>`;
   rows.sort((x,y)=>(y.done?1:0)-(x.done?1:0));
   const hasBonus=["loneWolf","firstGame","reverseSweep"].some(k=>rOn(lg.rules,k));
@@ -4138,11 +4192,23 @@ function lgMyPicks(lg){
       <div class="mp-pts">${done?(earned>0?'+'+earned:earned):''}</div>
     </div>`;
   }).join("");
+  const outList=outRows.map(o=>`<div class="mp-row ${o.done?(o.hit?'hit':'miss'):'pending'}">
+      <div class="mp-mark">${o.done?(o.hit?'✓':'✗'):'⏳'}</div>
+      <div class="mp-body">
+        <div class="mp-pick">${esc(o.label)} <span class="mp-score">${esc(o.pick)}</span></div>
+        <div class="mp-result">${esc(o.result)}</div>
+      </div>
+      <div class="mp-pts">${o.done?(o.earned>0?'+'+o.earned:o.earned):''}</div>
+    </div>`).join("");
+
   return `<div class="lg-card" style="padding:16px 18px">
       <h3 style="margin:0 0 4px">My picks</h3>
-      <div class="hint" style="margin:0">${correct}/${settled} correct${settled?` · ${pts} pts from these rules`:""}${pending?` · ${pending} still to play`:""}</div>
+      <div class="hint" style="margin:0">${correct}/${settled} correct${settled?` · ${pts} pts from these rules`:""}${pending?` · ${pending} still to settle`:""}</div>
     </div>
-    <div class="mp-list">${list}</div>
+    ${outList?`<div class="td-section-label" style="margin-top:16px">Tournament outcomes</div>
+      <div class="mp-list">${outList}</div>`:""}
+    ${list?`<div class="td-section-label" style="margin-top:16px">Matches</div>
+      <div class="mp-list">${list}</div>`:""}
     ${hasBonus?`<div class="hint" style="margin-top:12px">Lone-wolf, game-1 and reverse-sweep bonuses are added on the standings — they depend on other players' picks and per-game results.</div>`:""}`;
 }
 
@@ -4194,6 +4260,58 @@ function lgRulesSummary(r){
   return parts.length?parts.join(""):`<span class="rs-item">No scoring rules are enabled.</span>`;
 }
 
+/* What each rule actually means. A row of chips reading "Upset +10" tells a
+   player the price of something without telling them what they are buying,
+   and the people who most need this are the ones who just joined. */
+const RULE_HELP={
+  winner:"You picked the team that won the series.",
+  exactScore:"On top of the winner, you called the scoreline exactly — you said 2–1 and it finished 2–1.",
+  cleanSweep:"You called a whitewash and got it: no games dropped, so 2–0 or 3–0.",
+  upsetBonus:"You backed the lower-ranked team and they won. The bigger the ranking gap, the braver the call.",
+  gameCountOU:"You got the number of games right even if you backed the wrong team — 2–1 and 1–2 are the same length.",
+  loneWolf:"Nobody else in the league called that result. Awarded on the leaderboard once everyone's picks are in.",
+  firstGame:"You called who takes the opening game of the series.",
+  reverseSweep:"You called a comeback from match point — losing 0–2 in a Bo5 and still winning.",
+  streakBonus:"For calling several series in a row correctly. Awarded on the leaderboard, which can see your whole run.",
+  perfectDay:"Every pick you locked on a single day came in.",
+  champion:"The team you picked to lift the Aegis wins The International.",
+  grandFinalists:"For each team you named that reaches the grand final.",
+  topFour:"For each team you put in your top four that actually finishes top four. Order doesn't matter.",
+  topEight:"For each team you put in your top eight that actually finishes top eight.",
+  champFromLB:"A bonus on top of the champion points if your pick wins it the hard way, from the lower bracket.",
+  negativePoints:"Taken off when a pick is wrong, so a guess costs you something."
+};
+// Split by when a rule can possibly pay out: a champion pick settles once,
+// at the very end, and it confuses people to see it mixed in with per-match
+// scoring they will collect tonight.
+const RULE_GROUP_MATCH=["winner","exactScore","cleanSweep","upsetBonus","gameCountOU",
+  "firstGame","reverseSweep","negativePoints"];
+const RULE_GROUP_RUN=["streakBonus","perfectDay","loneWolf"];
+const RULE_GROUP_EVENT=["champion","grandFinalists","topFour","topEight","champFromLB"];
+
+function lgRulesExplained(r){
+  const block=(title,keys,note)=>{
+    const on=keys.filter(k=>r[k]&&r[k].on);
+    if(!on.length) return "";
+    const rows=on.map(k=>{
+      const pts=r[k].pts||0;
+      const val=(k==="negativePoints")?`−${pts}`:`+${pts}`;
+      const per=(k==="topFour"||k==="topEight"||k==="grandFinalists")?" each":"";
+      return `<div class="rx-row">
+        <div class="rx-pts">${val}<span>${esc(per.trim()||"pts")}</span></div>
+        <div class="rx-txt"><b>${esc(RULE_SHORT[k]||k)}</b><span>${esc(RULE_HELP[k]||"")}</span></div>
+      </div>`;
+    }).join("");
+    return `<div class="rx-group"><div class="rx-head">${esc(title)}</div>
+      ${note?`<div class="rx-note">${esc(note)}</div>`:""}${rows}</div>`;
+  };
+  const html =
+      block("Every match", RULE_GROUP_MATCH, "Scored as soon as the series finishes.")
+    + block("Across the tournament", RULE_GROUP_RUN, "These need everyone's picks or your whole run, so they land on the leaderboard rather than on a single match.")
+    + block("How TI finishes", RULE_GROUP_EVENT, "Locked in early, settled when the Aegis is lifted.");
+  return html || `<div class="rx-note">No scoring rules are switched on in this league.</div>`;
+}
+
 function lgRulesView(lg){
   const editable=lg.me===lg.admin;
   const r=lg.rules;
@@ -4223,7 +4341,8 @@ function lgRulesView(lg){
         <h3 style="margin:0 0 4px">League rules</h3>
         <div class="hint" style="margin:0 0 14px">Set by the admin. This is how points are scored.</div>
         <div class="rule-summary">${lgRulesSummary(r)}</div>
-        <div class="hint" style="margin-top:14px">Predictions lock ${Math.round(r.lockLeadMs/60000)} minutes before each match${r.scoreMode==="weighted"?", and later rounds are worth more":""}.</div>
+        <div class="rx-wrap">${lgRulesExplained(r)}</div>
+        <div class="hint" style="margin-top:14px">Predictions lock ${Math.round(r.lockLeadMs/60000)} minutes before each match${r.scoreMode==="weighted"?", and later rounds are worth more":""}. Once locked a pick is final — that's what makes the leaderboard mean anything.</div>
       </div>`;
   }
 
