@@ -98,19 +98,22 @@ async function send(subs: Sub[], payload: Record<string, unknown>) {
 let _sched: { at: number; data: any } | null = null;
 const SCHED_TTL = 5 * 60 * 1000;
 
+// One cached copy, shared by everything that needs the schedule.
+async function schedule(): Promise<any | null> {
+  if (_sched && Date.now() - _sched.at < SCHED_TTL) return _sched.data;
+  try {
+    const r = await fetch(`${SITE}/data.json`, { headers: { "Cache-Control": "no-cache" } });
+    const data = await r.json();
+    _sched = { at: Date.now(), data };
+    return data;
+  } catch (_e) { return _sched?.data ?? null; }
+}
+
 // --- what is about to start, from the published schedule ---------------------
 async function upcoming(minutes: number) {
   const out: { key: string; a: string; b: string; mins: number; bo: number }[] = [];
-  let data: any;
-  if (_sched && Date.now() - _sched.at < SCHED_TTL) {
-    data = _sched.data;
-  } else {
-    try {
-      const r = await fetch(`${SITE}/data.json`, { headers: { "Cache-Control": "no-cache" } });
-      data = await r.json();
-      _sched = { at: Date.now(), data };
-    } catch (_e) { return out; }
-  }
+  const data = await schedule();
+  if (!data) return out;
 
   const rounds: any[] = [];
   if (data?.groupStage?.rounds) rounds.push(...data.groupStage.rounds);
@@ -140,6 +143,44 @@ async function upcoming(minutes: number) {
     // wobble does not.
     const bucket = Math.round(t / (15 * 60 * 1000));
     out.push({ key: `soon:${m.id}:${bucket}`, a, b, mins, bo: m.bestOf ?? 3 });
+  }
+  return out;
+}
+
+/* --- what just became predictable -------------------------------------------
+   A fixture is worth predicting the moment BOTH teams are known. During a Swiss
+   round the next pairings are drawn minutes after the previous games end, and
+   the lock deadline is half an hour before kick-off — so somebody who is not
+   staring at the page misses the window entirely. That is the notification this
+   sends: not "a match is starting", but "you can still pick this one".
+
+   Keyed on the id AND the pairing, so a fixture that was TBD announces once when
+   the draw lands, and a corrected pairing announces again rather than being
+   silently swallowed by the earlier claim. */
+async function newlyPredictable(lockLeadMin: number) {
+  const out: { key: string; a: string; b: string }[] = [];
+  const data = await schedule();
+  if (!data) return out;
+
+  const rounds: any[] = [];
+  if (data?.groupStage?.rounds) rounds.push(...data.groupStage.rounds);
+  if (data?.bracket?.rounds?.upper) rounds.push(...data.bracket.rounds.upper);
+  if (data?.bracket?.rounds?.lower) rounds.push(...data.bracket.rounds.lower);
+  const all = rounds.flatMap((r) => r?.matches ?? []);
+  if (data?.bracket?.grandFinal) all.push(data.bracket.grandFinal);
+
+  const now = Date.now();
+  for (const m of all) {
+    if (!m?.id || m.status === "completed") continue;
+    const a = String(m.teamA?.name ?? "").trim();
+    const b = String(m.teamB?.name ?? "").trim();
+    if (!a || !b || a === "TBD" || b === "TBD") continue;
+    // Already locked or under way: telling someone to pick it now is a lie.
+    if (m.scheduled) {
+      const t = Date.parse(m.scheduled);
+      if (Number.isFinite(t) && t - now <= lockLeadMin * 60000) continue;
+    } else if (m.status === "live") continue;
+    out.push({ key: `predict:${m.id}:${[a, b].sort().join("|")}`, a, b });
   }
   return out;
 }
@@ -224,6 +265,10 @@ Deno.serve(async (req) => {
     for (const m of await liveNow(leagues)) {
       jobs.push({ key: m.key, kind: "live", line: `${m.a} vs ${m.b}` });
     }
+    const lockLead = Number(await config("push_predict_lock_lead_min", 30)) || 30;
+    for (const m of await newlyPredictable(lockLead)) {
+      jobs.push({ key: m.key, kind: "predict", line: `${m.a} vs ${m.b}` });
+    }
 
     if (dryRun) return Response.json({ dryRun: true, subs: subs.length, leagues, jobs });
 
@@ -238,19 +283,25 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     const announced: string[] = [];
-    for (const kind of ["soon", "live"]) {
+    for (const kind of ["predict", "soon", "live"]) {
       const group = fresh.filter((j) => j.kind === kind);
       if (!group.length) continue;
 
       const mins = Math.min(...group.map((j) => j.mins ?? 0));
       const title = kind === "live"
         ? (group.length > 1 ? `${group.length} TI matches are live` : "Live now")
+        : kind === "predict"
+        ? (group.length > 1 ? `${group.length} new matches to predict` : "New match to predict")
         : (mins <= 1 ? "TI is starting" : `TI starts in ${mins} min`);
 
       const res = await send(subs, {
         title,
-        body: summarise(group.map((j) => j.line)),
-        url: "/",
+        body: kind === "predict"
+          ? `${summarise(group.map((j) => j.line))} — lock your picks before they start.`
+          : summarise(group.map((j) => j.line)),
+        // Straight to the predict tab: a notification that drops you on the
+        // home page and leaves you to find the picks yourself is a wasted buzz.
+        url: kind === "predict" ? "/#predict" : "/",
         // One tag per kind per burst, so a later round replaces the last
         // rather than stacking up behind it.
         tag: `ti-${kind}`,

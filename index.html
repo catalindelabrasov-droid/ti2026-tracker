@@ -535,6 +535,16 @@
     padding-left:8px;border-left:1px solid var(--line)}
   .lc-nowdraft{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--live);margin-left:auto}
+  /* Manual refresh on the predict tab: round pairings land minute to minute. */
+  .lg-refresh-row{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+  .lg-refresh-note{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--ink-faint);flex:1;min-width:0}
+  .lg-refresh{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.07em;
+    text-transform:uppercase;background:var(--panel-3);border:1px solid var(--line);
+    color:var(--ink);padding:7px 14px;border-radius:20px;cursor:pointer;flex:none}
+  .lg-refresh:hover:not(:disabled){border-color:var(--aegis);color:var(--aegis)}
+  .lg-refresh:disabled{opacity:.55;cursor:default}
+
   /* Entry point to the watch page. Shown only while a game is being played. */
   .watch-all{display:block;margin:0 0 12px;padding:10px 13px;border-radius:5px;
     background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--live);
@@ -4246,6 +4256,7 @@ function wireAuth(){
   captureJoinParam();
   handleConfirmationLanding()
     .then(handleJoinLanding)
+    .then(openPredictFromHash)
     .then(lgReplayPendingPick)
     .catch(e=>console.warn("landing handlers failed",e));
 }
@@ -4424,6 +4435,17 @@ async function openLeague(){
   if(SB_READY()){ try{ await lgFetchActive(); renderLeague(); }catch(e){} } // then sync from DB
 }
 function closeLeague(){ document.body.classList.remove("league-open"); }
+
+/* Arriving from the "new matches to predict" notification.
+   A push that drops somebody on the home page and leaves them to find the picks
+   themselves is a wasted buzz, so #predict opens the league straight on that
+   tab. The hash is cleared afterwards so a later refresh does not reopen it. */
+async function openPredictFromHash(){
+  if(location.hash!=="#predict") return;
+  history.replaceState(null,"",location.pathname+location.search);
+  _lgTab="predict";
+  await openLeague();
+}
 
 // A stand-in league so someone without an account (or without a league yet)
 // can still browse the real matches and rules instead of hitting a wall.
@@ -4659,9 +4681,36 @@ function lgUpcomingPredictable(){
   return out.filter(m=>(m.teamA&&m.teamA.name&&m.teamA.name!=="TBD")&&(m.teamB&&m.teamB.name&&m.teamB.name!=="TBD"));
 }
 
+/* Pull the schedule again on demand.
+   Pairings for the next round appear minute to minute during a live event, and
+   the page's own refresh cycle can be a minute or more away — long enough to
+   miss a lock deadline. This re-reads data.json and the live feed immediately
+   and redraws just this panel. */
+async function lgRefreshPredict(btn){
+  const before=lgUpcomingPredictable().length;
+  if(btn){ btn.disabled=true; btn.dataset.label=btn.textContent; btn.textContent="Checking…"; }
+  try{
+    const fresh=await loadData(true);
+    if(fresh) DATA=fresh;
+    try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent=btn.dataset.label||"Refresh"; }
+    toast("Couldn't refresh","Check your connection and try again.");
+    return;
+  }
+  const after=lgUpcomingPredictable().length;
+  renderLeague();                       // redraws the panel, button included
+  const gained=after-before;
+  if(gained>0) toast("New matches to predict",`${gained} more ${gained===1?"match is":"matches are"} open now.`);
+  else toast("Up to date",`${after} ${after===1?"match":"matches"} open to predict.`);
+}
+
 function lgPredictions(lg){
   const matches=lgUpcomingPredictable();
-  if(!matches.length) return `<div class="lg-empty"><div class="big">🔮</div><h3>No open matches to predict</h3><div class="hint">Predictions open when upcoming matches have two confirmed teams.</div></div>`;
+  const refreshBtn=`<div class="lg-refresh-row">
+    <span class="lg-refresh-note">Pairings appear as rounds are drawn</span>
+    <button class="lg-refresh" data-lg-refresh>Refresh</button></div>`;
+  if(!matches.length) return `${refreshBtn}<div class="lg-empty"><div class="big">🔮</div><h3>No open matches to predict</h3><div class="hint">Predictions open when upcoming matches have two confirmed teams.</div></div>`;
   const now=Date.now();
   const cards=matches.map(m=>{
     const myPred=(lg.predictions||{})[m.id];
@@ -4709,6 +4758,7 @@ function lgPredictions(lg){
   return `${intro}
     ${outcomes}
     <div class="td-section-label" style="margin-top:8px">Match predictions</div>
+    ${refreshBtn}
     ${cards}`;
 }
 
@@ -5084,6 +5134,8 @@ function lgRulesView(lg){
 
 function wireLeaguePanel(){
   const lg=lgLoad();
+  // Manual schedule refresh on the predict tab.
+  const rb=$("[data-lg-refresh]"); if(rb) rb.onclick=()=>lgRefreshPredict(rb);
   // sign-in prompts (when not signed in)
   const gsi=$("#lgGoSignin"); if(gsi) gsi.onclick=()=>{closeLeague();openModal("signinModal");};
   const gsu=$("#lgGoSignup"); if(gsu) gsu.onclick=()=>{closeLeague();openModal("signupModal");};
