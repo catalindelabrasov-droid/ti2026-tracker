@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T11:01:02.703427+00:00",
+    "lastUpdated": "2026-08-13T11:45:11.112176+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2001,15 +2001,15 @@
           {
             "id": "gs-r2-m1",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T18:00:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "Team Falcons",
-              "score": null
+              "score": 1
             }
           },
           {
@@ -2023,20 +2023,20 @@
             },
             "teamB": {
               "name": "Iron Wing",
-              "score": 0
+              "score": 1
             }
           },
           {
             "id": "gs-r2-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T16:00:00+08:00",
+            "scheduled": "2026-08-14T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Spirit",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Aurora Gaming",
               "score": null
             }
           },
@@ -2044,13 +2044,13 @@
             "id": "gs-r2-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T16:00:00+08:00",
+            "scheduled": "2026-08-14T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Yandex",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Team Liquid",
               "score": null
             }
           },
@@ -2086,13 +2086,13 @@
             "id": "gs-r2-m7",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Xtreme Gaming",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "GamerLegion",
               "score": null
             }
           },
@@ -2100,13 +2100,13 @@
             "id": "gs-r2-m8",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "HULIGANI",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Vici Gaming",
               "score": null
             }
           }
