@@ -314,6 +314,22 @@ Deno.serve(async (req) => {
     "Cache-Control": "public, max-age=10",
   };
   try {
+    // What does Valve actually send? Field NAMES only — useful for deciding what
+    // is buildable without guessing, and it exposes no key and no match data.
+    if (url.searchParams.get("fields") === "1") {
+      const games = await valveLive(Number(url.searchParams.get("league") || 19719));
+      const g = (games || [])[0];
+      const sb = g?.scoreboard ?? {};
+      const p = (sb.radiant?.players ?? [])[0] ?? {};
+      return new Response(JSON.stringify({
+        game: Object.keys(g ?? {}),
+        scoreboard: Object.keys(sb),
+        side: Object.keys(sb.radiant ?? {}),
+        player: Object.keys(p),
+        picksBans: Array.isArray(sb.radiant?.picks) ? Object.keys(sb.radiant.picks[0] ?? {}) : null,
+      }, null, 1), { headers: cors });
+    }
+
     if (url.searchParams.get("streams") === "1") {
       return new Response(JSON.stringify({ streams: await resolveStreams() }, null, 1), { headers: cors });
     }
