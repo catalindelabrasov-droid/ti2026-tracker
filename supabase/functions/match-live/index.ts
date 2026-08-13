@@ -176,6 +176,29 @@ async function finished(league: number) {
   return _fin;
 }
 
+/* Item id -> name and icon. Valve's live feed gives item0..item5 as bare ids,
+   which are meaningless on screen without this. 501 items, so cache it hard. */
+let _items: { at: number; data: Record<string, any> } | null = null;
+async function items(): Promise<Record<string, any>> {
+  if (_items && Date.now() - _items.at < HERO_TTL) return _items.data;
+  try {
+    const r = await fetch(`${OPENDOTA}/constants/items`, { headers: UA });
+    const raw = await r.json();
+    const map: Record<string, any> = {};
+    Object.values(raw || {}).forEach((it: any) => {
+      if (it && it.id != null) {
+        map[String(it.id)] = {
+          name: it.dname || null,
+          img: it.img ? `https://cdn.cloudflare.steamstatic.com${it.img}` : null,
+          cost: it.cost ?? null,
+        };
+      }
+    });
+    _items = { at: Date.now(), data: map };
+    return map;
+  } catch (_e) { return _items?.data ?? {}; }
+}
+
 async function heroes(): Promise<Record<string, any>> {
   if (_heroes && Date.now() - _heroes.at < HERO_TTL) return _heroes.data;
   try {
@@ -244,7 +267,8 @@ function isBeingPlayed(g: any, nowSec: number): boolean {
 
 /* Shape Valve's game into the same object the page already renders, so the
    front end needs no change and OpenDota can still stand in if Valve is down. */
-function shapeValve(g: any, heroMap: Record<string, any>, teamMap: Record<string, any>, streams: any[]) {
+function shapeValve(g: any, heroMap: Record<string, any>, teamMap: Record<string, any>,
+                    itemMap: Record<string, any>, streams: any[]) {
   const sb = g.scoreboard ?? {};
   const a = (g.radiant_team?.team_name || "Radiant").trim();
   const b = (g.dire_team?.team_name || "Dire").trim();
@@ -268,6 +292,20 @@ function shapeValve(g: any, heroMap: Record<string, any>, teamMap: Record<string
     netWorth: p.net_worth ?? null,
     gpm: p.gold_per_min ?? null,
     xpm: p.xp_per_min ?? null,
+    lastHits: p.last_hits ?? null,
+    denies: p.denies ?? null,
+    gold: p.gold ?? null,
+    // Item slot 0 means empty; keep the slot so the layout does not jump around
+    // as things are bought and sold.
+    items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].map((id: any) => {
+      if (!id) return null;
+      const it = itemMap[String(id)];
+      return it ? { id, name: it.name, img: it.img } : { id, name: null, img: null };
+    }),
+    // 0 not ready, 1 no mana, 2 ready — useful, and nothing else exposes it
+    ultState: p.ultimate_state ?? null,
+    ultCooldown: p.ultimate_cooldown ?? null,
+    respawn: p.respawn_timer ?? null,
   }));
   const nw = (s: any) => (s?.players ?? []).reduce((t: number, p: any) => t + (p.net_worth ?? 0), 0);
   const logo = (id: any, name: string) =>
@@ -330,6 +368,28 @@ Deno.serve(async (req) => {
       }, null, 1), { headers: cors });
     }
 
+    /* The prize pool, straight from Valve.
+       The updater scrapes this off a Liquipedia SUBPAGE with a regex, because
+       the main page carries a transclusion rather than a number — it broke once
+       already and showed the $1.6M base for hours. Valve returns the figure in
+       one field. Exposed here rather than called from the updater directly, so
+       the Steam key stays in one place instead of being copied into GitHub. */
+    if (url.searchParams.get("prize") === "1") {
+      const league = Number(url.searchParams.get("league") || 19719);
+      if (!STEAM_KEY) return new Response(JSON.stringify({ error: "no key" }), { status: 503, headers: cors });
+      const r = await fetch(
+        `https://api.steampowered.com/IEconDOTA2_570/GetTournamentPrizePool/v1/?key=${encodeURIComponent(STEAM_KEY)}&leagueid=${league}`,
+        { headers: UA });
+      const j = await r.json().catch(() => null);
+      const pool = j?.result?.prize_pool;
+      if (typeof pool !== "number") {
+        return new Response(JSON.stringify({ error: "unavailable" }), { status: 502, headers: cors });
+      }
+      return new Response(JSON.stringify({ leagueId: league, prizePool: pool }), {
+        headers: { ...cors, "Cache-Control": "public, max-age=300" },
+      });
+    }
+
     if (url.searchParams.get("streams") === "1") {
       return new Response(JSON.stringify({ streams: await resolveStreams() }, null, 1), { headers: cors });
     }
@@ -339,10 +399,11 @@ Deno.serve(async (req) => {
     // ?src=opendota forces the fallback path, so it can be exercised on demand
     // rather than only discovered broken the day Valve is down.
     const forceOD = url.searchParams.get("src") === "opendota";
-    const [streams, heroMap, teamMap, fin, valve, liveRaw] = await Promise.all([
+    const [streams, heroMap, teamMap, itemMap, fin, valve, liveRaw] = await Promise.all([
       resolveStreams(),
       heroes(),
       teamLogos(wanted),
+      items(),
       finished(wanted),
       forceOD ? Promise.resolve(null) : valveLive(wanted),
       fetch(`${OPENDOTA}/live`, { headers: UA }).then(r => r.json()).catch(() => []),
@@ -352,7 +413,7 @@ Deno.serve(async (req) => {
     // none of the finished-game guesswork below is needed when it answers.
     if (valve && valve.length >= 0 && !forceOD) {
       const matches = valve
-        .map((g: any) => shapeValve(g, heroMap, teamMap, streams))
+        .map((g: any) => shapeValve(g, heroMap, teamMap, itemMap, streams))
         .sort((x: any, y: any) => (x.gameMinute ?? 0) - (y.gameMinute ?? 0));
       const livePairs = new Set(matches.map((m: any) =>
         [tkey(m.radiant.name), tkey(m.dire.name)].sort().join("|")));

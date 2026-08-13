@@ -153,6 +153,29 @@ def parse_prize_pool(wt):
     return int(m.group(1).replace(",", ""))
 
 
+MATCH_LIVE_FN = "https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/match-live"
+
+
+def _valve_prize_pool():
+    """Valve's own figure, via our edge function. None if it cannot be had."""
+    league = (OPENDOTA_LEAGUE_IDS or ["19719"])[0]
+    try:
+        req = urllib.request.Request(
+            f"{MATCH_LIVE_FN}?prize=1&league={league}",
+            headers={"User-Agent": "dota2tileague-updater/1.0"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            pool = json.loads(r.read().decode("utf-8")).get("prizePool")
+    except Exception as e:
+        print(f"  · Valve prize pool unavailable ({e}); falling back to Liquipedia.")
+        return None
+    # Same sanity rails the Liquipedia read uses: a wrong number here is worse
+    # than a stale one.
+    if isinstance(pool, int) and 1_600_000 <= pool <= 50_000_000:
+        print(f"  · Prize pool from Valve: ${pool:,}")
+        return pool
+    return None
+
+
 def fetch_live_prize_pool():
     """
     The live prize pool, which is NOT on the main page.
@@ -164,7 +187,18 @@ def fetch_live_prize_pool():
     and Liquipedia keeps the running figure on that subpage as a bare integer.
 
     Returns None on any doubt, so a bad read never overwrites a good number.
+
+    Valve is asked FIRST. IEconDOTA2_570/GetTournamentPrizePool returns the
+    figure in one field, which beats a regex over a wiki subpage that already
+    broke once and left the $1.6M base on screen for hours. It is reached through
+    our own edge function so the Steam key stays in one place instead of being
+    copied into GitHub. Liquipedia remains the fallback: measured 13 Aug 2026 the
+    two were 892 apart, so it is a perfectly good second source.
     """
+    valve = _valve_prize_pool()
+    if valve:
+        return valve
+
     wt = get_wikitext("The International/2026/prizepool")
     if not wt:
         return None
