@@ -519,6 +519,23 @@
   .tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft)}
   .tbl tr:hover td{background:var(--panel)}
   .tbl .rank{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);width:42px}
+  /* A team's own matches, shown in its panel — the roster is often empty this
+     early and an empty panel is worse than no panel. */
+  .td-mlist{display:flex;flex-direction:column;gap:1px;margin-bottom:4px}
+  .td-mrow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;
+    padding:9px 11px;border-radius:5px;background:var(--panel);border-left:2px solid var(--line)}
+  .td-mrow.won{border-left-color:var(--win)}
+  .td-mrow.lost{border-left-color:var(--live)}
+  .td-mrow.live{border-left-color:var(--aegis);background:rgba(217,164,65,.06)}
+  .td-mrow.next{opacity:.72}
+  .td-mopp{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .td-mscore{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--ink)}
+  .td-mtag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint);min-width:56px;text-align:right}
+  .td-mrow.won .td-mtag{color:var(--win)}
+  .td-mrow.lost .td-mtag{color:var(--live)}
+  .td-mrow.live .td-mtag{color:var(--aegis-bright)}
+
   /* Eighth place: the cut. Drawn instead of labelling eight teams ADVANCES
      before the stage has decided anything. */
   .tbl tr.cutline td{border-bottom:2px solid var(--aegis)}
@@ -1612,12 +1629,22 @@ function liveCard(m){
   // labelled. They used to be printed as the big number, which turned a real
   // "Falcons 0–1 LGD" into a kill count and read like a finished Bo3.
   const score=(v)=>v??'–';
+  // "Falcons 1 – LGD 1" with "0' LIVE" underneath is genuinely ambiguous: is
+  // that the series or the game on screen? Naming the game removes the doubt —
+  // the big number is the series, and the footer says which game is being
+  // played right now. Games already finished = the two series scores added up.
+  const played=(typeof a.score==='number'&&typeof b.score==='number')?a.score+b.score:null;
+  const gameNo=(m.status==='live'&&played!=null)?played+1:null;
+  const bo=m.bestOf?`Bo${m.bestOf}`:'';
+  const gameBit=gameNo?`${bo?bo+' · ':''}game ${gameNo}`:bo;
   const kills=(m.killsA!=null&&m.killsB!=null)?` · ${m.killsA}–${m.killsB} kills`:'';
   return`<div class="lcard ${m.status==='live'?'is-live':''}" data-mid="${esc(m.id)}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status)}">
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
     <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${score(a.score)}</span></div>
     <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24,b.logo)}<span class="lc-score">${score(b.score)}</span></div>
-    <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${kills}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):' · Bo'+esc(m.bestOf||3)}</span>
+    <div class="lc-foot"><span class="lc-time">${m.status==='live'
+        ? `● ${gameBit?esc(gameBit)+' · ':''}${m.gameMinute!=null?m.gameMinute+"'":'live'}`
+        : esc(time)}${kills}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):(m.status==='live'?'':' · '+esc(bo||'Bo3'))}</span>
       <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
 }
@@ -3078,15 +3105,53 @@ function teamDetailHTML(d,name){
   const coachBlock=coach?`<div class="td-coach"><span class="td-pav">${esc((coach.match(/[a-zA-Z0-9]/)||['?'])[0].toUpperCase())}</span>
       <div><div class="lbl">Coach</div><div class="nm">${esc(coach)}</div></div></div>`
     :`<div class="td-empty">No coach listed.</div>`;
+  // Liquipedia often has no roster this early, which left the whole panel
+  // reading "Roster will fill in" and "No coach listed" — nothing at all for a
+  // team that has already played. We know their matches, so show those.
+  const mine=tiMergedMatches(d).filter(m=>{
+    const x=tnorm((m.teamA||{}).name), y=tnorm((m.teamB||{}).name), me=tnorm(name);
+    return x===me||y===me;
+  });
+  const fmt=(m)=>{
+    const home=tnorm((m.teamA||{}).name)===tnorm(name);
+    const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
+    const os=us&&us.score, ts=them&&them.score;
+    const done=typeof os==='number'&&typeof ts==='number'&&
+               Math.max(os,ts)>=Math.floor((m.bestOf||3)/2)+1;
+    const live=m.status==='live'&&!done;
+    const cls=done?(os>ts?'won':'lost'):(live?'live':'next');
+    const when=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):'';
+    const mid=done?`${os}–${ts}`:(live?`${os??0}–${ts??0}`:'vs');
+    const tag=done?(os>ts?'WON':'LOST'):(live?`LIVE${m.gameMinute!=null?" "+m.gameMinute+"'":''}`:esc(when||'Upcoming'));
+    return `<div class="td-mrow ${cls}">
+      <span class="td-mopp">${esc((them||{}).name||'TBD')}</span>
+      <span class="td-mscore">${mid}</span>
+      <span class="td-mtag">${tag}</span>
+    </div>`;
+  };
+  const played=mine.filter(m=>{
+    const a2=(m.teamA||{}).score,b2=(m.teamB||{}).score;
+    return typeof a2==='number'&&typeof b2==='number';
+  });
+  const upcoming=mine.filter(m=>!played.includes(m)&&(m.teamA||{}).name!=='TBD'&&(m.teamB||{}).name!=='TBD');
+  const matchBlock=(played.length||upcoming.length)
+    ? `<div class="td-section-label">Matches</div>
+       <div class="td-mlist">${played.map(fmt).join("")}${upcoming.slice(0,3).map(fmt).join("")}</div>`
+    : "";
+
+  // World ranking, when our own rating engine knows this team.
+  const rated=((LIVE_FEED&&LIVE_FEED.topTeams)||[]).find(t=>tnorm(t.name)===tnorm(name));
+  const rankBit=rated?`<span>World #${rated.rank}</span>`:'';
+
   return `<div class="td-head">
       ${teamLogo(name,54)}
       <div><div class="td-title">${esc(name)}</div>
-        <div class="td-meta">${tm.region?`<span>${esc(tm.region)}</span>`:''}${tm.qualification?`<span>${esc(tm.qualification)}</span>`:''}${rec?`<span>${esc(rec)}</span>`:''}</div></div>
+        <div class="td-meta">${tm.region?`<span>${esc(tm.region)}</span>`:''}${tm.qualification?`<span>${esc(tm.qualification)}</span>`:''}${rec?`<span>${esc(rec)}</span>`:''}${rankBit}</div></div>
     </div>
+    ${matchBlock}
     <div class="td-section-label">Roster</div>
     ${playerRows}
-    <div class="td-section-label">Staff</div>
-    ${coachBlock}`;
+    ${coach?`<div class="td-section-label">Staff</div>${coachBlock}`:''}`;
 }
 function openTeam(d,name){
   if(!name) return;
