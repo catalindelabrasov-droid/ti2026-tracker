@@ -519,6 +519,9 @@
   .tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft)}
   .tbl tr:hover td{background:var(--panel)}
   .tbl .rank{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);width:42px}
+  /* Eighth place: the cut. Drawn instead of labelling eight teams ADVANCES
+     before the stage has decided anything. */
+  .tbl tr.cutline td{border-bottom:2px solid var(--aegis)}
   .tbl tr.adv .rank{color:var(--aegis)}
   .tbl tr.adv td{background:rgba(217,164,65,.045)}
   .tbl tr.elim td{opacity:.62}
@@ -3135,8 +3138,12 @@ function computeGroupStandings(d){
   const g=d.groupStage||{};
   const rec={};
   const seed=(n)=>{ if(n&&n!=="TBD"&&!rec[n]) rec[n]={team:n,wins:0,losses:0,played:0}; };
+  // Seed ONLY from the standings and the fixtures, never from the participants
+  // list. That list carries org names — "Aurora Gaming", "Iron Wing TI 2026",
+  // "BetBoom Team" — while the games report "Aurora", "Iron Wing", "BoomBoys",
+  // so seeding from both produced nineteen rows for sixteen teams, with the
+  // same side appearing twice on different records.
   (g.standings||[]).forEach(r=>seed(r.team));
-  (d.teams||[]).forEach(t=>seed(t.name));
 
   let decided=0;
   // Count from the MERGED matches, not the raw schedule: a series can be over
@@ -3157,12 +3164,19 @@ function computeGroupStandings(d){
     if(rec[l]){ rec[l].losses++; rec[l].played++; }
   });
 
+  // How many group series exist at all, so the caller can tell "one result in"
+  // from "the stage is over".
+  const total=tiMergedMatches(d).filter(m=>{
+    const a=(m.teamA||{}).name,b=(m.teamB||{}).name;
+    return a&&b&&a!=="TBD"&&b!=="TBD"&&/^gs-/.test(m.id||"");
+  }).length;
+
   // Nothing settled yet: keep the source's own list so the table still shows
   // the field, but say plainly that nothing has been decided.
   const rows=Object.values(rec);
-  if(!decided) return {rows:(g.standings||[]).length?g.standings:rows, decided:0};
+  if(!decided) return {rows:(g.standings||[]).length?g.standings:rows, decided:0, total};
   rows.sort((x,y)=>(y.wins-x.wins)||(x.losses-y.losses)||x.team.localeCompare(y.team));
-  return {rows, decided};
+  return {rows, decided, total};
 }
 
 function renderGroups(d){
@@ -3173,18 +3187,24 @@ function renderGroups(d){
   // Only call somebody through once the table means something. Before that the
   // "top 8" is just the first eight rows of an alphabetical list, which told
   // everyone Aurora was advancing because it starts with an A.
-  const settled=computed.decided>0;
+  // A pill saying ADVANCES is a claim about the future, so only make it when
+  // it is actually true: when the source says so, or when every match is in.
+  // Mid-stage it was being handed to whoever sat in the top eight rows, which
+  // among a field of 0-0 teams means whoever comes first alphabetically.
+  // Until then the cut line alone shows where eighth place falls.
+  const allIn=computed.decided>0 && computed.decided>=(computed.total||0) && (computed.total||0)>0;
   const rows=s.map((r,i)=>{
-    const adv=r.status==="advanced"||(settled&&r.status==null&&i<8);
-    const elim=r.status==="eliminated";
-    return`<tr class="clickable ${adv?'adv':''} ${elim?'elim':''}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" data-status="${adv?'advanced':'eliminated'}">
+    const adv=r.status==="advanced"||(allIn&&r.status==null&&i<8);
+    const elim=r.status==="eliminated"||(allIn&&r.status==null&&i>=8);
+    const cut=(i===7&&s.length>8);
+    return`<tr class="clickable ${adv?'adv':''} ${elim?'elim':''} ${cut?'cutline':''}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" data-status="${adv?'advanced':elim?'eliminated':''}">
       <td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${teamLogo(r.team,22)}${esc(r.team)}</td>
       <td class="rec"><span class="w">${r.wins??0}</span> – <span class="l">${r.losses??0}</span></td>
       <td>${adv?'<span class="pill adv">Advances</span>':elim?'<span class="pill elim">Out</span>':''}</td></tr>`;
   }).join("");
   return`<section id="groups"><div class="sec-head"><span class="sec-num">04</span><h2>Group Stage</h2></div>
     <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")} Click a team for its roster.
-      ${computed.decided?`<b>${computed.decided} series decided so far.</b>`
+      ${computed.decided?`<b>${computed.decided} of ${computed.total||"?"} series decided.</b> The line marks eighth place — top eight go through.`
         :`<b>No series finished yet</b> — the table fills in as they do.`}</p>
     <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>W–L</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></section>`;
 }
