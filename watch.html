@@ -84,6 +84,12 @@
     padding:26px 16px;text-align:center;color:var(--ink-dim);font-size:14px;line-height:1.6}
   .empty b{display:block;color:var(--ink);font-family:'Oswald',sans-serif;font-size:17px;
     text-transform:uppercase;margin-bottom:6px}
+  .focusnote{background:var(--panel-2);border:1px solid var(--line);border-left:2px solid var(--aegis);
+    border-radius:5px;padding:9px 12px;margin-bottom:14px;font-size:12.5px;color:var(--ink-dim);line-height:1.6}
+  .focusnote b{color:var(--ink)}
+  .focusnote a{margin-left:6px}
+  .card.focus{border-color:var(--aegis)}
+
   /* reruns: deliberately quieter than the live cards */
   .rerun{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:8px;padding:12px;margin-top:4px}
   .rerun-h{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;
@@ -111,6 +117,7 @@
     Only games being played right now — draft, live kill score and the gold swing —
     plus the exact official channel carrying each match, in your language.
   </p>
+  <div id="focusnote"></div>
   <div id="app"><div class="empty"><b>Loading</b>Fetching live matches…</div></div>
   <!-- Kept apart from the live list on purpose: Valve reruns finished series on
        the spare channels between rounds, and from the outside a rerun looks
@@ -128,6 +135,20 @@ const FN = "https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/match-live";
 const PARENT = location.hostname || "dota2tileague.com";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 const gold = n => Math.abs(n) >= 1000 ? (Math.abs(n)/1000).toFixed(1) + "k" : String(Math.abs(n));
+
+/* Deep link from a card on the main site: ?a=Team+One&b=Team+Two
+   Teams rather than a match id, because the match id changes with every game of
+   a series while the pairing does not — a link made during game 1 still works in
+   game 3. Same spaces-stripped key the server matches on. */
+const tkey = s => String(s ?? "").toLowerCase()
+  .replace(/[.\-_'"]/g, " ")
+  .replace(/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g, " ")
+  .replace(/\s+/g, "");
+const pairKey = (a, b) => [tkey(a), tkey(b)].sort().join("|");
+const qs = new URLSearchParams(location.search);
+const FOCUS = (qs.get("a") && qs.get("b")) ? pairKey(qs.get("a"), qs.get("b")) : null;
+const FOCUS_LABEL = FOCUS ? `${qs.get("a")} vs ${qs.get("b")}` : "";
+let focusScrolled = false;
 
 // which stream the viewer chose to play inline, per match
 const chosen = {};
@@ -221,12 +242,21 @@ function card(m){
    here — and re-fetches every portrait. So only what changed is touched. */
 function paint(matches){
   const app = document.getElementById("app");
-  const live = new Set(matches.map(m => m.matchId));
+
+  // A deep-linked game goes to the top, so the thing the visitor clicked is the
+  // thing they see without scrolling.
+  let list = matches;
+  if (FOCUS){
+    list = matches.slice().sort((x, y) =>
+      (pairKey(y.radiant.name, y.dire.name) === FOCUS) - (pairKey(x.radiant.name, x.dire.name) === FOCUS));
+  }
+
+  const live = new Set(list.map(m => m.matchId));
   [...app.querySelectorAll(".card")].forEach(el => { if (!live.has(el.dataset.mid)) el.remove(); });
   const empty = app.querySelector(".empty");
-  if (empty && matches.length) empty.remove();
+  if (empty && list.length) empty.remove();
 
-  matches.forEach((m, i) => {
+  list.forEach((m, i) => {
     let el = app.querySelector(`.card[data-mid="${CSS.escape(m.matchId)}"]`);
     if (!el){
       app.insertAdjacentHTML("beforeend", card(m));
@@ -247,9 +277,33 @@ function paint(matches){
         el.querySelector(".streamslot").innerHTML = streamRow(m);
       }
     }
+    if (FOCUS) el.classList.toggle("focus", pairKey(m.radiant.name, m.dire.name) === FOCUS);
     const want = app.children[i];
     if (want !== el) app.insertBefore(el, want || null);
   });
+
+  // Scroll to the deep-linked game once, not on every 20s refresh.
+  if (FOCUS && !focusScrolled){
+    const el = app.querySelector(".card.focus");
+    if (el){ focusScrolled = true; el.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  }
+  paintFocusNote(list);
+}
+
+/* If someone followed a link to a game that has since ended, say so plainly
+   rather than dropping them into an unexplained list of other matches. */
+function paintFocusNote(list){
+  const box = document.getElementById("focusnote");
+  if (!FOCUS){ box.innerHTML = ""; return; }
+  const here = list.some(m => pairKey(m.radiant.name, m.dire.name) === FOCUS);
+  const msg = here
+    ? `Showing <b>${esc(FOCUS_LABEL)}</b>.`
+    : `<b>${esc(FOCUS_LABEL)}</b> isn't being played right now — it may have finished or not started yet.`;
+  const key = here ? "here" : "gone";
+  if (box.dataset.key === key) return;
+  box.dataset.key = key;
+  box.innerHTML = `<div class="focusnote">${msg}
+    <a href="watch.html">show all live games</a></div>`;
 }
 
 /* Channels on air with no live game behind them — Valve reruns finished series
