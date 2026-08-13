@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T14:50:56.475785+00:00",
+    "lastUpdated": "2026-08-13T15:00:56.134609+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1832,6 +1832,11 @@
         "losses": 1
       },
       {
+        "team": "LGD Gaming",
+        "wins": 1,
+        "losses": 1
+      },
+      {
         "team": "Nigma Galaxy",
         "wins": 1,
         "losses": 1
@@ -1852,16 +1857,6 @@
         "losses": 1
       },
       {
-        "team": "LGD Gaming",
-        "wins": 0,
-        "losses": 1
-      },
-      {
-        "team": "Team Resilience",
-        "wins": 0,
-        "losses": 1
-      },
-      {
         "team": "Vici Gaming",
         "wins": 0,
         "losses": 1
@@ -1873,6 +1868,11 @@
       },
       {
         "team": "OG",
+        "wins": 0,
+        "losses": 2
+      },
+      {
+        "team": "Team Resilience",
         "wins": 0,
         "losses": 2
       }
@@ -2119,13 +2119,13 @@
             "id": "gs-r3-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "BoomBoys",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "TEAM VISION",
               "score": null
             }
           },
@@ -2133,7 +2133,7 @@
             "id": "gs-r3-m2",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2147,13 +2147,13 @@
             "id": "gs-r3-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Iron Wing",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Team Falcons",
               "score": null
             }
           },
@@ -2161,13 +2161,13 @@
             "id": "gs-r3-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "LGD Gaming",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Nigma Galaxy",
               "score": null
             }
           },
@@ -2175,7 +2175,7 @@
             "id": "gs-r3-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2189,7 +2189,7 @@
             "id": "gs-r3-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2203,13 +2203,13 @@
             "id": "gs-r3-m7",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Resilience",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "OG",
               "score": null
             }
           },
@@ -2217,7 +2217,7 @@
             "id": "gs-r3-m8",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": null,
+            "scheduled": "2026-08-14T16:00:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
