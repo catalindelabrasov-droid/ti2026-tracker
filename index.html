@@ -3871,6 +3871,16 @@ function showCheckEmail(email){
       <p style="color:var(--ink-faint);font-size:12px;line-height:1.6;margin-top:12px">
         Didn't get it? Check your spam folder, or resend it below.
       </p>
+      <!-- Supabase deliberately sends NOTHING when the address already has an
+           account — that is how it stops strangers probing who is registered.
+           The screen still says "check your inbox", so without this line the
+           only possible reading is that our email is broken. -->
+      <p style="color:var(--ink-faint);font-size:12px;line-height:1.6;margin-top:10px;
+                border-top:1px solid var(--line);padding-top:10px">
+        Still nothing after a few minutes? If you've signed up with this address
+        before, no new email is sent — <button class="linklike" data-switch="signin">sign in instead</button>,
+        or reset your password.
+      </p>
     </div>`;
   if(foot) foot.innerHTML=`
     <button class="btn btn-ghost" id="resendBtn" style="display:flex;width:100%;justify-content:center;padding:11px">Resend email</button>
@@ -3983,7 +3993,17 @@ function wireAuth(){
         options:{ data:{ username:data.username, name:data.name, phone:data.phone },
                   emailRedirectTo: location.origin + "/?confirmed=1" }
       });
-      if(error){ setErr("su_email", error.message||"Sign-up failed."); btn.disabled=false; btn.textContent=orig; return; }
+      if(error){
+        // Put the message on the field it is actually about. Everything used to
+        // land under the email box, so a rejected PASSWORD read as an email
+        // problem and people went looking for a mail that was never sent.
+        const msg=error.message||"Sign-up failed.";
+        const field=/password/i.test(msg)?"su_pw"
+                   :/user\s*name|username/i.test(msg)?"su_user"
+                   :/phone/i.test(msg)?"su_phone":"su_email";
+        setErr(field,msg);
+        btn.disabled=false; btn.textContent=orig; return;
+      }
       // Save a profile row (username → user) so login-by-username works later.
       if(res && res.user){
         try{ await SB.from("profiles").insert({ id:res.user.id, username:data.username }); }catch(e){ /* may already exist */ }
