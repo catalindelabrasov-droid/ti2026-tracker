@@ -1458,10 +1458,15 @@ let LIVE_FEED={liveMatches:[],events:[]};
 // Live pro games from anywhere in Dota, shaped like our own match cards.
 // These belong on the Tournaments tab, not on the TI page.
 function liveProMatches(){
+  // The feed's per-team "score" is KILLS in the game being played, not the
+  // series score. Carry it as kills from the outset so nothing downstream can
+  // mistake it for a result — the misleading field name was the whole trap.
   return (LIVE_FEED.liveMatches||[]).map(m=>({
     id:"stz_"+m.id, stage:(m.event||"Pro Match"), side:"live",
     status:"live", scheduled:null, leagueId:m.leagueId,
-    teamA:m.teamA, teamB:m.teamB, watch:m.watch, stats:m.stats,
+    teamA:{...(m.teamA||{}), score:null}, teamB:{...(m.teamB||{}), score:null},
+    killsA:(m.teamA||{}).score, killsB:(m.teamB||{}).score,
+    watch:m.watch, stats:m.stats,
     gameMinute:m.gameMinute, spectators:m.spectators, fromStratz:true
   }));
 }
@@ -1511,12 +1516,17 @@ function liveMatchesOf(d){
     if(i>=0){
       // Upgrade the fixture in place so the card keeps its round label and Bo,
       // and the same match is never listed twice.
+      //
+      // Keep the fixture's OWN score: that is the real series score, and it is
+      // the number people came for. The feed only knows kills in the game
+      // currently being played, so those ride alongside rather than replacing
+      // it — overwriting turned a true "Falcons 0-1 LGD" into a kill count.
       const f=out[i];
       const flipped=tnorm(f.teamA&&f.teamA.name)===b;
       out[i]={...f, status:"live", gameMinute:lm.gameMinute, spectators:lm.spectators,
               watch:lm.watch||f.watch, stats:lm.stats||f.stats, fromStratz:true,
-              teamA:{...(f.teamA||{}), score:flipped?lm.teamB.score:lm.teamA.score},
-              teamB:{...(f.teamB||{}), score:flipped?lm.teamA.score:lm.teamB.score}};
+              killsA:flipped?lm.killsB:lm.killsA,
+              killsB:flipped?lm.killsA:lm.killsB};
     }else if(tiTeams.has(a)&&tiTeams.has(b)){
       // No fixture yet — a rescheduled or unlisted game between two TI teams.
       out.push({...lm, stage:lm.stage||"TI 2026"});
@@ -1551,15 +1561,12 @@ function liveCard(m){
   const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);
   const time=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):"";
   const on=notifIds.has(m.id);
-  // The live feed's numbers are KILLS IN THE CURRENT GAME, not the series
-  // score — the field is called radiant_score but it counts kills. Printed big
-  // beside the team names it reads as a series score, so "Falcons 2 – 0 LGD"
-  // six minutes into game two looks like Falcons have already won the Bo3.
-  // We genuinely do not know the series score, so we don't print one: the
-  // kills move to the footer where they are labelled for what they are.
-  const liveKills = m.status==='live' && m.fromStratz;
-  const score=(v)=>liveKills?'–':(v??'–');
-  const kills=(liveKills&&a.score!=null&&b.score!=null)?` · ${a.score}–${b.score} kills`:'';
+  // Big number = the SERIES score, which is what people came for and which the
+  // schedule knows. Kills in the game currently being played sit in the footer,
+  // labelled. They used to be printed as the big number, which turned a real
+  // "Falcons 0–1 LGD" into a kill count and read like a finished Bo3.
+  const score=(v)=>v??'–';
+  const kills=(m.killsA!=null&&m.killsB!=null)?` · ${m.killsA}–${m.killsB} kills`:'';
   return`<div class="lcard ${m.status==='live'?'is-live':''}" data-mid="${esc(m.id)}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status)}">
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
     <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${score(a.score)}</span></div>
