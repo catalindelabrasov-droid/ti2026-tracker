@@ -61,11 +61,14 @@ jobs:
             python update_data.py
           fi
 
-      # Only the full run publishes. A fast run has nothing to commit - it
-      # writes to Supabase, not to the repo - and committing every 15 minutes
-      # would mean 96 deploys a day for a file the page already corrects live.
+      # Both runs may publish, but only when data.json actually changed.
+      #
+      # The fast pass rewrites the file ONLY when a pairing or kick-off time
+      # moved - never for scores alone - so this step is a no-op on most fast
+      # runs and there is no flood of commits. That is deliberate: new pairings
+      # used to wait for the hourly run and reached the site after the match had
+      # already started, leaving no window to predict in.
       - name: Commit changes if data changed
-        if: ${{ inputs.mode != 'fast' }}
         run: |
           git config user.name  "ti-data-bot"
           git config user.email "actions@users.noreply.github.com"

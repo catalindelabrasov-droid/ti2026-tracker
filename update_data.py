@@ -1664,24 +1664,77 @@ def push_league_backend(data, with_ranking=True):
     return len(results)
 
 
+def _pairing_snapshot(data):
+    """Who is playing whom, and when — the part people need in order to predict."""
+    out = {}
+    gs = data.get("groupStage") or {}
+    rounds = list(gs.get("rounds") or [])
+    br = (data.get("bracket") or {}).get("rounds") or {}
+    rounds += list(br.get("upper") or []) + list(br.get("lower") or [])
+    for r in rounds:
+        for m in (r.get("matches") or []):
+            if not m.get("id"):
+                continue
+            out[m["id"]] = (
+                (m.get("teamA") or {}).get("name"),
+                (m.get("teamB") or {}).get("name"),
+                m.get("scheduled"),
+            )
+    return out
+
+
 def run_fast(data):
     """
-    Score-only pass for the 15-minute cycle.
+    The 15-minute pass.
 
-    OpenDota is the score authority, so this refreshes results and feeds the
-    league backend without touching Liquipedia or the rating engine. It does NOT
-    commit data.json: the page merges the live feed at render time, so the site
-    is already correct between full runs. What actually needs the shorter cycle
-    is `match_results` — league points only move once a decided series lands
-    there, and on opening day that lagged an hour behind the games.
+    Two jobs, and the second one is why it exists at all:
+
+      1. Scores into match_results, so league points move within a quarter hour
+         instead of lagging an hour behind the games.
+
+      2. NEW PAIRINGS. This is the one that matters to anybody trying to make a
+         prediction. Round pairings are drawn minutes after the previous games
+         end, and if they only reach data.json on the hourly run, the match has
+         often already started by the time the site knows who is playing —
+         measured 13 Aug 2026: round two's fixtures reached the site 28 to 78
+         minutes AFTER their scheduled start. There was no window to predict in.
+         Two Liquipedia page reads close that gap.
+
+    data.json is written ONLY when a pairing or a kick-off time actually
+    changed. A score-only pass leaves the file alone, which keeps the workflow's
+    `git diff` check honest and avoids ninety-six commits and deploys a day for
+    numbers the page already merges live.
     """
+    before = _pairing_snapshot(data)
+    known = lambda snap: sum(1 for v in snap.values()
+                             if v[0] and v[0] != "TBD" and v[1] and v[1] != "TBD")
+
+    # Pairings first: they are the reason for the shorter cycle.
+    try:
+        update_stages_from_liquipedia(data)
+        print(f"  · Stages refreshed: {known(_pairing_snapshot(data))} fixtures with two teams "
+              f"(was {known(before)}).")
+    except Exception as e:
+        print(f"  ! Fast stage refresh failed: {e}", file=sys.stderr)
+
     try:
         _, merged = run_opendota(data, main_only=True)
         print(f"  · Fast pass: {merged} score(s) merged.")
     except Exception as e:
         print(f"  ! Fast OpenDota merge failed: {e}", file=sys.stderr)
         return 1
-    data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    after = _pairing_snapshot(data)
+    new_pairs = [k for k, v in after.items()
+                 if before.get(k) != v and v[0] and v[0] != "TBD" and v[1] and v[1] != "TBD"]
+    if new_pairs:
+        print(f"  · Fixtures changed ({len(new_pairs)}): {', '.join(sorted(new_pairs)[:6])}"
+              f"{' …' if len(new_pairs) > 6 else ''} — publishing.")
+        data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        save(data)
+    else:
+        print("  · No fixture changes — not republishing data.json.")
+
     try:
         push_league_backend(data, with_ranking=False)
     except Exception as e:
@@ -1695,7 +1748,7 @@ def main():
     data = load_current()
 
     if FAST_MODE:
-        print("  · Fast mode: OpenDota scores + league backend only.")
+        print("  · Fast mode: pairings + scores + league backend (no ranking rebuild).")
         return run_fast(data)
 
     try:
