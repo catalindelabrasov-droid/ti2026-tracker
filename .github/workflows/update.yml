@@ -5,10 +5,14 @@ name: Update TI 2026 data
 
 on:
   schedule:
-    # Hourly while qualifiers/event are running. During the live event
-    # (mid-Aug) you can lower this, but stay polite to Liquipedia — don't go
-    # below ~30 min.
+    # Full run, hourly: Liquipedia structure + rosters + world ranking, and the
+    # only one that commits data.json. Stays polite to Liquipedia.
     - cron: "0 * * * *"
+    # Fast run, on the quarter hours: OpenDota scores straight into the league
+    # backend so points move within ~15 min of a series ending. Costs 2 API
+    # calls, touches no third party but OpenDota, and commits nothing — the page
+    # already merges live scores at render time, so there is nothing to publish.
+    - cron: "15,30,45 * * * *"
   workflow_dispatch: {}
 
 # Allow the workflow to push the updated data.json back to the repo.
@@ -39,9 +43,19 @@ jobs:
           # League backend: finished results feed the prediction leaderboard.
           SUPABASE_URL: https://hqpynfzatnmwvlxdfhsw.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
-        run: python update_data.py
+          FAST: ${{ github.event.schedule == '15,30,45 * * * *' && '1' || '' }}
+        run: |
+          if [ -n "$FAST" ]; then
+            python update_data.py --fast
+          else
+            python update_data.py
+          fi
 
+      # Only the full run publishes. A fast run has nothing to commit — it
+      # writes to Supabase, not to the repo — and committing every 15 minutes
+      # would mean 96 deploys a day for a file the page already corrects live.
       - name: Commit changes if data changed
+        if: ${{ github.event.schedule != '15,30,45 * * * *' }}
         run: |
           git config user.name  "ti-data-bot"
           git config user.email "actions@users.noreply.github.com"

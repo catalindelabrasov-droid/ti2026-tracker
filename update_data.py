@@ -53,6 +53,16 @@ OPENDOTA_LEAGUE_IDS = [s.strip() for s in
                        if s.strip()]
 OPENDOTA_KEY = os.environ.get("OPENDOTA_API_KEY", "").strip()          # optional, higher limits
 
+# --fast: a score-only pass, for running every 15 minutes during a live event.
+#
+# A full run costs ~19 OpenDota calls (6 leagues x 2, plus /leagues, plus 6
+# pages of /proMatches for the rating engine). Four of those an hour would be
+# ~1,800 calls a day against OpenDota's free ceiling of 2,000 — it would start
+# failing within days. The fast pass skips Liquipedia entirely (structure and
+# rosters change slowly, and their API asks callers to be gentle) and skips the
+# world-ranking rebuild, leaving 2 calls per run.
+FAST_MODE = "--fast" in sys.argv
+
 # OpenDota league id -> region name as it appears in data.json qualifiers[].
 # TI 2026 regional qualifiers (OpenDota /leagues, verified 2026-07-26).
 OPENDOTA_QUALIFIER_REGIONS = {
@@ -552,13 +562,17 @@ def merge_opendota_qualifiers(data, per_league, now_ts):
     return count
 
 
-def run_opendota(data):
+def run_opendota(data, main_only=False):
     """
     Fetch every configured OpenDota league and fold results into data:
     qualifier leagues -> synthesized qualifiers[].matches; main event ->
     score merge into existing bracket matches. Team logos OpenDota knows and
     Liquipedia hasn't provided yet are added to the top-level logos map.
     Returns (qual_matches, merged_scores).
+
+    main_only skips the regional qualifier leagues. They finished in June and
+    re-reading them every quarter hour buys nothing, so the fast pass drops
+    five leagues' worth of calls this way.
     """
     if not OPENDOTA_LEAGUE_IDS:
         print("  · OpenDota league id not set — skipping results merge.")
@@ -566,7 +580,9 @@ def run_opendota(data):
     _GAMES_BY_MATCH.clear()
     now_ts = int(time.time())
     per_league = {}
-    for lid in OPENDOTA_LEAGUE_IDS:
+    league_ids = [l for l in OPENDOTA_LEAGUE_IDS
+                  if not (main_only and l in OPENDOTA_QUALIFIER_REGIONS)]
+    for lid in league_ids:
         games = fetch_opendota_league_games(lid)
         teams = fetch_opendota_league_teams(lid) if games else {}
         per_league[lid] = {"games": games, "teams": teams}
@@ -1609,12 +1625,15 @@ def _supabase_upsert(table, conflict, rows):
     return total
 
 
-def push_league_backend(data):
+def push_league_backend(data, with_ranking=True):
     """
     Feed the prediction league: the schedule/participants (`matches`), the
     per-game rows (`match_games`) the first-game and reverse-sweep rules need,
     and the decided results (`match_results`) the leaderboard scores against.
     Skips cleanly when the service-role key isn't set (e.g. local runs).
+
+    with_ranking=False leaves the world ranking alone — it costs seven OpenDota
+    calls and a full Glicko recompute, neither of which needs a 15-minute cycle.
     """
     if not SUPABASE_SERVICE_ROLE_KEY:
         print("  · Supabase service key not set — skipping league backend push.")
@@ -1637,16 +1656,47 @@ def push_league_backend(data):
 
     # The Dota hub's world ranking — computed from match history we already
     # pull, so it needs no third party and refreshes itself every run.
-    try:
-        refresh_world_ranking()
-    except Exception as e:
-        print(f"  ! World ranking failed: {e}", file=sys.stderr)
+    if with_ranking:
+        try:
+            refresh_world_ranking()
+        except Exception as e:
+            print(f"  ! World ranking failed: {e}", file=sys.stderr)
     return len(results)
+
+
+def run_fast(data):
+    """
+    Score-only pass for the 15-minute cycle.
+
+    OpenDota is the score authority, so this refreshes results and feeds the
+    league backend without touching Liquipedia or the rating engine. It does NOT
+    commit data.json: the page merges the live feed at render time, so the site
+    is already correct between full runs. What actually needs the shorter cycle
+    is `match_results` — league points only move once a decided series lands
+    there, and on opening day that lagged an hour behind the games.
+    """
+    try:
+        _, merged = run_opendota(data, main_only=True)
+        print(f"  · Fast pass: {merged} score(s) merged.")
+    except Exception as e:
+        print(f"  ! Fast OpenDota merge failed: {e}", file=sys.stderr)
+        return 1
+    data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    try:
+        push_league_backend(data, with_ranking=False)
+    except Exception as e:
+        print(f"  ! League backend push failed: {e}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def main():
     print(f"[{datetime.datetime.now(datetime.timezone.utc).isoformat()}] Updating TI 2026 data…")
     data = load_current()
+
+    if FAST_MODE:
+        print("  · Fast mode: OpenDota scores + league backend only.")
+        return run_fast(data)
 
     try:
         wt = get_wikitext(PAGE)
