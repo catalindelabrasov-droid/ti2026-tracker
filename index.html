@@ -4451,14 +4451,20 @@ async function openPredictFromHash(){
   if(location.hash!=="#predict") return;
   history.replaceState(null,"",location.pathname+location.search);
   _lgTab="predict";
-  // This runs during start-up, before the first data render has put #lgPanel on
-  // the page — and renderLeague() quietly returns when the panel is missing, so
-  // the league opened onto a blank panel. Wait for it rather than racing it.
-  for(let i=0;i<40 && !document.querySelector("#lgPanel");i++){
+  // This runs during start-up, and needs BOTH the panel element and the
+  // schedule: renderLeague() quietly returns when #lgPanel is missing, and
+  // lgPredictions reads DATA, which throws before the first load lands. Either
+  // way the league opened onto a blank panel. Wait for both rather than racing.
+  const ready=()=>document.querySelector("#lgPanel") && typeof DATA!=="undefined" && DATA;
+  for(let i=0;i<60 && !ready();i++){
     await new Promise(r=>setTimeout(r,150));
   }
   await openLeague();
 }
+/* The app may already be open when the notification is tapped: the service
+   worker calls navigate() on the existing window, and a change that only
+   touches the hash does not reload the page, so the handler above never runs. */
+window.addEventListener("hashchange",()=>{ openPredictFromHash(); });
 
 // A stand-in league so someone without an account (or without a league yet)
 // can still browse the real matches and rules instead of hitting a wall.
