@@ -1088,7 +1088,41 @@
       </div>
       <div class="modal-foot">
         <button class="btn btn-primary" id="signinSubmit">Sign in</button>
+        <!-- There was no way to recover an account at all. The only email button
+             on the site resent the SIGN-UP confirmation, which sends nothing
+             once an address is already confirmed, so anyone who forgot their
+             password clicked it, got no mail, and concluded email was broken. -->
+        <div class="modal-alt"><button id="forgotBtn">Forgot your password?</button></div>
         <div class="modal-alt">No account yet? <button data-switch="signup">Create one</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Set a new password, after following the reset link from the email -->
+  <div class="modal" id="resetModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><h3>Set a new password</h3><p>Choose a new password for your account.</p></div>
+        <button class="x" data-close="resetModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-ok" id="resetOk"></div>
+        <div class="field">
+          <label for="rs_pw">New password</label>
+          <div class="pw-wrap">
+            <input id="rs_pw" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+            <button type="button" class="pw-toggle" data-pw="rs_pw">SHOW</button>
+          </div>
+          <div class="err" id="rs_pw_err"></div>
+        </div>
+        <div class="field">
+          <label for="rs_pw2">Repeat new password</label>
+          <input id="rs_pw2" type="password" autocomplete="new-password" placeholder="Type it again">
+          <div class="err" id="rs_pw2_err"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" id="resetSubmit">Save new password</button>
       </div>
     </div>
   </div>
@@ -3945,6 +3979,27 @@ async function handleJoinLanding(){
 async function handleConfirmationLanding(){
   const params=new URLSearchParams(location.search);
   const isConfirmed=params.get("confirmed")==="1";
+  // Arriving from a password-reset link. Supabase has already turned the token
+  // in the URL into a session, so the check below would just sign them in and
+  // they would never get to choose a new password — handle it first. The hash
+  // is checked too because the implicit flow puts type=recovery there.
+  const isReset=params.get("reset")==="1"||/type=recovery/.test(location.hash||"");
+  if(isReset&&SB_READY()){
+    try{
+      const {data:{user}}=await SB.auth.getUser();
+      if(user){
+        history.replaceState(null,"",location.pathname);
+        openModal("resetModal");
+        return;
+      }
+    }catch(e){}
+    // No session: the link was already used, or it expired (1 hour).
+    openModal("signinModal");
+    const ok=$("#signinOk");
+    if(ok){ ok.classList.add("show"); ok.textContent="That reset link has expired or was already used. Request a new one below."; }
+    history.replaceState(null,"",location.pathname);
+    return;
+  }
   // Always try to restore an existing Supabase session (keeps refreshes logged in).
   if(SB_READY()){
     try{
@@ -4040,6 +4095,55 @@ function wireAuth(){
       },700);
     }catch(e){ setErr("si_pw","Something went wrong. Try again."); btn.disabled=false; btn.textContent=orig; }
   });
+  // ---- forgot password ----------------------------------------------------
+  // Ask Supabase to mail a recovery link. Deliberately reports the same thing
+  // whether or not the address exists: saying "no such account" would turn this
+  // box into a way to test which of your friends have signed up.
+  const fb=$("#forgotBtn"); if(fb) fb.addEventListener("click",async()=>{
+    clearErr("si_id");
+    let email=($("#si_id").value||"").trim();
+    if(!email){ setErr("si_id","Type your email address first, then tap this."); return; }
+    if(!email.includes("@")){
+      // They typed a username. Resolve it, since the reset needs an address.
+      if(!SB_READY()){ setErr("si_id","Backend not reachable. Try again in a moment."); return; }
+      try{
+        const {data:em}=await SB.rpc("email_for_username",{ p_username:email });
+        if(em) email=em;
+      }catch(e){}
+      if(!email.includes("@")){ setErr("si_id","Enter the email address on your account."); return; }
+    }
+    if(!SB_READY()){ setErr("si_id","Backend not reachable. Try again in a moment."); return; }
+    fb.disabled=true; const before=fb.textContent; fb.textContent="Sending…";
+    try{
+      await SB.auth.resetPasswordForEmail(email,{ redirectTo: location.origin + "/?reset=1" });
+      const ok=$("#signinOk");
+      if(ok){ ok.classList.add("show"); ok.textContent="If that address has an account, a reset link is on its way. Check spam too."; }
+      fb.textContent="Reset link sent";
+    }catch(e){
+      fb.disabled=false; fb.textContent=before;
+      setErr("si_id","Couldn't send the reset email. Try again in a moment.");
+    }
+  });
+
+  // ---- set the new password, after following the link ---------------------
+  const rs=$("#resetSubmit"); if(rs) rs.addEventListener("click",async()=>{
+    ["rs_pw","rs_pw2"].forEach(clearErr);
+    const pw=$("#rs_pw").value, pw2=$("#rs_pw2").value;
+    let bad=false;
+    if(pw.length<8){ setErr("rs_pw","Use at least 8 characters."); bad=true; }
+    if(pw2!==pw){ setErr("rs_pw2","Passwords don't match."); bad=true; }
+    if(bad) return;
+    if(!SB_READY()){ setErr("rs_pw","Backend not reachable. Try again in a moment."); return; }
+    rs.disabled=true; const orig=rs.textContent; rs.textContent="Saving…";
+    try{
+      const {error}=await SB.auth.updateUser({ password:pw });
+      if(error){ setErr("rs_pw",error.message||"Couldn't save the password."); rs.disabled=false; rs.textContent=orig; return; }
+      const ok=$("#resetOk"); if(ok){ ok.classList.add("show"); ok.textContent="Password changed. You're signed in."; }
+      history.replaceState(null,"",location.pathname);
+      setTimeout(()=>{ closeModals(); renderAuthArea(); wireMyLeaguesMenu(); },900);
+    }catch(e){ setErr("rs_pw","Something went wrong. Try again."); rs.disabled=false; rs.textContent=orig; }
+  });
+
   // Capture the invite code BEFORE the confirmation handler rewrites the URL,
   // then redeem it only once a session exists (hence the chain, not two calls).
   captureJoinParam();
