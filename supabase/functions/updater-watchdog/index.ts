@@ -21,10 +21,14 @@ const SB_KEY = Deno.env.get("SUPA_SERVICE_KEY") ?? Deno.env.get("SUPABASE_SERVIC
 const GH_TOKEN = Deno.env.get("GH_TOKEN") ?? "";
 const TICK_SECRET = Deno.env.get("PUSH_TICK_SECRET") ?? "";
 
-// How stale the data may get before we intervene. The Action runs hourly, and
-// GitHub routinely starts it up to 40 minutes late without anything being
-// wrong, so anything under an hour would fight a healthy scheduler.
-const STALE_MIN = 75;
+// How stale the data may get before we intervene.
+//
+// This was 75 because GitHub's own scheduler routinely started the hourly run
+// up to 40 minutes late, and anything tighter would have fought a healthy (if
+// tardy) scheduler. pg_cron now dispatches the hourly run itself, on the minute,
+// so lateness no longer exists: if the data is older than this, something is
+// genuinely wrong and waiting another half hour helps nobody.
+const STALE_MIN = 45;
 // Never poke more often than this, whatever happens. A run takes ~70s; if the
 // updater is genuinely broken we want one attempt an hour in the log, not one
 // every five minutes.
@@ -59,6 +63,36 @@ Deno.serve(async (req) => {
   const force = url.searchParams.get("force") === "1";
   const dry = url.searchParams.get("dry") === "1";
   const fast = url.searchParams.get("fast") === "1";
+  const full = url.searchParams.get("full") === "1";
+
+  // The hourly full run, on the same reliable timer as the scoring pass.
+  // pg_cron owns the clock now; the workflow no longer carries a schedule of
+  // its own, so there is nothing to double-fire against.
+  if (full) {
+    if (!GH_TOKEN) return Response.json({ ok: false, error: "GH_TOKEN not set" }, { status: 500 });
+    if (dry) return Response.json({ ok: true, action: "would-dispatch-full" });
+    const gh = await fetch(
+      `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GH_TOKEN}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "ti-updater-watchdog",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ref: "main", inputs: { mode: "full" } }),
+      },
+    );
+    if (gh.status === 204) {
+      await cfgSet("updater_last_dispatch", new Date().toISOString());
+      return Response.json({ ok: true, action: "dispatched-full" });
+    }
+    return Response.json(
+      { ok: false, action: "full-dispatch-failed", status: gh.status, body: (await gh.text()).slice(0, 200) },
+      { status: 502 },
+    );
+  }
 
   // The quarter-hour scoring pass.
   //

@@ -122,6 +122,20 @@ if(Test-Path $SB){
     }
     $cfg=Q "select value #>> '{}' as v from app_config where key='ti_league_ids';"
     Chk "TI league id configured" ($cfg.v -and $cfg.v -ne '[]') $cfg.v
+
+    # Both update paths now hang off ONE edge function driven by pg_cron, which
+    # makes it a single point of failure — so prove it answers its callers
+    # instead of assuming. A deploy that omits --no-verify-jwt silently flips
+    # verify_jwt back on and every cron call gets 401, with nothing in any log.
+    $sec=(Q "select value #>> '{}' as v from app_config where key='push_tick_secret';").v
+    foreach($p in @(@{n="hourly full run";q="full"}, @{n="15-min scoring pass";q="fast"})){
+      try{
+        $r=Invoke-RestMethod -Uri "$FN/updater-watchdog?$($p.q)=1&dry=1" -Headers @{ "x-tick-secret"=$sec } -TimeoutSec 60
+        Chk "dispatcher answers: $($p.n)" ($r.ok -eq $true) "$($r.action)"
+      }catch{ No "dispatcher answers: $($p.n)" ("HTTP " + [int]$_.Exception.Response.StatusCode) }
+    }
+    $names=@((Q "select jobname from cron.job where active and jobname in ('full-tick','score-tick');") | ForEach-Object { $_.jobname })
+    Chk "update cron jobs scheduled" (($names -contains 'full-tick') -and ($names -contains 'score-tick')) ($names -join ', ')
     $lg=Q "select count(*) as n from leagues;"
     $lb=Q "select count(*) as n from league_leaderboard((select id from leagues order by created_at desc limit 1));"
     Chk "leaderboard computes" ([int]$lb.n -ge 0) "$($lb.n) rows, $($lg.n) leagues"

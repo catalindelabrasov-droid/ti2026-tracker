@@ -4,18 +4,19 @@ name: Update TI 2026 data
 # Also runnable on demand from the Actions tab (workflow_dispatch).
 
 on:
-  schedule:
-    # Full run, hourly: Liquipedia structure + rosters + world ranking, and the
-    # only trigger that commits data.json. Stays polite to Liquipedia.
-    #
-    # There is deliberately NO quarter-hour schedule here. GitHub's `schedule`
-    # trigger is best-effort and gets deprioritised on public repos: it dropped
-    # two consecutive hours on TI opening night, and both the 07:00 and 07:15
-    # slots on day two. The 15-minute scoring pass is driven from Supabase
-    # pg_cron instead, which calls updater-watchdog?fast=1 and dispatches this
-    # workflow with mode=fast. workflow_dispatch fires immediately, so the
-    # reliable timer keeps the clock and GitHub only runs the job.
-    - cron: "0 * * * *"
+  # There is deliberately NO `schedule:` here any more.
+  #
+  # GitHub's schedule trigger is best-effort and gets deprioritised on public
+  # repos: it dropped two consecutive hours on TI opening night, and both the
+  # 07:00 and 07:15 slots on day two. Supabase pg_cron drives both runs instead
+  # and dispatches this workflow, which fires immediately - measured 1 second
+  # from tick to job start:
+  #
+  #   pg_cron full-tick   0 * * * *         -> updater-watchdog?full=1 -> mode=full
+  #   pg_cron score-tick  15,30,45 * * * *  -> updater-watchdog?fast=1 -> mode=fast
+  #
+  # updater-watchdog also still checks data.json staleness every 10 minutes and
+  # re-dispatches a full run if it drifts past 45 minutes.
   workflow_dispatch:
     inputs:
       mode:
