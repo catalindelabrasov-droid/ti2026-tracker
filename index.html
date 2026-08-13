@@ -1487,9 +1487,41 @@ function placeIs(label,n){
   return +s===n;
 }
 
+/* One merged view of every TI match, used by anything that needs a score.
+   The published schedule lags: Liquipedia records a finished game minutes
+   later, so it said Nigma 0-1 Iron Wing while the series was already over at
+   0-2. The live feed carries the real series standing. Merging in one place
+   means the cards, the ticker and the group table cannot disagree — which they
+   did, in three different ways, on opening night. */
+function tiMergedMatches(d){
+  const out=allMatches(d).map(m=>({...m,
+    teamA:{...(m.teamA||{})}, teamB:{...(m.teamB||{})}}));
+  liveProMatches().forEach(lm=>{
+    const a=tnorm(lm.teamA&&lm.teamA.name), b=tnorm(lm.teamB&&lm.teamB.name);
+    if(!a||!b) return;
+    const i=out.findIndex(m=>{
+      const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
+      if(!x||!y||x==="tbd"||y==="tbd") return false;
+      return (x===a&&y===b)||(x===b&&y===a);
+    });
+    if(i<0) return;
+    const f=out[i];
+    const flipped=tnorm(f.teamA&&f.teamA.name)===b;
+    const A=flipped?lm.teamB:lm.teamA, B=flipped?lm.teamA:lm.teamB;
+    if(A&&A.score!=null) f.teamA.score=A.score;
+    if(B&&B.score!=null) f.teamB.score=B.score;
+    f.status="live";
+    f.gameMinute=lm.gameMinute; f.spectators=lm.spectators;
+    f.watch=lm.watch||f.watch; f.stats=lm.stats||f.stats; f.fromStratz=true;
+    f.killsA=flipped?lm.killsB:lm.killsA;
+    f.killsB=flipped?lm.killsA:lm.killsB;
+  });
+  return out;
+}
+
 // TI 2026's own live and upcoming matches only.
 function liveMatchesOf(d){
-  const matches=allMatches(d);
+  const matches=tiMergedMatches(d);
   // regional qualifier matches from curated data
   (d.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>matches.push({...m,stage:(m.stage?m.stage+" · ":"")+q.region+" Qualifier",side:"qual"})));
   const out=matches.filter(m=>m.status==="live"||m.status==="upcoming"||m.status==="scheduled"||m.status==="ongoing");
@@ -3107,7 +3139,11 @@ function computeGroupStandings(d){
   (d.teams||[]).forEach(t=>seed(t.name));
 
   let decided=0;
-  (g.rounds||[]).forEach(rd=>(rd.matches||[]).forEach(m=>{
+  // Count from the MERGED matches, not the raw schedule: a series can be over
+  // (2-0 in a Bo3) while Liquipedia still shows 0-1 and calls it live. Reading
+  // the schedule directly left the table empty with "no series finished yet"
+  // printed underneath a series that had finished.
+  tiMergedMatches(d).forEach(m=>{
     const a=(m.teamA||{}),b=(m.teamB||{});
     seed(a.name); seed(b.name);
     if(a.name==="TBD"||b.name==="TBD") return;
@@ -3119,7 +3155,7 @@ function computeGroupStandings(d){
     const w=sa>sb?a.name:b.name, l=sa>sb?b.name:a.name;
     if(rec[w]){ rec[w].wins++; rec[w].played++; }
     if(rec[l]){ rec[l].losses++; rec[l].played++; }
-  }));
+  });
 
   // Nothing settled yet: keep the source's own list so the table still shows
   // the field, but say plainly that nothing has been decided.
