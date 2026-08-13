@@ -1511,6 +1511,46 @@ function liveProMatches(){
   }));
 }
 const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
+/* The schedule and the game client spell the same team differently — the
+   fixture says "Aurora", the Dota client says "Aurora Gaming", and Liquipedia's
+   participant list says "Iron Wing TI 2026". An exact compare quietly failed to
+   merge, so the match rendered twice: once on its fixture with no score, and
+   once as an orphan card full of dashes. Strip the org decoration and compare
+   what is left. */
+const ORGWORDS=/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g;
+const tkey=(s)=>tnorm(s).replace(/[.\-_'"]/g," ").replace(ORGWORDS," ").replace(/\s+/g," ").trim();
+/* Locate the fixture two teams are playing. Exact names first; the stripped key
+   is only a fallback, and only when it is unambiguous — collapsing "Aurora
+   Gaming" onto "Aurora" is the point, collapsing two different teams onto each
+   other would put a real score on the wrong match. Returns the index and
+   whether the fixture lists the pair in the opposite order. */
+function findFixture(list,a,b){
+  const usable=m=>{
+    const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
+    return !!x&&!!y&&x!=="tbd"&&y!=="tbd";
+  };
+  const na=tnorm(a), nb=tnorm(b);
+  if(!na||!nb) return null;
+  let i=list.findIndex(m=>usable(m)&&
+    ((tnorm(m.teamA.name)===na&&tnorm(m.teamB.name)===nb)||
+     (tnorm(m.teamA.name)===nb&&tnorm(m.teamB.name)===na)));
+  if(i>=0) return {i,flipped:tnorm(list[i].teamA.name)!==na};
+  const ka=tkey(a), kb=tkey(b);
+  if(!ka||!kb||ka===kb) return null;
+  const hits=[];
+  list.forEach((m,j)=>{
+    if(!usable(m)) return;
+    const x=tkey(m.teamA.name), y=tkey(m.teamB.name);
+    if((x===ka&&y===kb)||(x===kb&&y===ka)) hits.push(j);
+  });
+  if(!hits.length) return null;
+  // The same pairing legitimately appears more than once (group stage, then
+  // playoffs) — that is fine, take the first. Two DIFFERENT pairings collapsing
+  // to one key is the dangerous case, so bail out of that one.
+  const pairs=new Set(hits.map(j=>[tnorm(list[j].teamA.name),tnorm(list[j].teamB.name)].sort().join("|")));
+  if(pairs.size>1) return null;
+  return {i:hits[0],flipped:tkey(list[hits[0]].teamA.name)!==ka};
+}
 
 /* Liquipedia labels prize placements "1", "2", "5-6"; earlier code here looked
    for "1st" and so never matched anything. That meant the champion banner
@@ -1539,15 +1579,9 @@ function tiMergedMatches(d){
   // to the published schedule, which lags by minutes — that is how BoomBoys v
   // OG read 1-0 and "live" on the site when it had finished 2-0.
   ((LIVE_FEED&&LIVE_FEED.tiSeries)||[]).forEach(s=>{
-    const a=tnorm(s.a), b=tnorm(s.b);
-    const i=out.findIndex(m=>{
-      const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
-      if(!x||!y||x==="tbd"||y==="tbd") return false;
-      return (x===a&&y===b)||(x===b&&y===a);
-    });
-    if(i<0) return;
-    const f=out[i];
-    const flipped=tnorm(f.teamA&&f.teamA.name)!==a;
+    const hit=findFixture(out,s.a,s.b);
+    if(!hit) return;
+    const f=out[hit.i], flipped=hit.flipped;
     f.teamA.score=flipped?s.sb:s.sa;
     f.teamB.score=flipped?s.sa:s.sb;
     // Decide the status from the score, not from what the schedule believes.
@@ -1556,19 +1590,16 @@ function tiMergedMatches(d){
   });
 
   liveProMatches().forEach(lm=>{
-    const a=tnorm(lm.teamA&&lm.teamA.name), b=tnorm(lm.teamB&&lm.teamB.name);
-    if(!a||!b) return;
-    const i=out.findIndex(m=>{
-      const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
-      if(!x||!y||x==="tbd"||y==="tbd") return false;
-      return (x===a&&y===b)||(x===b&&y===a);
-    });
-    if(i<0) return;
-    const f=out[i];
-    const flipped=tnorm(f.teamA&&f.teamA.name)===b;
+    const hit=findFixture(out,lm.teamA&&lm.teamA.name,lm.teamB&&lm.teamB.name);
+    if(!hit) return;
+    const f=out[hit.i], flipped=hit.flipped;
     const A=flipped?lm.teamB:lm.teamA, B=flipped?lm.teamA:lm.teamB;
     if(A&&A.score!=null) f.teamA.score=A.score;
     if(B&&B.score!=null) f.teamB.score=B.score;
+    // A series being played that has not finished a game yet is 0-0, not
+    // unknown. Left null it rendered as "Falcons – LGD –", which reads like the
+    // score is missing rather than nobody having won a game.
+    if(f.teamA.score==null&&f.teamB.score==null){ f.teamA.score=0; f.teamB.score=0; }
     f.status="live";
     f.gameMinute=lm.gameMinute; f.spectators=lm.spectators;
     f.watch=lm.watch||f.watch; f.stats=lm.stats||f.stats; f.fromStratz=true;
@@ -1598,15 +1629,12 @@ function liveMatchesOf(d){
   // "Iron Wing TI 2026" while the game reports "Iron Wing", so two of the four
   // opening-night matches were silently skipped. The fixtures use the same
   // names the game does.
-  const tiTeams=new Set((d.teams||[]).map(t=>tnorm(t.name)));
+  const tiTeams=new Set((d.teams||[]).map(t=>tkey(t.name)).filter(Boolean));
   liveProMatches().forEach(lm=>{
-    const a=tnorm(lm.teamA&&lm.teamA.name), b=tnorm(lm.teamB&&lm.teamB.name);
+    const a=tkey(lm.teamA&&lm.teamA.name), b=tkey(lm.teamB&&lm.teamB.name);
     if(!a||!b) return;
-    const i=out.findIndex(m=>{
-      const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
-      if(!x||!y||x==="tbd"||y==="tbd") return false;
-      return (x===a&&y===b)||(x===b&&y===a);
-    });
+    const hit=findFixture(out,lm.teamA&&lm.teamA.name,lm.teamB&&lm.teamB.name);
+    const i=hit?hit.i:-1;
     if(i>=0){
       // Upgrade the fixture in place so the card keeps its round label and Bo,
       // and the same match is never listed twice.
@@ -1616,7 +1644,7 @@ function liveMatchesOf(d){
       // currently being played, so those ride alongside rather than replacing
       // it — overwriting turned a true "Falcons 0-1 LGD" into a kill count.
       const f=out[i];
-      const flipped=tnorm(f.teamA&&f.teamA.name)===b;
+      const flipped=hit.flipped;
       const lmA=flipped?lm.teamB:lm.teamA, lmB=flipped?lm.teamA:lm.teamB;
       // Prefer the live series score over the schedule's. Liquipedia records a
       // finished game minutes later — on opening night it still said 0-1 while
