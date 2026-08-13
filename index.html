@@ -3157,8 +3157,14 @@ function renderTeams(d){
 }
 
 function teamRecord(d,name){
-  // pull W-L from group standings if present
-  const s=((d.groupStage||{}).standings||[]).find(x=>x.team===name);
+  // Read the SAME computed standings the group table renders. This used to read
+  // d.groupStage.standings straight from Liquipedia, which lags by minutes, so
+  // the popup header said "0–0 group stage" directly above its own match list
+  // reading "OG 2–0 WON". Two surfaces, two sources — the recurring bug here.
+  const rows=(computeGroupStandings(d)||{}).rows||[];
+  const k=tkey(name);
+  const s=rows.find(x=>tnorm(x.team)===tnorm(name))
+        ||(k?rows.find(x=>tkey(x.team)===k):null);
   return s?`${s.wins??0}–${s.losses??0} group stage`:"";
 }
 function teamDetailHTML(d,name){
@@ -3183,12 +3189,14 @@ function teamDetailHTML(d,name){
   // Liquipedia often has no roster this early, which left the whole panel
   // reading "Roster will fill in" and "No coach listed" — nothing at all for a
   // team that has already played. We know their matches, so show those.
-  const mine=tiMergedMatches(d).filter(m=>{
-    const x=tnorm((m.teamA||{}).name), y=tnorm((m.teamB||{}).name), me=tnorm(name);
-    return x===me||y===me;
-  });
+  // Match on the stripped key as well: the participants list says "Aurora
+  // Gaming" while the fixtures say "Aurora", so an exact compare showed an
+  // empty panel for a team that had already played.
+  const me=tnorm(name), meK=tkey(name);
+  const isMe=(n)=>{ const t=tnorm(n); return !!t&&(t===me||(!!meK&&tkey(n)===meK)); };
+  const mine=tiMergedMatches(d).filter(m=>isMe((m.teamA||{}).name)||isMe((m.teamB||{}).name));
   const fmt=(m)=>{
-    const home=tnorm((m.teamA||{}).name)===tnorm(name);
+    const home=isMe((m.teamA||{}).name);
     const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
     const os=us&&us.score, ts=them&&them.score;
     const done=typeof os==='number'&&typeof ts==='number'&&
