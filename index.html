@@ -535,6 +535,14 @@
     padding-left:8px;border-left:1px solid var(--line)}
   .lc-nowdraft{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--live);margin-left:auto}
+  /* Entry point to the watch page. Shown only while a game is being played. */
+  .watch-all{display:block;margin:0 0 12px;padding:10px 13px;border-radius:5px;
+    background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--live);
+    text-decoration:none;color:var(--ink);font-family:'Oswald',sans-serif;font-size:14px;
+    font-weight:500;letter-spacing:.01em}
+  .watch-all:hover{border-color:var(--aegis);border-left-color:var(--aegis);color:var(--aegis)}
+  .watch-all span{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
 
   /* Swiss board — the group stage grouped by record instead of ranked 1..16 */
   .sw-prog{display:flex;align-items:center;gap:10px;margin:12px 0 4px}
@@ -1376,9 +1384,26 @@ function matchWinner(m){if(!m)return null;const a=m.teamA||{},b=m.teamB||{};if(a
 function watchButton(m,mini){
   // Shows a "Watch" link when the match has a stream/watch URL and isn't finished.
   const url=m.streamUrl||m.stream||m.watch||"";
-  if(!url) return "";
   if(m.status==="completed"||m.status==="done") return "";
   const label=m.status==="live"?"Watch live":"Watch";
+
+  /* A live TI match goes to our own watch page rather than off to Twitch.
+     The feed's watch url is a Twitch SEARCH page — "here, go find it yourself" —
+     while /watch.html resolves the exact official channel for this pairing in
+     every language, alongside the draft and the live score. Linked by TEAMS, not
+     match id: the id changes with each game of a series, the pairing does not.
+     Anything that is not a TI fixture keeps the old external link, because the
+     watch page only covers this league. */
+  const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
+  const isTI=/^(gs|me|el)-/.test(m.id||"")
+    || (typeof LIVE_FEED!=="undefined" && LIVE_FEED && LIVE_FEED.tiLeagueId && m.leagueId===LIVE_FEED.tiLeagueId);
+  if(m.status==="live" && isTI && a && b && a!=="TBD" && b!=="TBD"){
+    const href=`watch.html?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
+    return `<a class="watch ${mini?'mini':''}" href="${esc(href)}" title="Watch this match on our live page">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${label}</a>`;
+  }
+
+  if(!url) return "";
   return `<a class="watch ${mini?'mini':''}" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Open the live stream in a new tab">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${label}</a>`;
 }
@@ -1789,11 +1814,16 @@ function liveRailInner(d){
       <div class="live-rail">${matches.map(liveCard).join("")}</div></div>`;
 }
 function renderLive(d){
+  // Only offer the watch page while something is actually being played, so it
+  // never sits there as a dead link between rounds or out of season.
+  const anyLive=tiMergedMatches(d).some(m=>m.status==="live");
   return`<section id="live">
     <div class="sec-head"><span class="sec-num">●</span><h2>Live &amp; Upcoming</h2>
       <span class="live-status" id="liveStatus" title="This section refreshes automatically while you're online">
         <span class="ls-dot"></span><span class="ls-text">Auto-updating</span></span>
     </div>
+    ${anyLive?`<a class="watch-all" href="watch.html">Watch every live game on one page
+      <span>draft · live score · gold swing · every language stream</span></a>`:""}
     <div id="liveRail">${liveRailInner(d)}</div>
   </section>`;
 }

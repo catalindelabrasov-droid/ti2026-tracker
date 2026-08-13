@@ -14,7 +14,7 @@
  *     already moved.
  */
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL   = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -154,3 +154,4 @@ self.addEventListener('fetch', event => {
   }
   event.respondWith(cacheFirst(request, RUNTIME));
 });
+
