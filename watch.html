@@ -58,8 +58,9 @@
   .tk{font-family:'Oswald',sans-serif;font-size:30px;font-weight:600;line-height:1;flex:none;min-width:38px;text-align:right}
   .tblock.rad .tk{color:var(--radiant)} .tblock.dir .tk{color:var(--dire)}
 
-  .hstrip{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
-  .hero{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden;text-align:center}
+  .hstrip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  .hero{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:4px;
+    overflow:hidden;text-align:center;min-width:0}
   .hero img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--panel-3)}
   .hero-ph{width:100%;aspect-ratio:16/9;background:var(--panel-3);display:flex;align-items:center;
     justify-content:center;color:var(--ink-faint);font-size:12px}
@@ -73,8 +74,11 @@
   .pnw{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--aegis);padding:1px 2px 2px}
   .plh{font-style:normal;color:var(--ink-faint)}
   /* six item slots, drawn even when empty so the tile never jumps */
-  .pitems{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:0 3px 4px}
-  .pitem{width:100%;aspect-ratio:1.35;border-radius:2px;display:block;object-fit:cover}
+  /* minmax(0,1fr), not 1fr: a 1fr track floors at min-content, so children with
+     width:100% resolve circularly and blow the track out — the six item slots
+     came out 73px wide inside a 59px tile and pushed the row off the screen. */
+  .pitems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:0 3px 4px}
+  .pitem{width:auto;min-width:0;aspect-ratio:1.35;border-radius:2px;display:block;object-fit:cover}
   .pitem.empty{background:var(--panel-3);opacity:.45}
   .hero.dead img{filter:grayscale(1);opacity:.45}
   .respawn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--live);
