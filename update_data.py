@@ -628,9 +628,24 @@ def merge_opendota_scores(data, series):
         if ta.get("score") != sa or tb.get("score") != sb:
             ta["score"] = sa; tb["score"] = sb
             m["teamA"] = ta; m["teamB"] = tb
-            if (sa + sb) > 0 and m.get("status") not in ("live", "completed"):
-                m["status"] = "completed" if max(sa, sb) >= (m.get("bestOf", 3) // 2 + 1) else "live"
             updated += 1
+
+        # Promote to completed the moment the score clinches the series, whatever
+        # the schedule still claims.
+        #
+        # This used to be skipped for any match already marked "live", which is
+        # exactly the case that matters: Liquipedia flips a match to live within
+        # minutes but can take far longer to mark it finished. BoomBoys beat OG
+        # 2-0 and sat at status "live" with the correct 2-0 score for over an
+        # hour. collect_completed_results() only takes status == "completed", so
+        # that series never reached match_results and nobody's league picks on it
+        # ever scored. Never demote a completed match back to live.
+        if (sa + sb) > 0 and m.get("status") != "completed":
+            clinched = max(sa, sb) >= (m.get("bestOf", 3) // 2 + 1)
+            new_status = "completed" if clinched else "live"
+            if m.get("status") != new_status:
+                m["status"] = new_status
+                updated += 1
 
     for q in data.get("qualifiers", []):
         for m in (q.get("matches") or []):
