@@ -587,23 +587,35 @@ Deno.serve(async (req) => {
     // showing a ghost. (League rows carry Valve's 15-minute broadcast delay,
     // hence the generous window.)
     const nowSec = Math.floor(Date.now() / 1000);
-    // Six minutes, not twenty-five.
+    // How long a quiet row may be trusted depends on what it is.
     //
-    // A game that is actually being played refreshes about once a minute;
-    // measured during TI, the live ones were 63s old while games that had
-    // already finished sat at 863s, 3063s and 4963s. OpenDota does not
-    // reliably set deactivate_time when a game ends, so staleness is the only
-    // signal — and at 25 minutes a finished game kept showing as live, frozen
-    // at "37' LIVE", for a quarter of an hour after it was over. Valve's
-    // broadcast delay shifts game_time against the wall clock; it does not
-    // slow how often the row is refreshed, which is what this measures.
-    const STALE_SEC = 6 * 60;
+    // OpenDota does not reliably set deactivate_time when a game ends, so
+    // staleness is the only signal we have. But it means two different things:
+    //
+    //  * A game being PLAYED refreshes roughly once a minute. Measured during
+    //    TI: live rows were 63s old while finished ones sat at 863s, 3063s and
+    //    4963s. Silence here means it is over — at the old 25-minute window a
+    //    finished game stayed on screen frozen at "37' LIVE" for a quarter of
+    //    an hour.
+    //
+    //  * A game still in DRAFT (game_time <= 0, horn not gone) updates far
+    //    less often. Six minutes wrongly dropped a real match that was sitting
+    //    at -10s with an 11-minute-old row, so the page showed three series
+    //    when four were in progress.
+    //
+    // Valve's broadcast delay shifts game_time against the wall clock; it does
+    // not change how often the row is written, which is what this measures.
+    const STALE_RUNNING_SEC = 6 * 60;
+    const STALE_DRAFT_SEC = 25 * 60;
     const newestByPair: Record<string, any> = {};
     for (const g of (Array.isArray(games) ? games : [])) {
       if (!isPro(g)) continue;
       if (g.deactivate_time) continue;                       // match is over
       const age = nowSec - (g.last_update_time || 0);
-      if (!g.last_update_time || age > STALE_SEC) continue;   // feed went quiet
+      // A negative or zero game_time means the horn has not gone yet.
+      const drafting = (g.game_time ?? 0) <= 0;
+      const limit = drafting ? STALE_DRAFT_SEC : STALE_RUNNING_SEC;
+      if (!g.last_update_time || age > limit) continue;       // feed went quiet
       const pair = [String(g.team_name_radiant), String(g.team_name_dire)]
         .sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1).join("|");
       const prev = newestByPair[pair];
