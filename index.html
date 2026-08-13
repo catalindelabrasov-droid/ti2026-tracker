@@ -3094,18 +3094,62 @@ function wireTeams(d){
     tm.addEventListener("click",e=>{if(e.target===tm){tm.classList.remove("show");_openView=null;}});
   }
 }
+/* Standings, counted from the results we have rather than trusted from the
+   source. Liquipedia's own standings table lags the games badly — on opening
+   night every team sat at 0-0 while four series were being played — and a
+   Swiss table that does not move is the one thing people check it for.
+   A series counts only once it is decided: won at ceil(bestOf/2) games. */
+function computeGroupStandings(d){
+  const g=d.groupStage||{};
+  const rec={};
+  const seed=(n)=>{ if(n&&n!=="TBD"&&!rec[n]) rec[n]={team:n,wins:0,losses:0,played:0}; };
+  (g.standings||[]).forEach(r=>seed(r.team));
+  (d.teams||[]).forEach(t=>seed(t.name));
+
+  let decided=0;
+  (g.rounds||[]).forEach(rd=>(rd.matches||[]).forEach(m=>{
+    const a=(m.teamA||{}),b=(m.teamB||{});
+    seed(a.name); seed(b.name);
+    if(a.name==="TBD"||b.name==="TBD") return;
+    const sa=a.score, sb=b.score;
+    if(typeof sa!=="number"||typeof sb!=="number") return;
+    const need=Math.floor((m.bestOf||3)/2)+1;
+    if(Math.max(sa,sb)<need) return;              // series still in play
+    decided++;
+    const w=sa>sb?a.name:b.name, l=sa>sb?b.name:a.name;
+    if(rec[w]){ rec[w].wins++; rec[w].played++; }
+    if(rec[l]){ rec[l].losses++; rec[l].played++; }
+  }));
+
+  // Nothing settled yet: keep the source's own list so the table still shows
+  // the field, but say plainly that nothing has been decided.
+  const rows=Object.values(rec);
+  if(!decided) return {rows:(g.standings||[]).length?g.standings:rows, decided:0};
+  rows.sort((x,y)=>(y.wins-x.wins)||(x.losses-y.losses)||x.team.localeCompare(y.team));
+  return {rows, decided};
+}
+
 function renderGroups(d){
-  const g=d.groupStage||{};const s=g.standings||[];
+  const g=d.groupStage||{};
+  const computed=computeGroupStandings(d);
+  const s=computed.rows||[];
   if(!s.length)return secEmpty("04","Group Stage","groups",(g.format?esc(g.format)+". ":"")+"Standings appear once the Swiss stage begins.");
+  // Only call somebody through once the table means something. Before that the
+  // "top 8" is just the first eight rows of an alphabetical list, which told
+  // everyone Aurora was advancing because it starts with an A.
+  const settled=computed.decided>0;
   const rows=s.map((r,i)=>{
-    const adv=r.status==="advanced"||(r.status==null&&i<8);const elim=r.status==="eliminated";
+    const adv=r.status==="advanced"||(settled&&r.status==null&&i<8);
+    const elim=r.status==="eliminated";
     return`<tr class="clickable ${adv?'adv':''} ${elim?'elim':''}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" data-status="${adv?'advanced':'eliminated'}">
       <td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${teamLogo(r.team,22)}${esc(r.team)}</td>
       <td class="rec"><span class="w">${r.wins??0}</span> – <span class="l">${r.losses??0}</span></td>
       <td>${adv?'<span class="pill adv">Advances</span>':elim?'<span class="pill elim">Out</span>':''}</td></tr>`;
   }).join("");
   return`<section id="groups"><div class="sec-head"><span class="sec-num">04</span><h2>Group Stage</h2></div>
-    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")} Click a team for its roster.</p>
+    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")} Click a team for its roster.
+      ${computed.decided?`<b>${computed.decided} series decided so far.</b>`
+        :`<b>No series finished yet</b> — the table fills in as they do.`}</p>
     <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>W–L</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></section>`;
 }
 function bracketMatch(m){
