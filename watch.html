@@ -97,8 +97,11 @@
      Class names are global. */
   .pitem-none{background:var(--panel-3);opacity:.4}
   @media(max-width:520px){
-    /* Items take their own line instead of squeezing the name to nothing. */
-    .pitems{margin-left:52px;flex-basis:100%;justify-content:flex-start}
+    /* Items take their own line instead of squeezing the name to nothing.
+       PADDING, not margin: flex-basis:100% plus a 52px margin makes the line
+       52px wider than the row and pushes it off the screen. box-sizing keeps
+       padding inside the 100%. */
+    .pitems{margin-left:0;padding-left:52px;flex-basis:100%;justify-content:flex-start}
     .plh{display:none}
   }
   .delayed{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;
