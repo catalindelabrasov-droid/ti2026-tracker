@@ -10,10 +10,16 @@ on:
     - cron: "0 * * * *"
     # Fast run, on the quarter hours: OpenDota scores straight into the league
     # backend so points move within ~15 min of a series ending. Costs 2 API
-    # calls, touches no third party but OpenDota, and commits nothing — the page
+    # calls, touches no third party but OpenDota, and commits nothing - the page
     # already merges live scores at render time, so there is nothing to publish.
     - cron: "15,30,45 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full = Liquipedia + ranking + commit; fast = scores only"
+        type: choice
+        options: [full, fast]
+        default: full
 
 # Allow the workflow to push the updated data.json back to the repo.
 permissions:
@@ -43,7 +49,7 @@ jobs:
           # League backend: finished results feed the prediction leaderboard.
           SUPABASE_URL: https://hqpynfzatnmwvlxdfhsw.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
-          FAST: ${{ github.event.schedule == '15,30,45 * * * *' && '1' || '' }}
+          FAST: ${{ (github.event.schedule == '15,30,45 * * * *' || inputs.mode == 'fast') && '1' || '' }}
         run: |
           if [ -n "$FAST" ]; then
             python update_data.py --fast
@@ -51,11 +57,11 @@ jobs:
             python update_data.py
           fi
 
-      # Only the full run publishes. A fast run has nothing to commit — it
-      # writes to Supabase, not to the repo — and committing every 15 minutes
+      # Only the full run publishes. A fast run has nothing to commit - it
+      # writes to Supabase, not to the repo - and committing every 15 minutes
       # would mean 96 deploys a day for a file the page already corrects live.
       - name: Commit changes if data changed
-        if: ${{ github.event.schedule != '15,30,45 * * * *' }}
+        if: ${{ github.event.schedule != '15,30,45 * * * *' && inputs.mode != 'fast' }}
         run: |
           git config user.name  "ti-data-bot"
           git config user.email "actions@users.noreply.github.com"
