@@ -97,6 +97,45 @@ async function teamLogos(league: number): Promise<Record<string, any>> {
   } catch (_e) { return _teams?.data ?? {}; }
 }
 
+/* Which games are actually over.
+   /live keeps finished games around for hours and its last_update_time is stamped
+   when the whole snapshot refreshes, not per game — every entry showed "145s ago"
+   at once, so staleness alone cannot tell a live game from a dead one. The league's
+   finished-game list is the authority: aggregate it into series and drop anything
+   already settled. That is what stopped Aurora 2-0 GamerLegion from sitting on the
+   page at "41 minutes" after the series had ended. */
+let _fin: { at: number; league: number; ids: Set<string>; decided: Set<string> } | null = null;
+const FIN_TTL = 120_000;
+async function finished(league: number) {
+  if (_fin && _fin.league === league && Date.now() - _fin.at < FIN_TTL) return _fin;
+  const ids = new Set<string>();
+  const wins: Record<string, Record<string, number>> = {};
+  try {
+    const [gamesR, teamsR] = await Promise.all([
+      fetch(`${OPENDOTA}/leagues/${league}/matches`, { headers: UA }).then(r => r.json()),
+      fetch(`${OPENDOTA}/leagues/${league}/teams`, { headers: UA }).then(r => r.json()),
+    ]);
+    const tn: Record<string, string> = {};
+    (teamsR || []).forEach((t: any) => { if (t.team_id && t.name) tn[String(t.team_id)] = t.name; });
+    (gamesR || []).forEach((g: any) => {
+      ids.add(String(g.match_id));
+      const r = (g.radiant_name || tn[String(g.radiant_team_id)] || "").trim();
+      const d = (g.dire_name || tn[String(g.dire_team_id)] || "").trim();
+      if (!r || !d || g.radiant_win == null) return;
+      const k = [tkey(r), tkey(d)].sort().join("|");
+      wins[k] = wins[k] || {};
+      const w = tkey(g.radiant_win ? r : d);
+      wins[k][w] = (wins[k][w] || 0) + 1;
+    });
+  } catch (_e) { /* fall through with whatever we managed */ }
+  const decided = new Set<string>();
+  Object.entries(wins).forEach(([k, w]) => {
+    if (Math.max(...Object.values(w)) >= 2) decided.add(k);   // Bo3
+  });
+  _fin = { at: Date.now(), league, ids, decided };
+  return _fin;
+}
+
 async function heroes(): Promise<Record<string, any>> {
   if (_heroes && Date.now() - _heroes.at < HERO_TTL) return _heroes.data;
   try {
@@ -146,10 +185,11 @@ Deno.serve(async (req) => {
 
     const leagueParam = url.searchParams.get("league");
     const wanted = leagueParam ? Number(leagueParam) : 19719;
-    const [streams, heroMap, teamMap, liveRaw] = await Promise.all([
+    const [streams, heroMap, teamMap, fin, liveRaw] = await Promise.all([
       resolveStreams(),
       heroes(),
       teamLogos(wanted),
+      finished(wanted),
       fetch(`${OPENDOTA}/live`, { headers: UA }).then(r => r.json()).catch(() => []),
     ]);
 
@@ -161,11 +201,18 @@ Deno.serve(async (req) => {
       const a = String(g.team_name_radiant || "").trim();
       const b = String(g.team_name_dire || "").trim();
       if (!a || !b) return;
+      // Valve marks some ended games directly — cheapest and surest signal.
+      if (g.deactivate_time) return;
+      // This exact game is already parsed as finished.
+      if (fin.ids.has(String(g.match_id))) return;
+      const k = [tkey(a), tkey(b)].sort().join("|");
+      // The whole series is settled, so nothing of it is still being played.
+      if (fin.decided.has(k)) return;
+
       const drafting = (g.game_time ?? 0) <= 0;
       const age = g.last_update_time ? now - g.last_update_time : 1e9;
       if (age > (drafting ? STALE_DRAFT : STALE_RUNNING)) return;
       // one row per pairing, newest match id wins
-      const k = [tkey(a), tkey(b)].sort().join("|");
       const prev = seen.get(k);
       if (prev && Number(prev.matchId) >= Number(g.match_id)) return;
 
@@ -183,6 +230,7 @@ Deno.serve(async (req) => {
       seen.set(k, {
         matchId: String(g.match_id),
         seriesId: g.series_id ?? null,
+        startedAgo: g.activate_time ? now - g.activate_time : null,
         gameMinute: g.game_time != null ? Math.floor(g.game_time / 60) : null,
         drafting,
         delaySec: g.delay ?? null,
@@ -204,7 +252,11 @@ Deno.serve(async (req) => {
       });
     });
 
-    const matches = [...seen.values()].sort((x, y) => (y.gameMinute ?? 0) - (x.gameMinute ?? 0));
+    // Newest game first. Sorting by minute put the game that started most
+    // recently — the one people are actually watching — at the BOTTOM, under
+    // whatever had been running longest.
+    const matches = [...seen.values()]
+      .sort((x, y) => (x.startedAgo ?? 1e9) - (y.startedAgo ?? 1e9));
     return new Response(JSON.stringify({
       matches,
       streamsAll: streams,
