@@ -3776,10 +3776,13 @@ function checkDeadlineAlerts(){
   // No first-run suppression here: unlike result alerts there's no history to
   // replay — only matches inside the next 45 minutes qualify, and that's
   // exactly when someone needs telling. The map alone stops repeats.
-  const now=Date.now(), lead=(lg.rules&&lg.rules.lockLeadMs)||3600000;
+  // ?? not ||: lockLeadMs of 0 is a real setting ("open until it starts") and
+  // || would quietly turn it back into an hour.
+  const now=Date.now(), lead=(lg.rules&&lg.rules.lockLeadMs)??3600000;
   const due=[];
   lgUpcomingPredictable().forEach(m=>{
     const sched=m.scheduled?new Date(m.scheduled).getTime():null; if(!sched) return;
+    if(lgStarted(m)) return;                              // already under way
     const lockBy=sched-lead;
     if(now>lockBy || lockBy-now>DL_WARN_MS) return;      // passed, or still far off
     const p=(lg.predictions||{})[m.id]; if(p&&p.locked) return;
@@ -4294,7 +4297,7 @@ const DEFAULT_RULES={
   tbExactHits:   {on:true},
   tbChampion:    {on:true},
   // timing
-  lockLeadMs: 60*60*1000
+  lockLeadMs: 0   // 0 = open until the match actually starts
 };
 let _lgTab="home";
 
@@ -4529,10 +4532,14 @@ let _othersFetching=false;
 // just decides what we bother asking for.
 function lgRevealableIds(lg){
   const ids=new Set(Object.entries(lg.predictions||{}).filter(([,p])=>p.locked).map(([mid])=>mid));
-  const now=Date.now(), lead=(lg.rules&&lg.rules.lockLeadMs)||3600000;
+  const now=Date.now(), lead=(lg.rules&&lg.rules.lockLeadMs)??3600000;
   lgUpcomingPredictable().forEach(m=>{
+    // Reveal once it has actually started, or once a real clock deadline passed
+    // — never merely because the scheduled slot went by on a match that has not
+    // begun, or a latecomer could read the room and copy the best pick.
+    if(lgStarted(m)) { ids.add(m.id); return; }
     const sched=m.scheduled?new Date(m.scheduled).getTime():null;
-    if(sched && now > sched-lead) ids.add(m.id);
+    if(lead>0 && sched && now > sched-lead) ids.add(m.id);
   });
   return [...ids];
 }
@@ -4664,7 +4671,7 @@ function lgHome(lg){
       <div class="hint" style="line-height:1.7">
         • Predict each match: pick the winner (+${rPts(lg.rules,'winner')} pts) and the exact score (+${rPts(lg.rules,'exactScore')} bonus).<br>
         • Predict tournament outcomes: champion (+${rPts(lg.rules,'champion')}), top 4 (+${rPts(lg.rules,'topFour')}).<br>
-        • Lock your pick at least ${Math.round(lg.rules.lockLeadMs/60000)} min before a match. Once locked, it's final.<br>
+        • ${lg.rules.lockLeadMs>0?`Lock your pick at least ${Math.round(lg.rules.lockLeadMs/60000)} min before a match`:"Pick any time right up until the match starts"}. Once locked, it's final.<br>
         • You can only see others' picks for a match after you've locked yours.
       </div>
       <button class="lg-btn" id="lgGoPredict" style="margin-top:8px">Make predictions →</button>
@@ -4681,13 +4688,43 @@ function lgUpcomingPredictable(){
   return out.filter(m=>(m.teamA&&m.teamA.name&&m.teamA.name!=="TBD")&&(m.teamB&&m.teamB.name&&m.teamB.name!=="TBD"));
 }
 
+/* Has this match actually begun?
+   Deliberately NOT "has its scheduled slot passed" — TI runs matches back to
+   back and the published time slips by an hour without anything being wrong.
+   Round two's fixtures sat 28 to 78 minutes past their slot, unplayed, and every
+   one of them read "Locking deadline passed" so nobody could predict them. */
+function lgStarted(m){
+  if(!m) return false;
+  if(m.status==="live"||m.status==="completed"||m.status==="done") return true;
+  // a decided score is a result, whatever the status field claims
+  const sa=(m.teamA||{}).score, sb=(m.teamB||{}).score;
+  if(typeof sa==="number"&&typeof sb==="number"){
+    if(Math.max(sa,sb)>=Math.floor((m.bestOf||3)/2)+1) return true;
+  }
+  return false;
+}
+/* Mirrors enforce_prediction_lock on the server, so the page never offers a
+   pick the database will refuse. lockLeadMs of 0 means "open until it starts". */
+function lgLockPassed(lg,m){
+  if(lgStarted(m)) return true;
+  const lead=(lg&&lg.rules&&lg.rules.lockLeadMs)||0;
+  if(lead<=0) return false;
+  const sched=m.scheduled?new Date(m.scheduled).getTime():null;
+  return sched?Date.now()>sched-lead:false;
+}
+// Matches somebody can still actually pick, which is what a count should mean.
+function lgOpenToPredict(lg){
+  return lgUpcomingPredictable().filter(m=>!lgLockPassed(lg,m));
+}
+
 /* Pull the schedule again on demand.
    Pairings for the next round appear minute to minute during a live event, and
    the page's own refresh cycle can be a minute or more away — long enough to
    miss a lock deadline. This re-reads data.json and the live feed immediately
    and redraws just this panel. */
 async function lgRefreshPredict(btn){
-  const before=lgUpcomingPredictable().length;
+  const lgNow=lgLoad()||lgGuestState();
+  const before=lgOpenToPredict(lgNow).length;
   if(btn){ btn.disabled=true; btn.dataset.label=btn.textContent; btn.textContent="Checking…"; }
   try{
     const fresh=await loadData(true);
@@ -4698,11 +4735,12 @@ async function lgRefreshPredict(btn){
     toast("Couldn't refresh","Check your connection and try again.");
     return;
   }
-  const after=lgUpcomingPredictable().length;
+  const after=lgOpenToPredict(lgLoad()||lgGuestState()).length;
   renderLeague();                       // redraws the panel, button included
   const gained=after-before;
   if(gained>0) toast("New matches to predict",`${gained} more ${gained===1?"match is":"matches are"} open now.`);
-  else toast("Up to date",`${after} ${after===1?"match":"matches"} open to predict.`);
+  else if(after) toast("Up to date",`${after} ${after===1?"match":"matches"} still open to predict.`);
+  else toast("Up to date","Nothing open to predict right now — the next pairings appear as rounds are drawn.");
 }
 
 function lgPredictions(lg){
@@ -4716,11 +4754,15 @@ function lgPredictions(lg){
     const myPred=(lg.predictions||{})[m.id];
     const locked=myPred&&myPred.locked;
     const sched=m.scheduled?new Date(m.scheduled).getTime():null;
-    const lockBy=sched?sched-lg.rules.lockLeadMs:null;
-    const lockPassed=lockBy?now>lockBy:false;
+    const lockPassed=lgLockPassed(lg,m);
+    const lead=(lg.rules&&lg.rules.lockLeadMs)||0;
+    const lockBy=(lead>0&&sched)?sched-lead:null;
     const a=m.teamA.name,b=m.teamB.name;
     const selA=myPred&&myPred.pick===a, selB=myPred&&myPred.pick===b;
-    const deadlineTxt=lockBy?(lockPassed?"Locking deadline passed":"Lock by "+new Date(lockBy).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"})):"";
+    const deadlineTxt=lockPassed
+      ? (lgStarted(m)?"Match has started":"Locking deadline passed")
+      : (lockBy?"Lock by "+new Date(lockBy).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"})
+              :"Open until the match starts");
     let body;
     if(locked){
       body=`<div class="pred-locked-tag">🔒 Locked: ${esc(myPred.pick)} · ${myPred.sa}–${myPred.sb}</div>${lgOthersBlock(lg,m,true)}`;
@@ -5078,7 +5120,7 @@ function lgRulesView(lg){
         <div class="hint" style="margin:0 0 14px">Set by the admin. This is how points are scored.</div>
         <div class="rule-summary">${lgRulesSummary(r)}</div>
         <div class="rx-wrap">${lgRulesExplained(r)}</div>
-        <div class="hint" style="margin-top:14px">Predictions lock ${Math.round(r.lockLeadMs/60000)} minutes before each match${r.scoreMode==="weighted"?", and later rounds are worth more":""}. Once locked a pick is final — that's what makes the leaderboard mean anything.</div>
+        <div class="hint" style="margin-top:14px">Predictions ${r.lockLeadMs>0?`lock ${Math.round(r.lockLeadMs/60000)} minutes before each match`:"stay open until each match actually starts"}${r.scoreMode==="weighted"?", and later rounds are worth more":""}. Once locked a pick is final — that's what makes the leaderboard mean anything.</div>
       </div>`;
   }
 
@@ -5123,7 +5165,7 @@ function lgRulesView(lg){
       <div class="rule-modes">${modeBtn("flat","Flat — every match equal")}${modeBtn("weighted","Round-weighted — finals worth more")}</div>
       ${row("negativePoints","Negative points","Wrong picks subtract — guessing blindly hurts.","pts",true)}
       <div class="rule-row on"><div class="rule-info"><div class="rule-name">Lock lead time</div><div class="rule-desc">How long before a match predictions must be locked.</div></div>
-        <div class="rule-pts"><input type="number" min="1" data-rulemin="lockMin" value="${Math.round(r.lockLeadMs/60000)}" ${dis}><span>min</span></div></div>
+        <div class="rule-pts"><input type="number" min="0" data-rulemin="lockMin" value="${Math.round(r.lockLeadMs/60000)}" ${dis}><span>min</span></div></div>
     </div>
 
     <div class="rule-group"><div class="rule-group-h">Tie-breakers (in priority order)</div>
@@ -5312,7 +5354,7 @@ function wireLeaguePanel(){
       if(typeof s.rules[k]!=="object"||s.rules[k]===null) s.rules[k]={on:true,pts:0};
       s.rules[k].pts=+inp.value||0;
     });
-    const lm=document.querySelector("[data-rulemin]"); if(lm) s.rules.lockLeadMs=Math.max(1,+lm.value||60)*60000;
+    const lm=document.querySelector("[data-rulemin]"); if(lm) s.rules.lockLeadMs=Math.max(0,+lm.value||0)*60000;   // 0 = until it starts
     lgSave(s);
     if(SB_READY() && s.id){
       try{ const {error}=await SB.from("leagues").update({rules:s.rules}).eq("id",s.id);
