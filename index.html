@@ -4451,6 +4451,12 @@ async function openPredictFromHash(){
   if(location.hash!=="#predict") return;
   history.replaceState(null,"",location.pathname+location.search);
   _lgTab="predict";
+  // This runs during start-up, before the first data render has put #lgPanel on
+  // the page — and renderLeague() quietly returns when the panel is missing, so
+  // the league opened onto a blank panel. Wait for it rather than racing it.
+  for(let i=0;i<40 && !document.querySelector("#lgPanel");i++){
+    await new Promise(r=>setTimeout(r,150));
+  }
   await openLeague();
 }
 
