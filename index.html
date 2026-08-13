@@ -1764,6 +1764,39 @@ const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
    what is left. */
 const ORGWORDS=/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g;
 const tkey=(s)=>tnorm(s).replace(/[.\-_'"]/g," ").replace(ORGWORDS," ").replace(/\s+/g," ").trim();
+
+/* Two spellings that stripping cannot bridge, because they share no stem.
+   Liquipedia's participant page calls the org "BetBoom Team"; every match page,
+   standing and bracket slot calls the side "BoomBoys". Verified by roster, not
+   by guesswork — the BoomBoys carry in match 8551002743 is Kiritych~, the first
+   player listed under BetBoom Team.
+   This matters beyond cosmetics: an outcome pick is settled by comparing team
+   names exactly, so a champion picked from the participant list could never
+   match the team that actually wins. */
+const TEAM_ALIASES={"betboom team":"BoomBoys"};
+/* The names results are actually settled against. computeGroupStandings already
+   seeds only from standings and fixtures, so its rows ARE the real field —
+   never the participant list, which carries org names nothing else uses. */
+let _fieldCache=null;
+function tiFieldNames(){
+  if(_fieldCache&&_fieldCache.d===DATA) return _fieldCache.names;
+  let names=[];
+  try{ names=(computeGroupStandings(DATA).rows||[]).map(r=>r.team).filter(Boolean); }catch(e){}
+  if(!names.length) names=((DATA||{}).teams||[]).map(t=>t.name).filter(Boolean);
+  _fieldCache={d:DATA,names};
+  return names;
+}
+// Any spelling of a team -> the one the rest of the tournament uses.
+function canonTeam(name){
+  if(!name) return name;
+  const field=tiFieldNames();
+  if(field.includes(name)) return name;
+  const k=tkey(name);
+  const byKey=field.find(t=>tkey(t)===k);
+  if(byKey) return byKey;
+  const al=TEAM_ALIASES[tnorm(name)];
+  return (al&&field.includes(al))?al:name;
+}
 /* Locate the fixture two teams are playing. Exact names first; the stripped key
    is only a fallback, and only when it is unambiguous — collapsing "Aurora
    Gaming" onto "Aurora" is the point, collapsing two different teams onto each
@@ -3448,13 +3481,17 @@ function teamRecord(d,name){
   // the popup header said "0–0 group stage" directly above its own match list
   // reading "OG 2–0 WON". Two surfaces, two sources — the recurring bug here.
   const rows=(computeGroupStandings(d)||{}).rows||[];
-  const k=tkey(name);
-  const s=rows.find(x=>tnorm(x.team)===tnorm(name))
+  const nm=canonTeam(name);            // "BetBoom Team" has no row; "BoomBoys" does
+  const k=tkey(nm);
+  const s=rows.find(x=>tnorm(x.team)===tnorm(nm))
         ||(k?rows.find(x=>tkey(x.team)===k):null);
   return s?`${s.wins??0}–${s.losses??0} group stage`:"";
 }
 function teamDetailHTML(d,name){
-  const tm=(d.teams||[]).find(x=>x.name===name)||{name};
+  // Roster lookup goes the other way too: open "BoomBoys" from the board and the
+  // players are filed under "BetBoom Team", so an exact compare found nobody.
+  const tm=(d.teams||[]).find(x=>x.name===name)
+        ||(d.teams||[]).find(x=>canonTeam(x.name)===canonTeam(name))||{name};
   const players=tm.players||[];
   const coach=tm.coach&&tm.coach!=="—"?tm.coach:null;
   const rec=teamRecord(d,name);
@@ -3478,8 +3515,12 @@ function teamDetailHTML(d,name){
   // Match on the stripped key as well: the participants list says "Aurora
   // Gaming" while the fixtures say "Aurora", so an exact compare showed an
   // empty panel for a team that had already played.
-  const me=tnorm(name), meK=tkey(name);
-  const isMe=(n)=>{ const t=tnorm(n); return !!t&&(t===me||(!!meK&&tkey(n)===meK)); };
+  // ...and through the alias table for the pair stripping cannot bridge, which
+  // is why the "BetBoom Team" panel listed no matches at all despite two
+  // completed series under the name BoomBoys.
+  const meC=canonTeam(name);
+  const me=tnorm(meC), meK=tkey(meC);
+  const isMe=(n)=>{ const t=tnorm(canonTeam(n)); return !!t&&(t===me||(!!meK&&tkey(canonTeam(n))===meK)); };
   const mine=tiMergedMatches(d).filter(m=>isMe((m.teamA||{}).name)||isMe((m.teamB||{}).name));
   const fmt=(m)=>{
     const home=isMe((m.teamA||{}).name);
@@ -5129,19 +5170,25 @@ function lgPredictions(lg){
 }
 
 function lgOutcomesHTML(lg){
-  // Tournament-long predictions: champion + top 4. Teams come from the 16-team field.
-  const teams=(DATA.teams||[]).map(t=>t.name);
+  /* Tournament-long predictions: champion + top 4.
+     Offer the names the tournament settles against, NOT the participant list.
+     Both the client and the SQL compare the stored pick to the winning team by
+     exact string, so a pick of "BetBoom Team" could never be paid — the team
+     wins every match as "BoomBoys". Existing picks are canonicalised on the way
+     in so a pick already locked under the old spelling still shows selected. */
+  const teams=tiFieldNames();
   if(!teams.length) return "";
   const o=lg.outcomes||{};
-  const opt=(sel)=>['<option value="">— select —</option>'].concat(teams.map(t=>`<option ${sel===t?'selected':''}>${esc(t)}</option>`)).join("");
+  const opt=(sel)=>{ const s=canonTeam(sel);
+    return ['<option value="">— select —</option>'].concat(teams.map(t=>`<option ${s===t?'selected':''}>${esc(t)}</option>`)).join(""); };
   const champLocked=o.champion&&o.champion.locked;
   const t4=o.topFour||{teams:[],locked:false};
   const champBlock=champLocked
-    ? `<div class="pred-locked-tag">🔒 Champion: ${esc(o.champion.pick)}</div>`
+    ? `<div class="pred-locked-tag">🔒 Champion: ${esc(canonTeam(o.champion.pick))}</div>`
     : `<select id="lgChampSel">${opt(o.champion&&o.champion.pick)}</select>
        <div class="pred-actions" style="margin-top:10px"><button class="pred-lock" id="lgLockChamp">🔒 Lock champion pick</button></div>`;
   const t4Block=t4.locked
-    ? `<div class="pred-locked-tag">🔒 Top 4: ${esc((t4.teams||[]).join(", "))}</div>`
+    ? `<div class="pred-locked-tag">🔒 Top 4: ${esc((t4.teams||[]).map(canonTeam).join(", "))}</div>`
     : `<div class="pred-multi">
         ${[0,1,2,3].map(i=>`<select class="lg-t4" data-i="${i}">${opt((t4.teams||[])[i])}</select>`).join("")}
        </div>
@@ -5226,21 +5273,24 @@ function lgComputeLeaderboard(lg){
 function lgOutcomePickRows(lg){
   const o=lg.outcomes||{};
   const dist=((DATA||{}).prizePool||{}).distribution||[];
-  const teamAt=(n)=>{ const e=dist.find(x=>placeIs(x.place,n)&&x.team); return e?e.team:null; };
+  // Both sides through canonTeam: the prize table is written by Liquipedia
+  // editors and may well say "BetBoom Team" where the pick says "BoomBoys".
+  const teamAt=(n)=>{ const e=dist.find(x=>placeIs(x.place,n)&&x.team); return e?canonTeam(e.team):null; };
   const champ=teamAt(1);
   const top4=[1,2,3,4].map(teamAt);
   const top4Known=top4.every(Boolean);
   const rows=[];
 
   if(o.champion&&o.champion.locked&&o.champion.pick){
-    const done=!!champ, hit=done&&champ===o.champion.pick;
+    const myChamp=canonTeam(o.champion.pick);
+    const done=!!champ, hit=done&&champ===myChamp;
     rows.push({
-      label:"🏆 Champion", pick:o.champion.pick, done, hit,
+      label:"🏆 Champion", pick:myChamp, done, hit,
       result: done?`${champ} lifted the Aegis`:"Settles when TI finishes",
       earned: (done&&hit&&rOn(lg.rules,"champion"))?rPts(lg.rules,"champion"):0 });
   }
   if(o.topFour&&o.topFour.locked&&(o.topFour.teams||[]).filter(Boolean).length){
-    const picks=(o.topFour.teams||[]).filter(Boolean);
+    const picks=(o.topFour.teams||[]).filter(Boolean).map(canonTeam);
     const hits=top4Known?picks.filter(t=>top4.includes(t)).length:0;
     rows.push({
       label:"🎖️ Top 4", pick:picks.join(", "), done:top4Known, hit:top4Known&&hits>0,
