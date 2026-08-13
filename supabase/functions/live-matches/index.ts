@@ -587,7 +587,17 @@ Deno.serve(async (req) => {
     // showing a ghost. (League rows carry Valve's 15-minute broadcast delay,
     // hence the generous window.)
     const nowSec = Math.floor(Date.now() / 1000);
-    const STALE_SEC = 25 * 60;
+    // Six minutes, not twenty-five.
+    //
+    // A game that is actually being played refreshes about once a minute;
+    // measured during TI, the live ones were 63s old while games that had
+    // already finished sat at 863s, 3063s and 4963s. OpenDota does not
+    // reliably set deactivate_time when a game ends, so staleness is the only
+    // signal — and at 25 minutes a finished game kept showing as live, frozen
+    // at "37' LIVE", for a quarter of an hour after it was over. Valve's
+    // broadcast delay shifts game_time against the wall clock; it does not
+    // slow how often the row is refreshed, which is what this measures.
+    const STALE_SEC = 6 * 60;
     const newestByPair: Record<string, any> = {};
     for (const g of (Array.isArray(games) ? games : [])) {
       if (!isPro(g)) continue;
