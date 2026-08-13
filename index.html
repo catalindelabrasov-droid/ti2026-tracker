@@ -536,6 +536,53 @@
   .lc-nowdraft{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--live);margin-left:auto}
 
+  /* Swiss board — the group stage grouped by record instead of ranked 1..16 */
+  .sw-prog{display:flex;align-items:center;gap:10px;margin:12px 0 4px}
+  .sw-progbar{flex:1;height:3px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+  .sw-progbar i{display:block;height:100%;background:var(--aegis);transition:width .4s ease}
+  .sw-progtxt{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-dim);white-space:nowrap}
+  .sw-board{display:grid;gap:10px;margin-top:12px}
+  .sw-bucket{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+  .sw-bucket.is-adv{border-color:rgba(78,201,143,.5)}
+  .sw-bucket.is-out{opacity:.6}
+  .sw-bhead{display:flex;align-items:center;gap:10px;padding:8px 11px;
+    background:var(--panel-2);border-bottom:1px solid var(--line)}
+  .sw-brec{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;line-height:1}
+  .sw-brec i{font-style:normal;color:var(--ink-faint);margin:0 1px}
+  .sw-bucket.is-adv .sw-brec{color:var(--win)}
+  .sw-bucket.is-out .sw-brec{color:var(--ink-faint)}
+  .sw-bnote{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--ink-dim);line-height:1.4}
+  .sw-bnote b{color:var(--ink)}
+  .sw-bcount{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;
+    color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:1px 7px}
+  .sw-teams{display:grid;gap:1px;background:var(--line-soft)}
+  .sw-team{display:grid;grid-template-columns:20px minmax(0,1fr) auto;
+    grid-template-areas:"logo name pips" "logo line line";gap:2px 8px;align-items:center;
+    width:100%;padding:8px 11px;background:var(--panel);border:0;text-align:left;
+    color:var(--ink);cursor:pointer;font:inherit}
+  .sw-team:hover{background:var(--panel-3)}
+  .sw-team.is-live{box-shadow:inset 2px 0 0 var(--live)}
+  .sw-tlogo{grid-area:logo;display:flex;align-items:center;justify-content:center}
+  .sw-tname{grid-area:name;font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sw-tpips{grid-area:pips;display:flex;gap:3px}
+  .sw-tpips i{width:6px;height:6px;border-radius:50%;background:var(--line);display:block}
+  .sw-tpips i.w{background:var(--win)}
+  .sw-tpips i.l{background:var(--live)}
+  .sw-tline{grid-area:line;font-family:'JetBrains Mono',monospace;font-size:9.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sw-live{color:var(--live)}
+  .sw-res.won{color:var(--win)}
+  .sw-res.lost{color:var(--ink-faint)}
+  .sw-soon{color:var(--ink-dim)}
+  /* Two buckets side by side once there is room for them. */
+  @media(min-width:760px){
+    .sw-board{grid-template-columns:1fr 1fr;align-items:start}
+    .sw-tname{font-size:15px}
+  }
+
   /* A team's own matches, shown in its panel — the roster is often empty this
      early and an empty panel is worse than no panel. */
   .td-mlist{display:flex;flex-direction:column;gap:1px;margin-bottom:4px}
@@ -3327,34 +3374,112 @@ function computeGroupStandings(d){
   return {rows, decided, total};
 }
 
+/* The Swiss board.
+   A Swiss stage is not a ladder, and rendering it as one was actively
+   misleading: sixteen teams numbered 01–16 with thirteen of them on the same
+   0–0 record, ordered alphabetically inside the tie, reads as a ranking that
+   does not exist — and the Status column beside it was empty for every row.
+   What decides a Swiss stage is which RECORD you hold and how far that is from
+   three wins (through) or three losses (out), so group the field by record and
+   spell out what each group still needs. Each team then carries the one thing
+   the old table could never show: what it is doing right now. */
 function renderGroups(d){
   const g=d.groupStage||{};
   const computed=computeGroupStandings(d);
   const s=computed.rows||[];
   if(!s.length)return secEmpty("04","Group Stage","groups",(g.format?esc(g.format)+". ":"")+"Standings appear once the Swiss stage begins.");
-  // Only call somebody through once the table means something. Before that the
-  // "top 8" is just the first eight rows of an alphabetical list, which told
-  // everyone Aurora was advancing because it starts with an A.
-  // A pill saying ADVANCES is a claim about the future, so only make it when
-  // it is actually true: when the source says so, or when every match is in.
-  // Mid-stage it was being handed to whoever sat in the top eight rows, which
-  // among a field of 0-0 teams means whoever comes first alphabetically.
-  // Until then the cut line alone shows where eighth place falls.
-  const allIn=computed.decided>0 && computed.decided>=(computed.total||0) && (computed.total||0)>0;
-  const rows=s.map((r,i)=>{
-    const adv=r.status==="advanced"||(allIn&&r.status==null&&i<8);
-    const elim=r.status==="eliminated"||(allIn&&r.status==null&&i>=8);
-    const cut=(i===7&&s.length>8);
-    return`<tr class="clickable ${adv?'adv':''} ${elim?'elim':''} ${cut?'cutline':''}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" data-status="${adv?'advanced':elim?'eliminated':''}">
-      <td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${teamLogo(r.team,22)}${esc(r.team)}</td>
-      <td class="rec"><span class="w">${r.wins??0}</span> – <span class="l">${r.losses??0}</span></td>
-      <td>${adv?'<span class="pill adv">Advances</span>':elim?'<span class="pill elim">Out</span>':''}</td></tr>`;
+  const WIN_TARGET=3, LOSS_LIMIT=3;      // 16 teams, top 8 advance
+  const ROUNDS=Math.max(1,(g.rounds||[]).length||5);
+
+  // Index every group-stage match by team once, rather than re-merging per team.
+  const merged=tiMergedMatches(d);
+  const isGroup=m=>/^gs-/.test(m.id||"");
+  const decidedIn=m=>{
+    const a=(m.teamA||{}).score, b=(m.teamB||{}).score;
+    return typeof a==="number"&&typeof b==="number"&&
+           Math.max(a,b)>=Math.floor((m.bestOf||3)/2)+1;
+  };
+  const byTeam={};
+  merged.filter(isGroup).forEach(m=>{
+    [[(m.teamA||{}).name,true],[(m.teamB||{}).name,false]].forEach(([n,home])=>{
+      if(!n||n==="TBD") return;
+      const k=tkey(n)||tnorm(n);
+      (byTeam[k]=byTeam[k]||[]).push({m,home});
+    });
+  });
+  const infoFor=(name)=>{
+    const list=(byTeam[tkey(name)||tnorm(name)]||[]).slice()
+      .sort((x,y)=>new Date(x.m.scheduled||0)-new Date(y.m.scheduled||0));
+    const pips=[]; let live=null,last=null,next=null;
+    list.forEach(({m,home})=>{
+      const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
+      const os=(us||{}).score, ts=(them||{}).score;
+      if(decidedIn(m)){ pips.push(os>ts?"w":"l"); last={opp:(them||{}).name,os,ts,won:os>ts}; }
+      else if(m.status==="live"){ live={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute}; }
+      else if(!next&&m.scheduled){ next={opp:(them||{}).name,when:m.scheduled}; }
+    });
+    return {pips,live,last,next};
+  };
+  const when=t=>{try{return new Date(t).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"});}catch(e){return"";}};
+  const lineFor=(i)=>
+     i.live?`<span class="sw-live">● ${i.live.os}–${i.live.ts} vs ${esc(i.live.opp||"TBD")}${i.live.min!=null?" · "+i.live.min+"'":""}</span>`
+    :i.last?`<span class="sw-res ${i.last.won?"won":"lost"}">${i.last.won?"beat":"lost to"} ${esc(i.last.opp||"")} ${i.last.os}–${i.last.ts}</span>`
+    :i.next?`<span class="sw-soon">vs ${esc(i.next.opp||"TBD")} · ${esc(when(i.next.when))}</span>`
+    :`<span class="sw-soon">awaiting the draw</span>`;
+
+  // Group by record, strongest first.
+  const buckets={};
+  s.forEach(r=>{ const k=`${r.wins||0}-${r.losses||0}`; (buckets[k]=buckets[k]||[]).push(r); });
+  const keys=Object.keys(buckets).sort((a,b)=>{
+    const [aw,al]=a.split("-").map(Number), [bw,bl]=b.split("-").map(Number);
+    return (bw-aw)||(al-bl);
+  });
+  const board=keys.map(k=>{
+    const [w,l]=k.split("-").map(Number);
+    const arr=buckets[k];
+    const qual=w>=WIN_TARGET, out=l>=LOSS_LIMIT;
+    const nw=WIN_TARGET-w, nl=LOSS_LIMIT-l;
+    const note=qual?"through to the playoffs"
+      :out?"out of the tournament"
+      :`${nw} ${nw===1?"win":"wins"} to qualify · ${nl} ${nl===1?"loss":"losses"} to elimination`;
+    const teams=arr.map(r=>{
+      const i=infoFor(r.team);
+      const pips=Array.from({length:ROUNDS},(_,n)=>`<i class="${i.pips[n]||""}"></i>`).join("");
+      return `<button class="sw-team ${i.live?"is-live":""}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}">
+        <span class="sw-tlogo">${teamLogo(r.team,20)}</span>
+        <span class="sw-tname">${esc(r.team)}</span>
+        <span class="sw-tpips" title="One mark per round">${pips}</span>
+        <span class="sw-tline">${lineFor(i)}</span>
+      </button>`;
+    }).join("");
+    return `<div class="sw-bucket ${qual?"is-adv":""} ${out?"is-out":""}">
+      <div class="sw-bhead">
+        <span class="sw-brec">${w}<i>–</i>${l}</span>
+        <span class="sw-bnote">${qual?"<b>Qualified</b> · ":""}${out?"<b>Eliminated</b> · ":""}${note}</span>
+        <span class="sw-bcount">${arr.length}</span>
+      </div>
+      <div class="sw-teams">${teams}</div></div>`;
   }).join("");
+
+  // Which round is actually being played, and how far into it we are.
+  let cur=null;
+  for(const rd of (g.rounds||[])){
+    const ms=(rd.matches||[]).filter(m=>m.teamA&&m.teamA.name&&m.teamA.name!=="TBD");
+    if(!ms.length) continue;
+    const done=ms.filter(m=>decidedIn(merged.find(x=>x.id===m.id)||m)).length;
+    if(done<ms.length){ cur={name:rd.name,done,total:ms.length}; break; }
+    cur={name:rd.name,done,total:ms.length};
+  }
+  const pct=cur&&cur.total?Math.round(cur.done/cur.total*100):0;
+  const progress=cur?`<div class="sw-prog"><div class="sw-progbar"><i style="width:${pct}%"></i></div>
+      <span class="sw-progtxt">${esc(cur.name)} · ${cur.done} of ${cur.total} series decided</span></div>`:"";
+
   return`<section id="groups"><div class="sec-head"><span class="sec-num">04</span><h2>Group Stage</h2></div>
-    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")} Click a team for its roster.
-      ${computed.decided?`<b>${computed.decided} of ${computed.total||"?"} series decided.</b> The line marks eighth place — top eight go through.`
-        :`<b>No series finished yet</b> — the table fills in as they do.`}</p>
-    <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>W–L</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")}
+      Teams are grouped by record — first to <b>${WIN_TARGET} wins</b> goes through,
+      <b>${LOSS_LIMIT} losses</b> knocks you out. Tap a team for its matches and roster.</p>
+    ${progress}
+    <div class="sw-board">${board}</div></section>`;
 }
 function bracketMatch(m){
   if(!m)return"";const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);const on=notifIds.has(m.id);
