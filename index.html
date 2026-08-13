@@ -600,13 +600,22 @@
   .msep{width:1px;height:16px;background:var(--line);flex:none;margin:0 3px}
   .mlegend{font-size:10.5px;color:var(--ink-faint);line-height:1.5;margin-top:2px}
   /* The result on the Swiss board is a button now. */
-  .sw-res{background:none;border:0;padding:0;font:inherit;cursor:pointer;text-align:left}
+  /* Padding rather than height: the line sits in a grid cell and a fixed height
+     would push the chip taller. At 14px tall it was the hardest thing on the
+     page to hit, and it is the main way into a series from the board. */
+  .sw-res{background:none;border:0;padding:7px 0;margin:-7px 0;font:inherit;cursor:pointer;text-align:left}
   .sw-res:hover{text-decoration:underline}
   @media(max-width:560px){
     /* A phone cannot fit 12 slots on one line: without wrapping the backpack ran
        past the panel edge and was simply invisible. Wrapping breaks it exactly
        where it should -- main inventory above, neutral + backpack below. */
     .mitems{margin-left:0;flex-basis:100%;padding-left:47px;flex-wrap:wrap;min-width:0;row-gap:3px}
+    /* Measured on a 375px screen: the game tabs were 25px tall, the back button
+       21px and the bracket's button 24px. Everything you actually press to move
+       around this view was under the size of a fingertip. */
+    .mtab{min-height:32px}
+    .mback{padding-top:6px;padding-bottom:12px}
+    .gbtn.sm{height:30px;padding:0 10px}
     /* Break where the meaning breaks, so the wrap does not leave a lone divider
        heading the second line: carried items above, backpack below. */
     .msep-bp{flex-basis:100%;width:auto;height:0;margin:0;background:none}
@@ -1947,9 +1956,15 @@ function renderLive(d){
    Every match reaching this helper gets it, so the playoffs are covered the day
    they are drawn without anything further being wired up. */
 function seriesGamesBtn(m,cls){
-  // Games are resolved against the TI league, so a regional qualifier or a
-  // random pro match off the live feed would only ever find nothing.
-  if(m.side==="qual"||m.fromStratz) return "";
+  /* Games resolve against the TI league, so anything played elsewhere would only
+     ever come back empty: regional qualifiers, and pro matches the live feed
+     carries from another event.
+     NOT fromStratz. That flag means "the live feed touched this", which is set
+     on every TI fixture the moment it goes live — the exact card this button is
+     most wanted on. Guarding on it made the button unreachable in practice
+     while still passing every synthetic test. */
+  if(m.side==="qual") return "";
+  if(m.leagueId!=null&&String(m.leagueId)!==String(TI_LEAGUE)) return "";
   const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
   if(!a||!b||a==="TBD"||b==="TBD") return "";
   const sa=(m.teamA||{}).score, sb=(m.teamB||{}).score;
@@ -3518,8 +3533,16 @@ function teamDetailHTML(d,name){
    inventory exists: the live feed carries six item slots, while a finished game
    also has the three backpack slots and the neutral item. */
 const MATCH_FN="https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/match-live";
-const _mCache={};          // seriesKey -> {games:[…]}, and gameId -> detail
+const TI_LEAGUE=19719;     // games resolve against this league and no other
+const _mCache={};          // gameId -> detail. A finished game never changes, so this never expires.
+/* The series LIST does change: a live Bo3 at 1–0 becomes 2–1 while you are
+   reading it. Cached without a TTL it said "1 game" until the page was
+   reloaded. Short window — long enough to stop tab-switching from refetching,
+   short enough that a finished game shows up on its own. */
+const _mList={};           // seriesKey -> {at, list}
+const M_LIST_TTL=60_000;
 let _mOpen=null;           // which series is on screen, so late fetches can't paint over a newer one
+let _mSeq=0;               // ...and which GAME within it: two tabs of one series share the key above
 
 function mItem(it){
   return it&&it.img
@@ -3570,12 +3593,13 @@ async function openMatch(a,b,backTo){
   const body=$("#matchModalBody");
   body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
     <div class="lg-empty"><div class="hint">Loading the series…</div></div>`;
-  let list=_mCache[key];
+  const hit=_mList[key];
+  let list=(hit&&Date.now()-hit.at<M_LIST_TTL)?hit.list:null;
   if(!list){
     try{
       const r=await fetch(`${MATCH_FN}?series=${encodeURIComponent(key)}&cb=${Date.now()}`);
-      list=await r.json(); _mCache[key]=list;
-    }catch(e){ list={games:[]}; }
+      list=await r.json(); _mList[key]={at:Date.now(),list};
+    }catch(e){ list=(hit&&hit.list)||{games:[]}; }   // a dropped connection keeps what we had
   }
   if(_mOpen!==key) return;                       // a different series was opened meanwhile
   if(!list.games||!list.games.length){
@@ -3597,13 +3621,17 @@ async function openMatch(a,b,backTo){
 
 async function showGame(id,key){
   const host=$("#mGameBody"); if(!host) return;
+  /* Both games of a series share `key`, so that guard alone cannot tell game 1's
+     late reply from game 3's. Click Game 1 then Game 3 and a slow game 1 would
+     paint its stats under the Game 3 tab, with nothing on screen saying so. */
+  const seq=++_mSeq;
   document.querySelectorAll("[data-mgame]").forEach(t=>t.classList.toggle("on",t.dataset.mgame===id));
   let g=_mCache[id];
   if(!g){ host.innerHTML=`<div class="lg-empty"><div class="hint">Loading game…</div></div>`;
     try{ const r=await fetch(`${MATCH_FN}?game=${encodeURIComponent(id)}`); g=await r.json(); _mCache[id]=g; }
     catch(e){ g={error:1}; }
   }
-  if(_mOpen!==key) return;
+  if(_mOpen!==key||seq!==_mSeq) return;
   const h=$("#mGameBody"); if(h) h.innerHTML=mDetailHTML(g);
 }
 
@@ -3625,10 +3653,14 @@ function openTeam(d,name){
   _openView={type:"team",name,mode};
 }
 
-// "← OG" back to the team panel you came from.
+/* "← OG" back to the team panel you came from.
+   Close this modal first. In the "Page" view preference the team panel is a body
+   class rather than a .modal, so openModal's closeModals() never hid it — the
+   match modal just sat on top at full screen, and pressing back re-rendered the
+   page underneath while the screen did not visibly change at all. */
 function wireMatchBack(root){
   const b=root&&root.querySelector("[data-mback]");
-  if(b) b.addEventListener("click",()=>openTeam(DATA,b.getAttribute("data-mback")));
+  if(b) b.addEventListener("click",()=>{ closeModals(); openTeam(DATA,b.getAttribute("data-mback")); });
 }
 
 /* Make every played-match row in a container open its series detail.
@@ -3666,16 +3698,19 @@ function refreshOpenView(d){
 }
 function wireTeams(d){
   /* Bound before the team handler below, and stops the click there: the result
-     button sits inside the team chip, so without this a tap would open both. */
-  document.querySelectorAll("[data-series]").forEach(el=>{
+     button sits inside the team chip, so without this a tap would open both.
+     Scoped to #app, which render() rebuilds from scratch every time. The modals
+     live OUTSIDE it and survive, so a document-wide bind stacked one more
+     handler on the same button on every refresh — a series left open for five
+     minutes fired eleven parallel fetches per click, and the team rows lost
+     their "back" because the last-bound handler had no team to return to. */
+  const app=$("#app")||document;
+  app.querySelectorAll("[data-series]").forEach(el=>{
     el.addEventListener("click",ev=>{
       ev.stopPropagation(); ev.preventDefault();
       const [a,b]=(el.getAttribute("data-series")||"").split("|");
       if(a&&b) openMatch(a,b);
     });
-  });
-  document.querySelectorAll("[data-mgame]").forEach(el=>{
-    el.addEventListener("click",()=>showGame(el.dataset.mgame,el.dataset.mkey));
   });
   document.querySelectorAll("[data-team]").forEach(el=>{
     const name=el.getAttribute("data-team");
@@ -3869,7 +3904,13 @@ function renderBracket(d){
   const b=d.bracket||{};const rounds=b.rounds||{};
   const hasData=(rounds.upper&&rounds.upper.length)||(rounds.lower&&rounds.lower.length)||b.grandFinal;
   if(!hasData)return secEmpty("05","Playoffs","bracket","Double-elimination bracket populates after the group stage. Main Event runs Aug 20–23 in Shanghai.");
-  const colsFor=arr=>(arr||[]).map(rd=>`<div class="br-col"><div class="br-col-title">${esc(rd.name)}</div>${(rd.matches||[]).map(bracketMatch).join("")}</div>`).join("");
+  /* Read the merged view, not the raw schedule. Liquipedia records a finished
+     game minutes late, and every other surface on the page already corrects for
+     that — leaving the bracket on the raw feed would have made a live 1–0 offer
+     no games at all and a finished 2–1 claim the wrong count. */
+  const mergedById={};
+  tiMergedMatches(d).forEach(x=>{ if(x&&x.id) mergedById[x.id]=x; });
+  const colsFor=arr=>(arr||[]).map(rd=>`<div class="br-col"><div class="br-col-title">${esc(rd.name)}</div>${(rd.matches||[]).map(m=>bracketMatch(mergedById[m&&m.id]||m)).join("")}</div>`).join("");
   return`<section id="bracket"><div class="sec-head"><span class="sec-num">05</span><h2>Main Event — Playoffs</h2></div>
     <p class="sec-note">${esc(b.format||"Double elimination")}.</p>
     <div class="br-section-label">Upper Bracket</div>
@@ -3877,7 +3918,7 @@ function renderBracket(d){
     <div class="br-section-label" style="margin-top:30px">Lower Bracket</div>
     <div class="bracket-wrap"><div class="bracket">${colsFor(rounds.lower)||'<div class="qual-dates">TBD</div>'}</div></div>
     <div class="br-section-label" style="margin-top:30px">Grand Final</div>
-    <div class="gf gf-wrap">${bracketMatch(b.grandFinal)||'<div class="qual-dates">TBD</div>'}</div></section>`;
+    <div class="gf gf-wrap">${bracketMatch((b.grandFinal&&mergedById[b.grandFinal.id])||b.grandFinal)||'<div class="qual-dates">TBD</div>'}</div></section>`;
 }
 function secEmpty(num,title,id,msg){
   return`<section id="${id}"><div class="sec-head"><span class="sec-num">${num}</span><h2>${esc(title)}</h2></div><div class="empty"><b>Not started</b>${esc(msg)}</div></section>`;
