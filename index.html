@@ -547,6 +547,9 @@
 
   /* Finished-series detail. One row per player, with the full inventory: six
      working items, the neutral, then whatever is left in the backpack. */
+  .mback{background:none;border:0;padding:0 0 8px;cursor:pointer;font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-dim)}
+  .mback:hover{color:var(--aegis)}
   .mtitle{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;margin:0 0 10px}
   .mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
   .mtab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
@@ -670,6 +673,10 @@
   .td-mscore{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--ink)}
   .td-mtag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;
     text-transform:uppercase;color:var(--ink-faint);min-width:56px;text-align:right}
+  /* Played matches open their history; upcoming ones stay inert. */
+  .td-mrow.td-mclick{cursor:pointer}
+  .td-mrow.td-mclick:hover{background:var(--panel-3)}
+  .td-mrow.td-mclick .td-mopp::after{content:" ›";color:var(--ink-faint);font-weight:400}
   .td-mrow.won .td-mtag{color:var(--win)}
   .td-mrow.lost .td-mtag{color:var(--live)}
   .td-mrow.live .td-mtag{color:var(--aegis-bright)}
@@ -3439,7 +3446,13 @@ function teamDetailHTML(d,name){
     const when=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):'';
     const mid=done?`${os}–${ts}`:(live?`${os??0}–${ts??0}`:'vs');
     const tag=done?(os>ts?'WON':'LOST'):(live?`LIVE${m.gameMinute!=null?" "+m.gameMinute+"'":''}`:esc(when||'Upcoming'));
-    return `<div class="td-mrow ${cls}">
+    /* A played match opens its full history, game by game. An upcoming one does
+       not: there is nothing behind it yet, and a row that looks clickable but
+       does nothing is worse than one that plainly is not. */
+    const opp=(them||{}).name||"";
+    const hit=done&&opp;
+    return `<div class="td-mrow ${cls}${hit?" td-mclick":""}"${
+        hit?` data-series="${esc(name+"|"+opp)}" role="button" tabindex="0" title="See every game of this match"`:""}>
       <span class="td-mopp">${esc((them||{}).name||'TBD')}</span>
       <span class="td-mscore">${mid}</span>
       <span class="td-mtag">${tag}</span>
@@ -3516,12 +3529,15 @@ function mDetailHTML(g){
     <div class="mlegend">Six working items, then the neutral, then anything left in the backpack.</div>`;
 }
 
-async function openMatch(a,b){
+async function openMatch(a,b,backTo){
   const key=a+"|"+b;
   _mOpen=key;
+  // openModal closes whatever else is open, so coming from a team panel would
+  // otherwise strand you here with no way back to it.
+  const back=backTo?`<button class="mback" data-mback="${esc(backTo)}">← ${esc(backTo)}</button>`:"";
   openModal("matchModal");
   const body=$("#matchModalBody");
-  body.innerHTML=`<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+  body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
     <div class="lg-empty"><div class="hint">Loading the series…</div></div>`;
   let list=_mCache[key];
   if(!list){
@@ -3532,17 +3548,19 @@ async function openMatch(a,b){
   }
   if(_mOpen!==key) return;                       // a different series was opened meanwhile
   if(!list.games||!list.games.length){
-    body.innerHTML=`<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+    body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
       <div class="lg-empty"><div class="hint">No finished games for this match yet.</div></div>`;
+    wireMatchBack(body);
     return;
   }
   const tabs=list.games.map((g,i)=>`<button class="mtab${i===list.games.length-1?" on":""}" data-mgame="${esc(g.matchId)}" data-mkey="${esc(key)}">Game ${g.game}</button>`).join("");
-  body.innerHTML=`<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+  body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
     <div class="mtabs">${tabs}</div><div id="mGameBody"></div>`;
   // Wire the tabs here: they are created now, long after wireTeams ran.
   body.querySelectorAll("[data-mgame]").forEach(t=>{
     t.addEventListener("click",()=>showGame(t.dataset.mgame,t.dataset.mkey));
   });
+  wireMatchBack(body);
   showGame(list.games[list.games.length-1].matchId,key);   // newest game first
 }
 
@@ -3570,7 +3588,32 @@ function openTeam(d,name){
     $("#teamModalBody").innerHTML=html;
     $("#teamModal").classList.add("show");
   }
+  // The match rows were just created, long after wireTeams ran, so bind them
+  // here. Both layouts, because the panel renders as a modal or a full page.
+  wireSeriesRows(mode==="page"?$("#teamPageBody"):$("#teamModalBody"),name);
   _openView={type:"team",name,mode};
+}
+
+// "← OG" back to the team panel you came from.
+function wireMatchBack(root){
+  const b=root&&root.querySelector("[data-mback]");
+  if(b) b.addEventListener("click",()=>openTeam(DATA,b.getAttribute("data-mback")));
+}
+
+/* Make every played-match row in a container open its series detail.
+   backTo is the team whose panel we are inside, so the detail can offer a way
+   back to it. */
+function wireSeriesRows(root,backTo){
+  if(!root) return;
+  root.querySelectorAll("[data-series]").forEach(el=>{
+    const go=ev=>{
+      ev.stopPropagation(); ev.preventDefault();
+      const [a,b]=(el.getAttribute("data-series")||"").split("|");
+      if(a&&b) openMatch(a,b,backTo);
+    };
+    el.addEventListener("click",go);
+    el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" ") go(e); });
+  });
 }
 // Re-render whichever detail view is open, in place, using fresh data.
 function refreshOpenView(d){
