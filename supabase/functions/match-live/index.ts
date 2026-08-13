@@ -27,6 +27,40 @@
 const OPENDOTA = "https://api.opendota.com/api";
 const UA = { "User-Agent": "dota2tileague/1.0 (https://dota2tileague.com)" };
 
+/* Valve's own live feed.
+   This is the authority and it solves at source the problem OpenDota created:
+   GetLiveLeagueGames returns ONLY games actually being played, so finished games
+   never appear at all and the frozen-clock heuristic below becomes a fallback
+   rather than the primary test. It also carries what OpenDota does not — the
+   real series score (radiant_series_wins, no waiting for game 1 to be parsed),
+   per-player net worth/level/KDA/items, the full pick-ban order, tower and
+   barracks state and the Roshan timer.
+
+   THE KEY IS THE SITE OWNER'S PERSONAL STEAM KEY. It stays server-side: this
+   function calls Valve and returns shaped data, so the key never reaches a
+   browser. Never inline it into a page. 100k calls/day, hence the cache. */
+const STEAM_KEY = Deno.env.get("STEAM_API_KEY") ?? "";
+const STEAM_LIVE = "https://api.steampowered.com/IDOTA2Match_570/GetLiveLeagueGames/v1/";
+
+let _valve: { at: number; data: any[] } | null = null;
+const VALVE_TTL = 8_000;   // the page polls every 20s; this keeps us well inside quota
+
+async function valveLive(league: number): Promise<any[] | null> {
+  if (!STEAM_KEY) return null;
+  if (_valve && Date.now() - _valve.at < VALVE_TTL) return _valve.data;
+  try {
+    const r = await fetch(`${STEAM_LIVE}?key=${encodeURIComponent(STEAM_KEY)}&league_id=${league}`, { headers: UA });
+    if (!r.ok) return _valve?.data ?? null;
+    const j = await r.json();
+    const games = j?.result?.games;
+    if (!Array.isArray(games)) return _valve?.data ?? null;
+    _valve = { at: Date.now(), data: games };
+    return games;
+  } catch (_e) {
+    return _valve?.data ?? null;   // keep serving the last good snapshot
+  }
+}
+
 // Official TI 2026 channels, taken from Liquipedia's event page.
 const CHANNELS: Array<{ c: string; lang: string }> = [
   { c: "dota2ti", lang: "EN" }, { c: "dota2ti_2", lang: "EN" },
@@ -208,6 +242,70 @@ function isBeingPlayed(g: any, nowSec: number): boolean {
   return false;                                          // clock stopped
 }
 
+/* Shape Valve's game into the same object the page already renders, so the
+   front end needs no change and OpenDota can still stand in if Valve is down. */
+function shapeValve(g: any, heroMap: Record<string, any>, teamMap: Record<string, any>, streams: any[]) {
+  const sb = g.scoreboard ?? {};
+  const a = (g.radiant_team?.team_name || "Radiant").trim();
+  const b = (g.dire_team?.team_name || "Dire").trim();
+  const dur = sb.duration ?? 0;
+  // Valve's scoreboard players carry stats but NO name — the handles live in a
+  // separate top-level players array, joined by account_id.
+  const names: Record<string, string> = {};
+  (g.players ?? []).forEach((p: any) => {
+    if (p.account_id != null && p.name) names[String(p.account_id)] = p.name;
+  });
+  const side = (s: any) => (s?.players ?? []).map((p: any) => ({
+    player: names[String(p.account_id)] || p.name || null,
+    heroId: p.hero_id,
+    hero: heroMap[String(p.hero_id)]?.name || null,
+    img: heroMap[String(p.hero_id)]?.img || null,
+    // the detail OpenDota never had
+    level: p.level ?? null,
+    kills: p.kills ?? null,
+    deaths: p.death ?? null,      // Valve spells it "death", singular
+    assists: p.assists ?? null,
+    netWorth: p.net_worth ?? null,
+    gpm: p.gold_per_min ?? null,
+    xpm: p.xp_per_min ?? null,
+  }));
+  const nw = (s: any) => (s?.players ?? []).reduce((t: number, p: any) => t + (p.net_worth ?? 0), 0);
+  const logo = (id: any, name: string) =>
+    teamMap[String(id)]?.logo
+    ?? Object.values(teamMap).find((t: any) => tkey(t.name) === tkey(name))?.logo
+    ?? null;
+
+  return {
+    matchId: String(g.match_id),
+    seriesId: null,
+    startedAgo: null,
+    source: "valve",
+    // Valve only returns live games, so anything here is being played. Before
+    // the horn the clock sits at 0 and the draft is still happening.
+    drafting: dur <= 0,
+    gameMinute: dur > 0 ? Math.floor(dur / 60) : 0,
+    delaySec: g.stream_delay_s ?? null,
+    spectators: g.spectators ?? 0,
+    radiant: {
+      name: a, kills: sb.radiant?.score ?? 0, teamId: g.radiant_team?.team_id ?? null,
+      logo: logo(g.radiant_team?.team_id, a), players: side(sb.radiant),
+      towers: sb.radiant?.tower_state ?? null, barracks: sb.radiant?.barracks_state ?? null,
+    },
+    dire: {
+      name: b, kills: sb.dire?.score ?? 0, teamId: g.dire_team?.team_id ?? null,
+      logo: logo(g.dire_team?.team_id, b), players: side(sb.dire),
+      towers: sb.dire?.tower_state ?? null, barracks: sb.dire?.barracks_state ?? null,
+    },
+    netWorthLead: (nw(sb.radiant) - nw(sb.dire)) || 0,
+    // straight from Valve: no waiting for OpenDota to parse game 1
+    series: { a: g.radiant_series_wins ?? 0, b: g.dire_series_wins ?? 0 },
+    bestOf: g.series_type === 1 ? 3 : g.series_type === 2 ? 5 : g.series_type === 0 ? 1 : null,
+    roshanRespawnSec: sb.roshan_respawn_timer ?? null,
+    streams: streamsFor(streams, a, b),
+    stats: `https://www.opendota.com/matches/${g.match_id}`,
+  };
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const cors = {
@@ -222,13 +320,33 @@ Deno.serve(async (req) => {
 
     const leagueParam = url.searchParams.get("league");
     const wanted = leagueParam ? Number(leagueParam) : 19719;
-    const [streams, heroMap, teamMap, fin, liveRaw] = await Promise.all([
+    // ?src=opendota forces the fallback path, so it can be exercised on demand
+    // rather than only discovered broken the day Valve is down.
+    const forceOD = url.searchParams.get("src") === "opendota";
+    const [streams, heroMap, teamMap, fin, valve, liveRaw] = await Promise.all([
       resolveStreams(),
       heroes(),
       teamLogos(wanted),
       finished(wanted),
+      forceOD ? Promise.resolve(null) : valveLive(wanted),
       fetch(`${OPENDOTA}/live`, { headers: UA }).then(r => r.json()).catch(() => []),
     ]);
+
+    // Valve is the authority: it returns only games actually being played, so
+    // none of the finished-game guesswork below is needed when it answers.
+    if (valve && valve.length >= 0 && !forceOD) {
+      const matches = valve
+        .map((g: any) => shapeValve(g, heroMap, teamMap, streams))
+        .sort((x: any, y: any) => (x.gameMinute ?? 0) - (y.gameMinute ?? 0));
+      const livePairs = new Set(matches.map((m: any) =>
+        [tkey(m.radiant.name), tkey(m.dire.name)].sort().join("|")));
+      const replays = streams.filter(s => s.teamA && s.teamB
+        && !livePairs.has([tkey(s.teamA), tkey(s.teamB)].sort().join("|")));
+      return new Response(JSON.stringify({
+        matches, replays, streamsAll: streams, leagueId: wanted,
+        source: "valve", updatedAt: new Date().toISOString(),
+      }, null, 1), { headers: cors });
+    }
 
     const now = Math.floor(Date.now() / 1000);
     const seen = new Map<string, any>();

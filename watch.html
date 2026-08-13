@@ -57,7 +57,12 @@
     justify-content:center;color:var(--ink-faint);font-size:12px}
   .pname{font-size:10.5px;font-weight:600;padding:3px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .hname{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink-faint);
-    padding:0 2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    padding:0 2px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pstat{display:flex;align-items:center;justify-content:center;gap:4px;padding:0 2px}
+  .plvl{font-family:'JetBrains Mono',monospace;font-size:8px;color:#0b0e13;background:var(--ink-dim);
+    border-radius:3px;padding:0 3px;line-height:12px;min-width:13px}
+  .pkda{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ink-dim)}
+  .pnw{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--aegis);padding:1px 2px 4px}
 
   /* gold swing, sitting between the two teams */
   .nw{padding:2px 12px 12px}
@@ -170,11 +175,31 @@ const streamKey = m => (chosen[m.matchId] || "") + "|" + (m.streams || []).map(s
 function heroCell(p){
   // hero_id stays 0 until that player is drafted, so the tile has to stand on
   // its own without a portrait rather than showing a broken image
+  // Level / KDA / net worth only exist on the Valve feed; the OpenDota fallback
+  // has no per-player stats, so the tile degrades to just player + hero.
+  const hasStats = p.level != null || p.netWorth != null;
   return `<div class="hero">
     ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">` : `<div class="hero-ph">?</div>`}
     <div class="pname">${esc(p.player || "—")}</div>
     <div class="hname">${esc(p.hero || "picking")}</div>
+    ${hasStats ? `<div class="pstat">
+        <span class="plvl">${p.level ?? "-"}</span>
+        <span class="pkda">${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}</span>
+      </div>
+      <div class="pnw">${p.netWorth != null ? gold(p.netWorth) : ""}</div>` : ""}
   </div>`;
+}
+
+function updateStats(strip, players){
+  if (!strip) return;
+  const cells = strip.children;
+  players.forEach((p, i) => {
+    const c = cells[i]; if (!c) return;
+    const lvl = c.querySelector(".plvl"), kda = c.querySelector(".pkda"), nw = c.querySelector(".pnw");
+    if (lvl) lvl.textContent = p.level ?? "-";
+    if (kda) kda.textContent = `${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}`;
+    if (nw)  nw.textContent  = p.netWorth != null ? gold(p.netWorth) : "";
+  });
 }
 
 function teamBlock(m, side){
@@ -271,6 +296,11 @@ function paint(matches){
         el.dataset.draft = draftKey(m);
         el.querySelector('.hstrip[data-h="rad"]').innerHTML = m.radiant.players.map(heroCell).join("");
         el.querySelector('.hstrip[data-h="dir"]').innerHTML = m.dire.players.map(heroCell).join("");
+      } else {
+        // Same heroes, moving numbers. Rebuilding the strip would recreate ten
+        // portraits every 20 seconds and flicker, so poke the text instead.
+        updateStats(el.querySelector('.hstrip[data-h="rad"]'), m.radiant.players);
+        updateStats(el.querySelector('.hstrip[data-h="dir"]'), m.dire.players);
       }
       if (el.dataset.skey !== streamKey(m)){
         el.dataset.skey = streamKey(m);
