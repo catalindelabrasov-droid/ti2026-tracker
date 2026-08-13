@@ -390,6 +390,91 @@ Deno.serve(async (req) => {
       });
     }
 
+    /* A finished game, in full.
+       The live feed only carries the six working item slots; once a match is
+       parsed the other four exist — three backpack and the neutral — along with
+       the final KDA, net worth, GPM and last hits. This is the only place those
+       can come from, so the match detail view reads from here. */
+    /* Every game of one series, by team names.
+       The site thinks in fixtures ("gs-r2-m1") and pairings; Valve and OpenDota
+       think in game ids. The league's own finished-game list already carries
+       both, so resolve here rather than making the page hold a mapping it would
+       only get stale. */
+    const seriesParam = url.searchParams.get("series");
+    if (seriesParam) {
+      const [ta, tb] = seriesParam.split("|");
+      if (!ta || !tb) return new Response(JSON.stringify({ error: "need series=A|B" }), { status: 400, headers: cors });
+      const league = Number(url.searchParams.get("league") || 19719);
+      const [gamesR, teamsR] = await Promise.all([
+        fetch(`${OPENDOTA}/leagues/${league}/matches`, { headers: UA }).then(r => r.json()).catch(() => []),
+        fetch(`${OPENDOTA}/leagues/${league}/teams`, { headers: UA }).then(r => r.json()).catch(() => []),
+      ]);
+      const tn: Record<string, string> = {};
+      (teamsR || []).forEach((t: any) => { if (t.team_id && t.name) tn[String(t.team_id)] = t.name; });
+      const want = [tkey(ta), tkey(tb)].sort().join("|");
+      const games = (Array.isArray(gamesR) ? gamesR : [])
+        .filter((g: any) => {
+          const r = (g.radiant_name || tn[String(g.radiant_team_id)] || "").trim();
+          const d = (g.dire_name || tn[String(g.dire_team_id)] || "").trim();
+          return r && d && [tkey(r), tkey(d)].sort().join("|") === want;
+        })
+        .sort((a: any, b: any) => (a.start_time ?? 0) - (b.start_time ?? 0))
+        .map((g: any, i: number) => ({
+          matchId: String(g.match_id),
+          game: i + 1,
+          startTime: g.start_time ?? null,
+          duration: g.duration ?? null,
+          radiantWin: g.radiant_win ?? null,
+          radiant: (g.radiant_name || tn[String(g.radiant_team_id)] || "").trim(),
+          dire: (g.dire_name || tn[String(g.dire_team_id)] || "").trim(),
+        }));
+      return new Response(JSON.stringify({ series: `${ta} vs ${tb}`, games }, null, 1),
+        { headers: { ...cors, "Cache-Control": "public, max-age=120" } });
+    }
+
+    const gameId = url.searchParams.get("game");
+    if (gameId) {
+      if (!/^\d{6,20}$/.test(gameId)) {
+        return new Response(JSON.stringify({ error: "bad id" }), { status: 400, headers: cors });
+      }
+      const [heroMap, itemMap] = await Promise.all([heroes(), items()]);
+      const r = await fetch(`${OPENDOTA}/matches/${gameId}`, { headers: UA });
+      if (!r.ok) return new Response(JSON.stringify({ error: `upstream ${r.status}` }), { status: 502, headers: cors });
+      const m = await r.json().catch(() => null);
+      if (!m || !Array.isArray(m.players)) {
+        return new Response(JSON.stringify({ error: "not parsed yet" }), { status: 404, headers: cors });
+      }
+      const it = (id: any) => {
+        if (!id) return null;
+        const x = itemMap[String(id)];
+        return x ? { id, name: x.name, img: x.img } : { id, name: null, img: null };
+      };
+      const side = (radiant: boolean) => (m.players || [])
+        .filter((p: any) => (p.isRadiant ?? (p.player_slot < 128)) === radiant)
+        .map((p: any) => ({
+          player: p.name || p.personaname || null,
+          heroId: p.hero_id,
+          hero: heroMap[String(p.hero_id)]?.name || null,
+          img: heroMap[String(p.hero_id)]?.img || null,
+          level: p.level ?? null,
+          kills: p.kills ?? null, deaths: p.deaths ?? null, assists: p.assists ?? null,
+          netWorth: p.net_worth ?? p.total_gold ?? null,
+          gpm: p.gold_per_min ?? null, xpm: p.xp_per_min ?? null,
+          lastHits: p.last_hits ?? null, denies: p.denies ?? null,
+          items: [p.item_0, p.item_1, p.item_2, p.item_3, p.item_4, p.item_5].map(it),
+          backpack: [p.backpack_0, p.backpack_1, p.backpack_2].map(it),
+          neutral: it(p.item_neutral),
+        }));
+      return new Response(JSON.stringify({
+        matchId: String(m.match_id),
+        radiantWin: m.radiant_win,
+        duration: m.duration ?? null,
+        startTime: m.start_time ?? null,
+        radiant: { name: m.radiant_team?.name || m.radiant_name || "Radiant", score: m.radiant_score ?? null, players: side(true) },
+        dire:    { name: m.dire_team?.name    || m.dire_name    || "Dire",    score: m.dire_score ?? null,    players: side(false) },
+      }, null, 1), { headers: { ...cors, "Cache-Control": "public, max-age=3600" } });
+    }
+
     if (url.searchParams.get("streams") === "1") {
       return new Response(JSON.stringify({ streams: await resolveStreams() }, null, 1), { headers: cors });
     }

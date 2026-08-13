@@ -545,6 +545,62 @@
   .lg-refresh:hover:not(:disabled){border-color:var(--aegis);color:var(--aegis)}
   .lg-refresh:disabled{opacity:.55;cursor:default}
 
+  /* Finished-series detail. One row per player, with the full inventory: six
+     working items, the neutral, then whatever is left in the backpack. */
+  .mtitle{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;margin:0 0 10px}
+  .mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .mtab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
+    background:var(--panel-3);border:1px solid var(--line);color:var(--ink-dim);
+    padding:5px 11px;border-radius:20px;cursor:pointer}
+  .mtab.on{background:var(--aegis);color:#0b0e13;border-color:var(--aegis);font-weight:600}
+  .mmeta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .mside{border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:10px}
+  .mside.won{border-color:rgba(78,201,143,.5)}
+  .mshead{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--panel-2);
+    border-bottom:1px solid var(--line)}
+  .msname{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mstag{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint)}
+  .msscore{font-family:'Oswald',sans-serif;font-size:20px;font-weight:600}
+  .mside.won .msscore{color:var(--win)}
+  .mrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 10px;
+    border-top:1px solid var(--line-soft);font-size:12px}
+  .mrow:first-of-type{border-top:0}
+  .mface{flex:none;line-height:0}
+  .mface img{width:40px;height:23px;object-fit:cover;border-radius:3px;display:block;background:var(--panel-3)}
+  .mface-ph{display:inline-block;width:40px;height:23px;background:var(--panel-3);border-radius:3px}
+  .mwho{display:flex;flex-direction:column;min-width:0;flex:1 1 74px}
+  .mname{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mhero{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ink-faint);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mlvl{flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;color:#0b0e13;
+    background:var(--ink-dim);border-radius:3px;padding:1px 4px;min-width:18px;text-align:center}
+  .mkda{flex:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;min-width:50px;text-align:center}
+  .mnw{flex:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--aegis);
+    min-width:34px;text-align:right}
+  .mgpm{flex:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-dim);min-width:44px;text-align:right}
+  .mgpm i{font-style:normal;color:var(--ink-faint);font-size:7.5px;margin-left:2px}
+  .mlh{flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);
+    min-width:44px;text-align:right}
+  .mitems{display:flex;gap:2px;align-items:center;flex:0 0 auto;margin-left:auto}
+  .mi{width:26px;height:20px;border-radius:2px;display:block;object-fit:cover;flex:none}
+  .mi-none{background:var(--panel-3);opacity:.4}
+  .msep{width:1px;height:16px;background:var(--line);flex:none;margin:0 3px}
+  .mlegend{font-size:10.5px;color:var(--ink-faint);line-height:1.5;margin-top:2px}
+  /* The result on the Swiss board is a button now. */
+  .sw-res{background:none;border:0;padding:0;font:inherit;cursor:pointer;text-align:left}
+  .sw-res:hover{text-decoration:underline}
+  @media(max-width:560px){
+    .mitems{margin-left:0;flex-basis:100%;padding-left:47px}
+    .mgpm,.mlh{display:none}
+  }
+
+  /* Says why the rail is shorter than the bracket: the rest are not drawn yet. */
+  .rail-note{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.07em;
+    text-transform:none;color:var(--ink-faint);margin-left:10px}
+
   /* Entry point to the watch page. Shown only while a game is being played. */
   .watch-all{display:block;margin:0 0 12px;padding:10px 13px;border-radius:5px;
     background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--live);
@@ -1250,6 +1306,17 @@
     </div>
   </div>
 
+  <!-- A finished series, game by game. Opened from a result on the Swiss board. -->
+  <div class="modal" id="matchModal">
+    <div class="modal-card" style="max-width:720px">
+      <div class="modal-head">
+        <div style="flex:1"></div>
+        <button class="x" data-close="matchModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="matchModalBody" style="padding-top:0"></div>
+    </div>
+  </div>
+
   <!-- Team detail: MODAL version -->
   <div class="modal" id="teamModal">
     <div class="modal-card" style="max-width:560px">
@@ -1816,7 +1883,18 @@ function liveMatchesOf(d){
   return out;
 }
 function liveRailInner(d){
-  const matches=liveMatchesOf(d);
+  const all=liveMatchesOf(d);
+  /* Drop fixtures whose teams are not drawn yet.
+     Measured 13 Aug 2026: 38 of the 46 cards in this rail were "TBD vs TBD",
+     making it 13,634px wide inside a 331px window — 41 screens of sideways
+     scrolling before you reach anything real. Nobody can act on an undrawn
+     fixture: there is no team to read, no time to plan around and nothing to
+     predict. They come back the moment the draw lands. */
+  const matches=all.filter(m=>{
+    const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
+    return a && b && a!=="TBD" && b!=="TBD";
+  });
+  const undrawn=all.length-matches.length;
   const elsewhere=liveProMatches().length;
   if(!matches.length){
     // Don't dead-end: if Dota is being played somewhere, say so and point there.
@@ -1824,7 +1902,8 @@ function liveRailInner(d){
       ${elsewhere?`${elsewhere} pro ${elsewhere===1?'match is':'matches are'} live elsewhere right now — see the <button class="linklike" data-goto-tab="tournaments">Tournaments</button> tab.`
                  :'Check back when the group stage begins on 13 August.'}</div>`;
   }
-  return `<div class="rail-group"><div class="rail-label">The International 2026</div>
+  return `<div class="rail-group"><div class="rail-label">The International 2026${
+      undrawn?`<span class="rail-note">${undrawn} more appear as rounds are drawn</span>`:""}</div>
       <div class="live-rail">${matches.map(liveCard).join("")}</div></div>`;
 }
 function renderLive(d){
@@ -3390,6 +3469,95 @@ function teamDetailHTML(d,name){
     ${playerRows}
     ${coach?`<div class="td-section-label">Staff</div>${coachBlock}`:''}`;
 }
+/* ---- finished series detail -------------------------------------------------
+   Everything here comes from parsed matches, which is the only place the full
+   inventory exists: the live feed carries six item slots, while a finished game
+   also has the three backpack slots and the neutral item. */
+const MATCH_FN="https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/match-live";
+const _mCache={};          // seriesKey -> {games:[…]}, and gameId -> detail
+let _mOpen=null;           // which series is on screen, so late fetches can't paint over a newer one
+
+function mItem(it){
+  return it&&it.img
+    ? `<img class="mi" src="${esc(it.img)}" alt="${esc(it.name||"")}" title="${esc(it.name||"")}" loading="lazy">`
+    : `<span class="mi mi-none"></span>`;
+}
+function mPlayerRow(p){
+  const bp=(p.backpack||[]).filter(Boolean);
+  return `<div class="mrow">
+    <div class="mface">${p.img?`<img src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">`:`<span class="mface-ph">?</span>`}</div>
+    <div class="mwho"><span class="mname">${esc(p.player||"—")}</span><span class="mhero">${esc(p.hero||"")}</span></div>
+    <span class="mlvl">${p.level??"-"}</span>
+    <span class="mkda">${p.kills??0}/${p.deaths??0}/${p.assists??0}</span>
+    <span class="mnw">${p.netWorth!=null?(p.netWorth>=1000?(p.netWorth/1000).toFixed(1)+"k":p.netWorth):""}</span>
+    <span class="mgpm">${p.gpm??"-"}<i>gpm</i></span>
+    <span class="mlh">${p.lastHits??0}/${p.denies??0}</span>
+    <div class="mitems">${(p.items||[]).map(mItem).join("")}
+      ${p.neutral?`<span class="msep"></span>${mItem(p.neutral)}`:""}
+      ${bp.length?`<span class="msep"></span>${bp.map(mItem).join("")}`:""}
+    </div>
+  </div>`;
+}
+function mSideBlock(side,label,won){
+  return `<div class="mside ${won?"won":""}">
+    <div class="mshead"><span class="msname">${esc(side.name||label)}</span>
+      <span class="mstag">${label}${won?" · won":""}</span>
+      <span class="msscore">${side.score??""}</span></div>
+    ${(side.players||[]).map(mPlayerRow).join("")}
+  </div>`;
+}
+function mDetailHTML(g){
+  if(!g) return `<div class="lg-empty"><div class="hint">Loading…</div></div>`;
+  if(g.error) return `<div class="lg-empty"><div class="hint">This game isn't available yet — it may not have been parsed.</div></div>`;
+  const mins=g.duration!=null?Math.round(g.duration/60):null;
+  return `<div class="mmeta">${mins!=null?`${mins} min`:""}${g.radiantWin!=null?` · ${g.radiantWin?esc(g.radiant.name):esc(g.dire.name)} won`:""}</div>
+    ${mSideBlock(g.radiant,"Radiant",g.radiantWin===true)}
+    ${mSideBlock(g.dire,"Dire",g.radiantWin===false)}
+    <div class="mlegend">Six working items, then the neutral, then anything left in the backpack.</div>`;
+}
+
+async function openMatch(a,b){
+  const key=a+"|"+b;
+  _mOpen=key;
+  openModal("matchModal");
+  const body=$("#matchModalBody");
+  body.innerHTML=`<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+    <div class="lg-empty"><div class="hint">Loading the series…</div></div>`;
+  let list=_mCache[key];
+  if(!list){
+    try{
+      const r=await fetch(`${MATCH_FN}?series=${encodeURIComponent(key)}&cb=${Date.now()}`);
+      list=await r.json(); _mCache[key]=list;
+    }catch(e){ list={games:[]}; }
+  }
+  if(_mOpen!==key) return;                       // a different series was opened meanwhile
+  if(!list.games||!list.games.length){
+    body.innerHTML=`<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+      <div class="lg-empty"><div class="hint">No finished games for this match yet.</div></div>`;
+    return;
+  }
+  const tabs=list.games.map((g,i)=>`<button class="mtab${i===list.games.length-1?" on":""}" data-mgame="${esc(g.matchId)}" data-mkey="${esc(key)}">Game ${g.game}</button>`).join("");
+  body.innerHTML=`<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+    <div class="mtabs">${tabs}</div><div id="mGameBody"></div>`;
+  // Wire the tabs here: they are created now, long after wireTeams ran.
+  body.querySelectorAll("[data-mgame]").forEach(t=>{
+    t.addEventListener("click",()=>showGame(t.dataset.mgame,t.dataset.mkey));
+  });
+  showGame(list.games[list.games.length-1].matchId,key);   // newest game first
+}
+
+async function showGame(id,key){
+  const host=$("#mGameBody"); if(!host) return;
+  document.querySelectorAll("[data-mgame]").forEach(t=>t.classList.toggle("on",t.dataset.mgame===id));
+  let g=_mCache[id];
+  if(!g){ host.innerHTML=`<div class="lg-empty"><div class="hint">Loading game…</div></div>`;
+    try{ const r=await fetch(`${MATCH_FN}?game=${encodeURIComponent(id)}`); g=await r.json(); _mCache[id]=g; }
+    catch(e){ g={error:1}; }
+  }
+  if(_mOpen!==key) return;
+  const h=$("#mGameBody"); if(h) h.innerHTML=mDetailHTML(g);
+}
+
 function openTeam(d,name){
   if(!name) return;
   const mode=localStorage.getItem("ti2026_region_view")||"modal"; // share the same Popup/Page preference
@@ -3418,6 +3586,18 @@ function refreshOpenView(d){
   }
 }
 function wireTeams(d){
+  /* Bound before the team handler below, and stops the click there: the result
+     button sits inside the team chip, so without this a tap would open both. */
+  document.querySelectorAll("[data-series]").forEach(el=>{
+    el.addEventListener("click",ev=>{
+      ev.stopPropagation(); ev.preventDefault();
+      const [a,b]=(el.getAttribute("data-series")||"").split("|");
+      if(a&&b) openMatch(a,b);
+    });
+  });
+  document.querySelectorAll("[data-mgame]").forEach(el=>{
+    el.addEventListener("click",()=>showGame(el.dataset.mgame,el.dataset.mkey));
+  });
   document.querySelectorAll("[data-team]").forEach(el=>{
     const name=el.getAttribute("data-team");
     const go=ev=>{ev.stopPropagation();openTeam(d,name);};
@@ -3528,9 +3708,15 @@ function renderGroups(d){
     return {pips,live,last,next};
   };
   const when=t=>{try{return new Date(t).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"});}catch(e){return"";}};
-  const lineFor=(i)=>
+  /* A finished result is a button: it opens the series game by game.
+     A real <button> nested inside the team chip is why the chip below is a div
+     rather than a button — a button inside a button is invalid and browsers
+     drop it. The handler stops the click reaching the chip, so tapping the
+     result opens the match while tapping anywhere else opens the team. */
+  const lineFor=(i,team)=>
      i.live?`<span class="sw-live">● ${i.live.os}–${i.live.ts} vs ${esc(i.live.opp||"TBD")}${i.live.min!=null?" · "+i.live.min+"'":""}</span>`
-    :i.last?`<span class="sw-res ${i.last.won?"won":"lost"}">${i.last.won?"beat":"lost to"} ${esc(i.last.opp||"")} ${i.last.os}–${i.last.ts}</span>`
+    :i.last?`<button class="sw-res ${i.last.won?"won":"lost"}" data-series="${esc(team+"|"+(i.last.opp||""))}"
+        title="See every game of this series">${i.last.won?"beat":"lost to"} ${esc(i.last.opp||"")} ${i.last.os}–${i.last.ts}</button>`
     :i.next?`<span class="sw-soon">vs ${esc(i.next.opp||"TBD")} · ${esc(when(i.next.when))}</span>`
     :`<span class="sw-soon">awaiting the draw</span>`;
 
@@ -3552,12 +3738,14 @@ function renderGroups(d){
     const teams=arr.map(r=>{
       const i=infoFor(r.team);
       const pips=Array.from({length:ROUNDS},(_,n)=>`<i class="${i.pips[n]||""}"></i>`).join("");
-      return `<button class="sw-team ${i.live?"is-live":""}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}">
+      // A div, not a button: the result line inside is itself a button, and
+      // nesting one button in another is invalid HTML.
+      return `<div class="sw-team ${i.live?"is-live":""}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" role="button" tabindex="0">
         <span class="sw-tlogo">${teamLogo(r.team,20)}</span>
         <span class="sw-tname">${esc(r.team)}</span>
         <span class="sw-tpips" title="One mark per round">${pips}</span>
-        <span class="sw-tline">${lineFor(i)}</span>
-      </button>`;
+        <span class="sw-tline">${lineFor(i,r.team)}</span>
+      </div>`;
     }).join("");
     return `<div class="sw-bucket ${qual?"is-adv":""} ${out?"is-out":""}">
       <div class="sw-bhead">
