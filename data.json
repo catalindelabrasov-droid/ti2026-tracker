@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T05:07:41.900511+00:00",
+    "lastUpdated": "2026-08-13T05:36:03.483664+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2910580,
-    "note": "$1,600,000 base plus $1,310,580 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2910981,
+    "note": "$1,600,000 base plus $1,310,981 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1236967,
+        "amount": 1237137,
         "team": null
       },
       {
         "place": "2",
-        "amount": 378419,
+        "amount": 378471,
         "team": null
       },
       {
         "place": "3",
-        "amount": 261910,
+        "amount": 261946,
         "team": null
       },
       {
         "place": "4",
-        "amount": 174646,
+        "amount": 174670,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 145519,
+        "amount": 145539,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 116391,
+        "amount": 116407,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 52335,
+        "amount": 52342,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29127,
+        "amount": 29131,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14564,
+        "amount": 14566,
         "team": null
       }
     ]
@@ -1888,7 +1888,7 @@
             "scheduled": "2026-08-13T11:00:00+08:00",
             "teamA": {
               "name": "Team Falcons",
-              "score": 0
+              "score": 1
             },
             "teamB": {
               "name": "LGD Gaming",
@@ -1941,7 +1941,7 @@
             "id": "gs-r1-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T14:00:00+08:00",
+            "scheduled": "2026-08-13T14:30:00+08:00",
             "teamA": {
               "name": "Team Spirit",
               "score": null
