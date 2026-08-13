@@ -96,6 +96,23 @@ try{
   # regex Match — every later call built an invalid URI.
   $feedFn=[regex]::Match($page,'async function fetchLiveFeed\([\s\S]{0,2000}?\n\}')
   Chk "page keeps unknown feed fields" ($feedFn.Success -and $feedFn.Value -match '\{\s*\.\.\.j') "spreads the response"
+
+  # The watch page and the per-match links into it.
+  try{
+    $w=Invoke-WebRequest "$SITE/watch.html?cb=$(Get-Random)" -UseBasicParsing -TimeoutSec 30
+    Chk "watch page reachable" ($w.StatusCode -eq 200) "HTTP $($w.StatusCode)"
+    Chk "watch page keeps the live-only clock test" ($w.Content -match 'paintReplays') "reruns split out"
+  }catch{ No "watch page" $_.Exception.Message }
+  Chk "live matches link to our watch page" ($page -match 'watch\.html\?a=') "per-match deep link"
+  Chk "watch entry point present" ($page -match 'watch-all') "shown while live"
+  try{
+    $ml=Invoke-RestMethod "$FN/match-live?cb=$(Get-Random)" -TimeoutSec 90
+    Chk "match-live responds" ($null -ne $ml.matches) "$($ml.matches.Count) live, $($ml.replays.Count) rerun(s)"
+    # every game it calls live must have a series score attached, or the card
+    # cannot tell a live game 2 from a replay of a decided series
+    $noSeries=@($ml.matches | Where-Object { $null -eq $_.series })
+    Chk "live games carry a series score" ($noSeries.Count -eq 0) "$($noSeries.Count) missing"
+  }catch{ No "match-live" $_.Exception.Message }
   Chk "page consumes tiSeries" ($page -match 'LIVE_FEED\.tiSeries|tiSeries') ""
 }catch{ No "index.html fetch" $_.Exception.Message }
 
