@@ -1465,12 +1465,52 @@ function liveProMatches(){
     gameMinute:m.gameMinute, spectators:m.spectators, fromStratz:true
   }));
 }
+const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
+
 // TI 2026's own live and upcoming matches only.
 function liveMatchesOf(d){
   const matches=allMatches(d);
   // regional qualifier matches from curated data
   (d.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(m=>matches.push({...m,stage:(m.stage?m.stage+" · ":"")+q.region+" Qualifier",side:"qual"})));
   const out=matches.filter(m=>m.status==="live"||m.status==="upcoming"||m.status==="scheduled"||m.status==="ongoing");
+
+  // The schedule comes from Liquipedia, which flips a match to "live" long
+  // after the game actually started — on TI's opening night four games were
+  // being played while this page still called them upcoming. The live feed
+  // knows better, so let it overrule the schedule.
+  //
+  // What counts as a TI match: primarily, one whose two teams match a fixture
+  // already on the TI schedule. That is definitional and needs no league id —
+  // Valve only publishes one days beforehand.
+  //
+  // Matching against d.teams alone is not enough: that list carries names like
+  // "Iron Wing TI 2026" while the game reports "Iron Wing", so two of the four
+  // opening-night matches were silently skipped. The fixtures use the same
+  // names the game does.
+  const tiTeams=new Set((d.teams||[]).map(t=>tnorm(t.name)));
+  liveProMatches().forEach(lm=>{
+    const a=tnorm(lm.teamA&&lm.teamA.name), b=tnorm(lm.teamB&&lm.teamB.name);
+    if(!a||!b) return;
+    const i=out.findIndex(m=>{
+      const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
+      if(!x||!y||x==="tbd"||y==="tbd") return false;
+      return (x===a&&y===b)||(x===b&&y===a);
+    });
+    if(i>=0){
+      // Upgrade the fixture in place so the card keeps its round label and Bo,
+      // and the same match is never listed twice.
+      const f=out[i];
+      const flipped=tnorm(f.teamA&&f.teamA.name)===b;
+      out[i]={...f, status:"live", gameMinute:lm.gameMinute, spectators:lm.spectators,
+              watch:lm.watch||f.watch, stats:lm.stats||f.stats, fromStratz:true,
+              teamA:{...(f.teamA||{}), score:flipped?lm.teamB.score:lm.teamA.score},
+              teamB:{...(f.teamB||{}), score:flipped?lm.teamA.score:lm.teamB.score}};
+    }else if(tiTeams.has(a)&&tiTeams.has(b)){
+      // No fixture yet — a rescheduled or unlisted game between two TI teams.
+      out.push({...lm, stage:lm.stage||"TI 2026"});
+    }
+  });
+
   out.sort((a,b)=>{const r=((a.status==="live"||a.status==="ongoing")?0:1)-((b.status==="live"||b.status==="ongoing")?0:1);if(r)return r;return new Date(a.scheduled||0)-new Date(b.scheduled||0);});
   return out;
 }
@@ -1499,11 +1539,20 @@ function liveCard(m){
   const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);
   const time=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):"";
   const on=notifIds.has(m.id);
+  // The live feed's numbers are KILLS IN THE CURRENT GAME, not the series
+  // score — the field is called radiant_score but it counts kills. Printed big
+  // beside the team names it reads as a series score, so "Falcons 2 – 0 LGD"
+  // six minutes into game two looks like Falcons have already won the Bo3.
+  // We genuinely do not know the series score, so we don't print one: the
+  // kills move to the footer where they are labelled for what they are.
+  const liveKills = m.status==='live' && m.fromStratz;
+  const score=(v)=>liveKills?'–':(v??'–');
+  const kills=(liveKills&&a.score!=null&&b.score!=null)?` · ${a.score}–${b.score} kills`:'';
   return`<div class="lcard ${m.status==='live'?'is-live':''}" data-mid="${esc(m.id)}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status)}">
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
-    <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${a.score??'–'}</span></div>
-    <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24,b.logo)}<span class="lc-score">${b.score??'–'}</span></div>
-    <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):' · Bo'+esc(m.bestOf||3)}</span>
+    <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${score(a.score)}</span></div>
+    <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24,b.logo)}<span class="lc-score">${score(b.score)}</span></div>
+    <div class="lc-foot"><span class="lc-time">${m.status==='live'?(m.gameMinute!=null?'● '+m.gameMinute+"' LIVE":'● LIVE NOW'):esc(time)}${kills}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):' · Bo'+esc(m.bestOf||3)}</span>
       <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
 }
