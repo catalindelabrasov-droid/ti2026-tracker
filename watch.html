@@ -78,7 +78,12 @@
      width:100% resolve circularly and blow the track out — the six item slots
      came out 73px wide inside a 59px tile and pushed the row off the screen. */
   .pitems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:0 3px 4px}
-  .pitem{width:auto;min-width:0;aspect-ratio:1.35;border-radius:2px;display:block;object-fit:cover}
+  /* align-self:start is load-bearing. A grid item stretches to the row height by
+     default, and with aspect-ratio the box then sizes from that HEIGHT rather
+     than its width — 54px tall became 73px wide inside a 16px track. Starting it
+     lets the track width drive the box, which is what aspect-ratio is for. */
+  .pitem{width:100%;height:auto;min-width:0;align-self:start;
+    aspect-ratio:1.35;border-radius:2px;display:block;object-fit:cover}
   .pitem.empty{background:var(--panel-3);opacity:.45}
   .hero.dead img{filter:grayscale(1);opacity:.45}
   .respawn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--live);
