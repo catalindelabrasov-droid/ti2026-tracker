@@ -1464,7 +1464,10 @@ function liveProMatches(){
   return (LIVE_FEED.liveMatches||[]).map(m=>({
     id:"stz_"+m.id, stage:(m.event||"Pro Match"), side:"live",
     status:"live", scheduled:null, leagueId:m.leagueId,
-    teamA:{...(m.teamA||{}), score:null}, teamB:{...(m.teamB||{}), score:null},
+    // The score people want is the series standing, which the server now rolls
+    // up from the event's finished games. Kills ride alongside, labelled.
+    teamA:{...(m.teamA||{}), score:m.seriesA??null},
+    teamB:{...(m.teamB||{}), score:m.seriesB??null},
     killsA:(m.teamA||{}).score, killsB:(m.teamB||{}).score,
     watch:m.watch, stats:m.stats,
     gameMinute:m.gameMinute, spectators:m.spectators, fromStratz:true
@@ -1523,8 +1526,16 @@ function liveMatchesOf(d){
       // it — overwriting turned a true "Falcons 0-1 LGD" into a kill count.
       const f=out[i];
       const flipped=tnorm(f.teamA&&f.teamA.name)===b;
+      const lmA=flipped?lm.teamB:lm.teamA, lmB=flipped?lm.teamA:lm.teamB;
+      // Prefer the live series score over the schedule's. Liquipedia records a
+      // finished game minutes later — on opening night it still said 0-1 while
+      // the series was actually level at 1-1.
+      const sa=(lmA&&lmA.score!=null)?lmA.score:(f.teamA||{}).score;
+      const sb=(lmB&&lmB.score!=null)?lmB.score:(f.teamB||{}).score;
       out[i]={...f, status:"live", gameMinute:lm.gameMinute, spectators:lm.spectators,
               watch:lm.watch||f.watch, stats:lm.stats||f.stats, fromStratz:true,
+              teamA:{...(f.teamA||{}), score:sa},
+              teamB:{...(f.teamB||{}), score:sb},
               killsA:flipped?lm.killsB:lm.killsA,
               killsB:flipped?lm.killsA:lm.killsB};
     }else if(tiTeams.has(a)&&tiTeams.has(b)){
@@ -1692,8 +1703,12 @@ function renderLiveStrip(){
   if(!live.length){ el.innerHTML=`<span class="ls-empty">No pro matches live right now</span>`; return; }
   el.innerHTML=live.slice(0,12).map(m=>{
     const a=m.teamA||{},b=m.teamB||{};
+    // seriesA/seriesB is the Bo3 standing. a.score is kills in the game being
+    // played, which read as a result and told people Falcons were 27-9 up.
+    const sa=m.seriesA, sb=m.seriesB;
+    const shown=(sa!=null&&sb!=null)?`${sa}–${sb}`:"vs";
     return `<a class="ls-game" href="${esc(m.watch||'#')}" target="_blank" rel="noopener" title="${esc(m.event||'')}">
-      <b>${esc(a.name||'?')}</b> <span class="ls-sc">${a.score??0}–${b.score??0}</span> <b>${esc(b.name||'?')}</b>
+      <b>${esc(a.name||'?')}</b> <span class="ls-sc">${shown}</span> <b>${esc(b.name||'?')}</b>
       ${m.gameMinute!=null?`<span class="ls-min">${m.gameMinute}'</span>`:''}</a>`;
   }).join("");
 }

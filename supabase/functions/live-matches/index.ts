@@ -338,7 +338,9 @@ async function loadPlayers() {
 const _leagueCache: Record<number, { at: number; data: any }> = {};
 async function fetchLeagueDetail(leagueId: number) {
   const c = _leagueCache[leagueId];
-  if (c && (Date.now() - c.at < 10 * 60 * 1000)) return c.data;
+  // Three minutes, not ten: this now feeds the live series score, and a Bo3
+  // that has just gone 2-1 should not read 1-1 for another quarter of an hour.
+  if (c && (Date.now() - c.at < 3 * 60 * 1000)) return c.data;
 
   const [rows, tms] = await Promise.all([
     jget(`/leagues/${leagueId}/matches`),
@@ -602,7 +604,41 @@ Deno.serve(async (req) => {
       .slice(0, 25)
       .map(shapeLive);
 
+    // Attach the SERIES score to every live match.
+    //
+    // The live feed only knows the game currently on the server: its
+    // radiant_score/dire_score are kills, and it carries no notion of a Bo3
+    // standing at 1-1. Without this a series reads 0-0 from first pick to last
+    // game, which is the one number anybody actually wants. The same
+    // game-to-series roll-up the event detail already does gives it to us, and
+    // it is cached, so this costs one OpenDota round trip per live event.
     const liveLeagueIds = new Set(liveMatches.map((m: any) => m.leagueId));
+    try {
+      const ids = [...liveLeagueIds].filter(Boolean) as number[];
+      const details = await Promise.all(
+        ids.map((id) => fetchLeagueDetail(id).catch(() => null)));
+      const byLeague: Record<number, any> = {};
+      ids.forEach((id, i) => { if (details[i]) byLeague[id] = details[i]; });
+
+      const norm = (s: unknown) => String(s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+      for (const m of liveMatches as any[]) {
+        const d = byLeague[m.leagueId];
+        if (!d) continue;
+        const an = norm(m.teamA?.name), bn = norm(m.teamB?.name);
+        if (!an || !bn) continue;
+        const s = (d.series || []).find((x: any) => {
+          const xa = norm(x.a), xb = norm(x.b);
+          return (xa === an && xb === bn) || (xa === bn && xb === an);
+        });
+        if (!s) continue;
+        const flipped = norm(s.a) !== an;
+        m.seriesA = flipped ? s.sb : s.sa;
+        m.seriesB = flipped ? s.sa : s.sb;
+      }
+    } catch (e) {
+      // A missing series score is a worse card, not a broken page.
+      console.error("series attach failed", String(e).slice(0, 200));
+    }
     const tournaments = (_tournaments || []).map((t) => ({ ...t, live: liveLeagueIds.has(t.id) }));
 
     return new Response(JSON.stringify({
