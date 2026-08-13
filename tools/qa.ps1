@@ -66,7 +66,35 @@ try{
     else { Ok "series score sane" "$nm $($m.seriesA)-$($m.seriesB)" }
   }
   Chk "top teams ranked" ($f.topTeams.Count -gt 0) "$($f.topTeams.Count) rated"
+
+  # The series roll-up. Without it the page falls back to the Liquipedia
+  # schedule, which lags by minutes, and a finished series keeps showing its
+  # old score while still labelled live.
+  Chk "tiLeagueId shipped" ($null -ne $f.tiLeagueId) "$($f.tiLeagueId)"
+  Chk "tiSeries shipped" ($f.tiSeries.Count -gt 0) "$($f.tiSeries.Count) series"
+
+  # A decided series must have left the live feed. This is the check that would
+  # have caught BoomBoys v OG reading 1-0 "live" when it had finished 2-0.
+  $stillLive=@()
+  foreach($s in $f.tiSeries){
+    if([math]::Max($s.sa,$s.sb) -lt 2){ continue }
+    foreach($m in $f.liveMatches){
+      $p1="$($m.teamA.name)|$($m.teamB.name)"; $p2="$($m.teamB.name)|$($m.teamA.name)"
+      if($p1 -eq "$($s.a)|$($s.b)" -or $p2 -eq "$($s.a)|$($s.b)"){ $stillLive += "$($s.a) v $($s.b) $($s.sa)-$($s.sb)" }
+    }
+  }
+  Chk "decided series are not still live" ($stillLive.Count -eq 0) (($stillLive -join ', '))
 }catch{ No "live-matches" $_.Exception.Message }
+
+# The page must not drop fields the feed adds. fetchLiveFeed used to rebuild the
+# response by naming every key, so tiSeries was silently discarded on arrival
+# and no server-side check could see it: the feed was correct, the page was not.
+try{
+  $page=(Invoke-WebRequest "$SITE/index.html?cb=$(Get-Random)" -UseBasicParsing).Content
+  $fn=[regex]::Match($page,'async function fetchLiveFeed\([\s\S]{0,2000}?\n\}')
+  Chk "page keeps unknown feed fields" ($fn.Success -and $fn.Value -match '\{\s*\.\.\.j') "spreads the response"
+  Chk "page consumes tiSeries" ($page -match 'LIVE_FEED\.tiSeries|tiSeries') ""
+}catch{ No "index.html fetch" $_.Exception.Message }
 
 # --------------------------------------------------------------- backend ----
 Head "Backend"

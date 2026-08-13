@@ -650,17 +650,42 @@ Deno.serve(async (req) => {
       ids.forEach((id, i) => { if (details[i]) byLeague[id] = details[i]; });
 
       const norm = (s: unknown) => String(s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+      // /live and /leagues/{id}/matches do not always spell a team the same way
+      // ("Aurora" vs "Aurora Gaming"), so fall back to the name with its org
+      // decoration stripped before giving up on the pairing.
+      const key = (s: unknown) =>
+        norm(s).replace(/[.\-_'"]/g, " ")
+               .replace(/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g, " ")
+               .replace(/\s+/g, " ").trim();
       for (const m of liveMatches as any[]) {
         const d = byLeague[m.leagueId];
         if (!d) continue;
         const an = norm(m.teamA?.name), bn = norm(m.teamB?.name);
         if (!an || !bn) continue;
-        const s = (d.series || []).find((x: any) => {
+        const list = (d.series || []);
+        let s = list.find((x: any) => {
           const xa = norm(x.a), xb = norm(x.b);
           return (xa === an && xb === bn) || (xa === bn && xb === an);
         });
-        if (!s) continue;
-        const flipped = norm(s.a) !== an;
+        if (!s) {
+          const ka = key(m.teamA?.name), kb = key(m.teamB?.name);
+          if (ka && kb && ka !== kb) {
+            const hits = list.filter((x: any) => {
+              const xa = key(x.a), xb = key(x.b);
+              return (xa === ka && xb === kb) || (xa === kb && xb === ka);
+            });
+            if (hits.length === 1) s = hits[0];
+          }
+        }
+        if (!s) {
+          // We hold this league's finished games and none belong to this pair,
+          // so the series really is 0-0. Left undefined it reached the page as
+          // "unknown" and rendered as a dash, which reads like the score is
+          // missing rather than nobody having won a game yet.
+          m.seriesA = 0; m.seriesB = 0;
+          continue;
+        }
+        const flipped = norm(s.a) !== an && key(s.a) !== key(m.teamA?.name);
         m.seriesA = flipped ? s.sb : s.sa;
         m.seriesB = flipped ? s.sa : s.sb;
       }
