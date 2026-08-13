@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T04:02:52.166659+00:00",
+    "lastUpdated": "2026-08-13T05:07:41.900511+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 1600000,
-    "note": "Base $1.6M; grows with TI 2026 Compendium sales. Full distribution announced closer to the event.",
+    "total": 2910580,
+    "note": "$1,600,000 base plus $1,310,580 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": null,
+        "amount": 1236967,
         "team": null
       },
       {
         "place": "2",
-        "amount": null,
+        "amount": 378419,
         "team": null
       },
       {
         "place": "3",
-        "amount": null,
+        "amount": 261910,
         "team": null
       },
       {
         "place": "4",
-        "amount": null,
+        "amount": 174646,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": null,
+        "amount": 145519,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": null,
+        "amount": 116391,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": null,
+        "amount": 52335,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": null,
+        "amount": 29127,
         "team": null
       },
       {
         "place": "16",
-        "amount": null,
+        "amount": 14564,
         "team": null
       }
     ]
@@ -1884,57 +1884,57 @@
           {
             "id": "gs-r1-m1",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T11:00:00+08:00",
             "teamA": {
               "name": "Team Falcons",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "LGD Gaming",
-              "score": null
+              "score": 1
             }
           },
           {
             "id": "gs-r1-m2",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T11:00:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "Iron Wing",
-              "score": null
+              "score": 1
             }
           },
           {
             "id": "gs-r1-m3",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T11:30:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "OG",
-              "score": null
+              "score": 0
             }
           },
           {
             "id": "gs-r1-m4",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T11:30:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Team Resilience",
-              "score": null
+              "score": 0
             }
           },
           {
@@ -2817,6 +2817,8 @@
     "BetBoom Team": "https://liquipedia.net/commons/images/5/5b/BetBoom_Team_2024_allmode.png",
     "Team Falcons": "https://liquipedia.net/commons/images/e/e9/Team_Falcons_2022_full_lightmode.png",
     "Team Liquid": "https://liquipedia.net/commons/images/f/f5/Team_Liquid_2024_full_lightmode.png",
-    "Xtreme Gaming": "https://liquipedia.net/commons/images/9/97/Xtreme_Gaming_%28China%29_full_allmode.png"
+    "Xtreme Gaming": "https://liquipedia.net/commons/images/9/97/Xtreme_Gaming_%28China%29_full_allmode.png",
+    "Iron Wing": "https://cdn.steamusercontent.com/ugc/16903873521422862552/02513782FE03E7A567B8B8955A0DEF415EF2B624/",
+    "BoomBoys": "https://cdn.steamusercontent.com/ugc/9995426432403529725/51E13136D4CCC8C7D8062861541A1D13B8ED87E0/"
   }
 }
