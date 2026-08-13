@@ -926,6 +926,10 @@
   .user-chip .av{width:26px;height:26px;border-radius:50%;background:var(--aegis);color:#0b0e13;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px}
   .user-chip .signout{color:var(--ink-faint);font-size:12px;border-left:1px solid var(--line);padding-left:9px;margin-left:2px}
   .user-chip .signout:hover{color:var(--live)}
+  /* Your own name is the button that changes it. Underlined on hover so it
+     reads as clickable without adding another control to a crowded header. */
+  .user-chip .chip-name{color:inherit;font:inherit;background:none;border:0;padding:0;cursor:pointer}
+  .user-chip .chip-name:hover{color:var(--aegis);text-decoration:underline}
   .modal{position:fixed;inset:0;z-index:95;background:rgba(8,10,14,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px}
   .modal.show{display:flex}
   .modal-card{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
@@ -1123,6 +1127,31 @@
       </div>
       <div class="modal-foot">
         <button class="btn btn-primary" id="resetSubmit">Save new password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change your nickname -->
+  <div class="modal" id="nickModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><h3>Change nickname</h3><p>This is the name shown on every leaderboard.</p></div>
+        <button class="x" data-close="nickModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-ok" id="nickOk"></div>
+        <div class="field">
+          <label for="nk_name">Nickname</label>
+          <input id="nk_name" type="text" autocomplete="off" maxlength="20" placeholder="3–20 chars: letters, numbers, _ or .">
+          <div class="err" id="nk_name_err"></div>
+        </div>
+        <p style="color:var(--ink-faint);font-size:12px;line-height:1.6">
+          You sign in with this name too, so use the new one next time. Your email
+          address always works either way.
+        </p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" id="nickSubmit">Save nickname</button>
       </div>
     </div>
   </div>
@@ -3861,7 +3890,16 @@ function renderAuthArea(){
   if(raw){
     let u={}; try{u=JSON.parse(raw);}catch(e){}
     const initial=(u.username||u.name||"?").trim().charAt(0).toUpperCase();
-    area.innerHTML=`<span class="user-chip"><span class="av">${esc(initial)}</span>${esc(u.username||u.name||"Account")}<button class="signout" id="signoutBtn">Sign out</button></span>`;
+    // The name doubles as the way in to changing it — there is no settings page
+    // to hang that off, and people look for their own name first.
+    area.innerHTML=`<span class="user-chip"><span class="av">${esc(initial)}</span><button class="chip-name" id="nickBtn" title="Change your nickname">${esc(u.username||u.name||"Account")}</button><button class="signout" id="signoutBtn">Sign out</button></span>`;
+    $("#nickBtn").addEventListener("click",()=>{
+      const inp=$("#nk_name"); if(inp) inp.value=(u.username||"").trim();
+      clearErr("nk_name");
+      const ok=$("#nickOk"); if(ok){ ok.classList.remove("show"); ok.textContent=""; }
+      const b=$("#nickSubmit"); if(b){ b.disabled=false; b.textContent="Save nickname"; }
+      openModal("nickModal");
+    });
     $("#signoutBtn").addEventListener("click",async()=>{try{if(SB_READY())await SB.auth.signOut();}catch(e){}localStorage.removeItem(LS_USER);localStorage.removeItem(LS_LEAGUE);localStorage.removeItem(LS_ACTIVE);renderAuthArea();wireMyLeaguesMenu();});
   }else{
     area.innerHTML=`<button class="tbtn" id="signinBtn">Sign in</button><button class="tbtn tbtn-accent" id="signupBtn">Sign up</button>`;
@@ -4095,6 +4133,35 @@ function wireAuth(){
       },700);
     }catch(e){ setErr("si_pw","Something went wrong. Try again."); btn.disabled=false; btn.textContent=orig; }
   });
+  // ---- change nickname ----------------------------------------------------
+  // The server owns the rules (format, availability, and updating BOTH the
+  // profile and the copy each league holds). This only mirrors the result into
+  // the places the browser caches a name.
+  const nb=$("#nickSubmit"); if(nb) nb.addEventListener("click",async()=>{
+    clearErr("nk_name");
+    const want=($("#nk_name").value||"").trim();
+    if(!/^[a-zA-Z0-9_.]{3,20}$/.test(want)){
+      setErr("nk_name","3–20 characters: letters, numbers, _ or . only."); return;
+    }
+    if(!SB_READY()){ setErr("nk_name","Backend not reachable. Try again in a moment."); return; }
+    nb.disabled=true; const orig=nb.textContent; nb.textContent="Saving…";
+    try{
+      const {data:saved,error}=await SB.rpc("set_username",{ p_username:want });
+      if(error){ setErr("nk_name", error.message||"Couldn't change the nickname."); nb.disabled=false; nb.textContent=orig; return; }
+      const name=saved||want;
+      // keep the browser's copies in step: the header reads localStorage, and
+      // user_metadata is what a future league join snapshots.
+      try{
+        const raw=localStorage.getItem(LS_USER); const u=raw?JSON.parse(raw):{};
+        u.username=name; localStorage.setItem(LS_USER,JSON.stringify(u));
+      }catch(e){}
+      try{ await SB.auth.updateUser({ data:{ username:name } }); }catch(e){}
+      const ok=$("#nickOk"); if(ok){ ok.classList.add("show"); ok.textContent=`You're now ${name}.`; }
+      renderAuthArea(); wireMyLeaguesMenu();
+      setTimeout(()=>{ closeModals(); },900);
+    }catch(e){ setErr("nk_name","Something went wrong. Try again."); nb.disabled=false; nb.textContent=orig; }
+  });
+
   // ---- forgot password ----------------------------------------------------
   // Ask Supabase to mail a recovery link. Deliberately reports the same thing
   // whether or not the address exists: saying "no such account" would turn this
