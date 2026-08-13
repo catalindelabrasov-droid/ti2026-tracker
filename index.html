@@ -600,6 +600,9 @@
        past the panel edge and was simply invisible. Wrapping breaks it exactly
        where it should -- main inventory above, neutral + backpack below. */
     .mitems{margin-left:0;flex-basis:100%;padding-left:47px;flex-wrap:wrap;min-width:0;row-gap:3px}
+    /* Break where the meaning breaks, so the wrap does not leave a lone divider
+       heading the second line: carried items above, backpack below. */
+    .msep-bp{flex-basis:100%;width:auto;height:0;margin:0;background:none}
     .mgpm,.mlh{display:none}
   }
 
@@ -3510,7 +3513,7 @@ function mPlayerRow(p){
     <span class="mlh">${p.lastHits??0}/${p.denies??0}</span>
     <div class="mitems">${(p.items||[]).map(mItem).join("")}
       ${p.neutral?`<span class="msep"></span>${mItem(p.neutral)}`:""}
-      ${bp.length?`<span class="msep"></span>${bp.map(mItem).join("")}`:""}
+      ${bp.length?`<span class="msep msep-bp"></span>${bp.map(mItem).join("")}`:""}
     </div>
   </div>`;
 }
