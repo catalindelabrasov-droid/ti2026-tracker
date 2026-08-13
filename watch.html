@@ -86,7 +86,10 @@
      height, and neither depends on the other. */
   .pitem{width:100%;height:13px;min-width:0;align-self:start;
     border-radius:2px;display:block;object-fit:cover}
-  .pitem.empty{background:var(--panel-3);opacity:.45}
+  /* NOT ".empty": that is the page-level empty-state panel, and its 26px 16px
+     padding was being applied to this 16px item slot, forcing it to 34x54 and
+     blowing the whole hero row off the screen. Class names are global. */
+  .pitem-none{background:var(--panel-3);opacity:.45}
   .hero.dead img{filter:grayscale(1);opacity:.45}
   .respawn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--live);
     background:rgba(0,0,0,.55);margin-top:-14px;position:relative;padding:1px 0}
@@ -241,7 +244,7 @@ function itemGrid(p){
   return `<div class="pitems">${p.items.map(it =>
     it && it.img
       ? `<img class="pitem" src="${esc(it.img)}" alt="${esc(it.name||"")}" title="${esc(it.name||"")}" loading="lazy">`
-      : `<span class="pitem empty"></span>`
+      : `<span class="pitem pitem-none"></span>`
   ).join("")}</div>`;
 }
 
@@ -298,7 +301,7 @@ function updateStats(strip, players){
         const rep = wantSrc
           ? Object.assign(document.createElement("img"),
               { className: "pitem", src: wantSrc, alt: it.name || "", title: it.name || "", loading: "lazy" })
-          : Object.assign(document.createElement("span"), { className: "pitem empty" });
+          : Object.assign(document.createElement("span"), { className: "pitem pitem-none" });
         el.replaceWith(rep);
       });
     }
