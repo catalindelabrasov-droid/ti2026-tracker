@@ -130,7 +130,16 @@ async function upcoming(minutes: number) {
     if (mins < 0 || mins > minutes) continue;
     const a = m.teamA?.name ?? "TBD", b = m.teamB?.name ?? "TBD";
     if (a === "TBD" || b === "TBD") continue;
-    out.push({ key: `soon:${m.id}`, a, b, mins, bo: m.bestOf ?? 3 });
+    // The claim key carries the scheduled time, bucketed to the quarter hour.
+    //
+    // On opening night the schedule said 10:00 local, we announced at 01:50
+    // UTC, and the times were then corrected to 11:00 — an hour later. Keyed
+    // on the match id alone the claim was already spent, so nobody was told
+    // when the games actually began: one false alarm, then silence. Bucketing
+    // means a real reschedule earns a fresh notification while a two-minute
+    // wobble does not.
+    const bucket = Math.round(t / (15 * 60 * 1000));
+    out.push({ key: `soon:${m.id}:${bucket}`, a, b, mins, bo: m.bestOf ?? 3 });
   }
   return out;
 }
@@ -155,7 +164,11 @@ async function liveNow(leagueIds: number[]) {
     if (g.deactivate_time) continue;                       // already over
     const age = nowSec - (g.last_update_time || 0);
     if (!g.last_update_time || age > 25 * 60) continue;     // feed went quiet
-    const a = g.team_name_radiant, b = g.team_name_dire;
+    // Trim: the feed returns "Nigma Galaxy " with a trailing space, and an
+    // untrimmed name in the claim key means the same series is announced twice
+    // the day the feed cleans it up.
+    const a = String(g.team_name_radiant ?? "").trim();
+    const b = String(g.team_name_dire ?? "").trim();
     if (!a || !b) continue;
     // The live feed repeats the same series under different match ids; one
     // notification per pairing is the useful behaviour.
