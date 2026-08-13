@@ -481,6 +481,13 @@
   .watch svg{width:12px;height:12px}
   .watch.mini{height:24px;padding:0 9px;font-size:11px}
   .lc-actions{display:flex;align-items:center;gap:8px}
+  /* "2 games" — opens the series game by game. Quieter than the watch button:
+     the live stream is what the card is for, this is the record behind it. */
+  .gbtn{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:20px;
+    border:1px solid var(--line);background:none;color:var(--ink-dim);cursor:pointer;flex:0 0 auto;
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase}
+  .gbtn:hover{border-color:var(--aegis);color:var(--aegis)}
+  .gbtn.sm{height:24px;padding:0 8px;font-size:9px}
   /* prize pool — distribution ladder */
   .pz-wrap{display:grid;grid-template-columns:300px 1fr;gap:16px}
   .pz-hero{background:linear-gradient(150deg,rgba(217,164,65,.14),rgba(217,164,65,.02));border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
@@ -1933,6 +1940,24 @@ function renderLive(d){
     <div id="liveRail">${liveRailInner(d)}</div>
   </section>`;
 }
+/* "2 GAMES" — opens that series game by game, the same view the Swiss board and
+   the team panels use. Offered only where there is something to show: a 0–0
+   fixture has no history behind it and a button that opens "nothing yet" is
+   worse than no button. A live series counts — at 1–0 game 1 is in the books.
+   Every match reaching this helper gets it, so the playoffs are covered the day
+   they are drawn without anything further being wired up. */
+function seriesGamesBtn(m,cls){
+  // Games are resolved against the TI league, so a regional qualifier or a
+  // random pro match off the live feed would only ever find nothing.
+  if(m.side==="qual"||m.fromStratz) return "";
+  const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
+  if(!a||!b||a==="TBD"||b==="TBD") return "";
+  const sa=(m.teamA||{}).score, sb=(m.teamB||{}).score;
+  const n=(typeof sa==="number"?sa:0)+(typeof sb==="number"?sb:0);
+  if(n<1) return "";
+  return `<button class="gbtn${cls?" "+cls:""}" data-series="${esc(a+"|"+b)}"
+    title="See every game of this series">${n} ${n===1?"game":"games"}</button>`;
+}
 function liveCard(m){
   const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);
   const time=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):"";
@@ -1966,7 +1991,7 @@ function liveCard(m){
     <div class="lc-foot"><span class="lc-time">${m.status==='live'
         ? `● live${bo?' · '+esc(bo):''}`
         : esc(time)}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):(m.status==='live'?'':' · '+esc(bo||'Bo3'))}</span>
-      <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
+      <span class="lc-actions">${seriesGamesBtn(m)}${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
 }
 function renderPrize(d,champion){
@@ -3625,9 +3650,14 @@ function wireSeriesRows(root,backTo){
 function refreshOpenView(d){
   if(!_openView) return;
   if(_openView.type==="team"){
-    if(document.body.classList.contains("team-open")){$("#teamPageBody").innerHTML=teamDetailHTML(d,_openView.name);}
-    else if($("#teamModal").classList.contains("show")){$("#teamModalBody").innerHTML=teamDetailHTML(d,_openView.name);}
+    // Re-rendering throws away the listeners with the old DOM, so rewire after:
+    // otherwise a panel left open across one refresh quietly stops opening its
+    // matches, and the rows still look clickable.
+    let host=null;
+    if(document.body.classList.contains("team-open")){host=$("#teamPageBody");host.innerHTML=teamDetailHTML(d,_openView.name);}
+    else if($("#teamModal").classList.contains("show")){host=$("#teamModalBody");host.innerHTML=teamDetailHTML(d,_openView.name);}
     else { _openView=null; }
+    if(host) wireSeriesRows(host,_openView.name);
   }else if(_openView.type==="region"){
     if(document.body.classList.contains("region-open")){$("#regionPageBody").innerHTML=regionDetailHTML(d,_openView.name);}
     else if($("#regionModal").classList.contains("show")){$("#regionModalBody").innerHTML=regionDetailHTML(d,_openView.name);}
@@ -3830,7 +3860,7 @@ function bracketMatch(m){
   const clk=name=>(name&&name!=="TBD")?`class="mt clickable" data-team="${esc(name)}"`:`class="mt"`;
   return`<div class="match ${m.status==='live'?'is-live':''} ${on?'notif':''}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status||'')}">
     <div class="match-head"><span class="match-bo">Bo${esc(m.bestOf||3)}</span>
-      <span style="display:flex;align-items:center;gap:8px">${watchButton(m,true)}${statusBadge(m.status)}
+      <span style="display:flex;align-items:center;gap:8px">${seriesGamesBtn(m,"sm")}${watchButton(m,true)}${statusBadge(m.status)}
       <button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me" style="width:24px;height:24px;font-size:11px">${on?'🔔':'🔕'}</button></span></div>
     <div class="match-row ${w==='A'?'winner':''}"><span ${clk(a.name)}>${teamWithLogo(a.name,20)}</span><span class="ms">${a.score??'–'}</span></div>
     <div class="match-row ${w==='B'?'winner':''}"><span ${clk(b.name)}>${teamWithLogo(b.name,20)}</span><span class="ms">${b.score??'–'}</span></div></div>`;
@@ -5793,6 +5823,10 @@ function updateLiveRail(newData,oldSig){
   });
   // re-bind the bell + watch handlers inside the rail
   rail.querySelectorAll("[data-notif]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleNotif(b.getAttribute("data-notif"));}));
+  // ...and the game-history buttons, which this innerHTML just replaced. The
+  // rail rebuilds itself every few seconds, so anything bound once by wireTeams
+  // is gone by the time a series actually has games to show.
+  wireSeriesRows(rail);
   applySearchFilter();
 }
 function cssEscape(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&");}
