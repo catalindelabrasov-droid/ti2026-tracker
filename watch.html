@@ -84,6 +84,18 @@
     padding:26px 16px;text-align:center;color:var(--ink-dim);font-size:14px;line-height:1.6}
   .empty b{display:block;color:var(--ink);font-family:'Oswald',sans-serif;font-size:17px;
     text-transform:uppercase;margin-bottom:6px}
+  /* reruns: deliberately quieter than the live cards */
+  .rerun{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:8px;padding:12px;margin-top:4px}
+  .rerun-h{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-dim)}
+  .rerun-note{font-size:11.5px;color:var(--ink-faint);margin:4px 0 9px;line-height:1.5}
+  .rerun-row{display:flex;align-items:center;gap:9px;padding:7px 0;text-decoration:none;
+    color:var(--ink-dim);border-top:1px solid var(--line-soft);font-size:12.5px}
+  .rerun-row:hover{color:var(--ink)}
+  .rerun-lang{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;
+    border:1px solid var(--line);border-radius:20px;padding:2px 7px;flex:none;color:var(--ink-faint)}
+  .rerun-teams{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rerun-go{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);flex:none}
   footer{margin-top:22px;font-size:11px;color:var(--ink-faint);line-height:1.7}
   a{color:var(--aegis)}
   @media(min-width:620px){ .tname{font-size:19px} .tk{font-size:34px} .hero img{aspect-ratio:1.5} }
@@ -100,6 +112,11 @@
     plus the exact official channel carrying each match, in your language.
   </p>
   <div id="app"><div class="empty"><b>Loading</b>Fetching live matches…</div></div>
+  <!-- Kept apart from the live list on purpose: Valve reruns finished series on
+       the spare channels between rounds, and from the outside a rerun looks
+       exactly like a live broadcast. "Live" above means a game server with a
+       moving clock — nothing else. -->
+  <div id="replays"></div>
   <footer>
     Match data from OpenDota. Streams are the official Valve broadcast channels listed on
     Liquipedia and play through Twitch's own embedded player — we don't rehost anything.
@@ -119,6 +136,13 @@ const chosen = {};
 let lastMatches = [];
 
 const clockText = m => m.drafting ? "Drafting" : (m.gameMinute != null ? m.gameMinute + "'" : "");
+// Which game of the series this is, and where the series stands. Without it a
+// live game 2 looks indistinguishable from a replay of a series already decided.
+function seriesText(m){
+  const s = m.series || {a:0,b:0};
+  const game = s.a + s.b + 1;
+  return `Game ${game}` + ((s.a || s.b) ? ` · series ${s.a}–${s.b}` : "");
+}
 const draftKey  = m => [...m.radiant.players, ...m.dire.players].map(p => p.heroId || 0).join(",");
 const streamKey = m => (chosen[m.matchId] || "") + "|" + (m.streams || []).map(s => s.channel).join(",");
 
@@ -181,7 +205,7 @@ function card(m){
   return `<div class="card" data-mid="${esc(m.matchId)}" data-draft="${esc(draftKey(m))}" data-skey="${esc(streamKey(m))}">
     <div class="chead">
       <span class="badge">● Live</span>
-      <span class="draftlbl">${m.drafting ? "Draft in progress" : "In game"}</span>
+      <span class="draftlbl">${m.drafting ? "Draft in progress" : esc(seriesText(m))}</span>
       <span class="clock">${esc(clockText(m))}</span>
     </div>
     ${teamBlock(m, "rad")}
@@ -209,7 +233,7 @@ function paint(matches){
       el = app.querySelector(`.card[data-mid="${CSS.escape(m.matchId)}"]`);
     } else {
       el.querySelector(".clock").textContent = clockText(m);
-      el.querySelector(".draftlbl").textContent = m.drafting ? "Draft in progress" : "In game";
+      el.querySelector(".draftlbl").textContent = m.drafting ? "Draft in progress" : seriesText(m);
       el.querySelector('.tk[data-k="rad"]').textContent = m.radiant.kills;
       el.querySelector('.tk[data-k="dir"]').textContent = m.dire.kills;
       el.querySelector(".nwslot").innerHTML = netWorth(m);
@@ -226,6 +250,26 @@ function paint(matches){
     const want = app.children[i];
     if (want !== el) app.insertBefore(el, want || null);
   });
+}
+
+/* Channels on air with no live game behind them — Valve reruns finished series
+   between rounds. Same treatment as the live list: only redraw when the set
+   actually changes, so an open rerun stream is not torn down every poll. */
+function paintReplays(list){
+  const box = document.getElementById("replays");
+  const key = list.map(s => s.channel).join(",");
+  if (box.dataset.key === key) return;
+  box.dataset.key = key;
+  if (!list.length){ box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="rerun">
+    <div class="rerun-h">Also on air · reruns</div>
+    <div class="rerun-note">Finished series being rebroadcast on the spare channels. Not live games.</div>
+    ${list.map(s => `<a class="rerun-row" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">
+        <span class="rerun-lang">${esc(s.lang)}</span>
+        <span class="rerun-teams">${esc(s.teamA || "")}${s.teamB ? " vs " + esc(s.teamB) : ""}</span>
+        <span class="rerun-go">twitch ↗</span>
+      </a>`).join("")}
+  </div>`;
 }
 
 async function refresh(){
@@ -245,6 +289,7 @@ async function refresh(){
     } else {
       paint(ms);
     }
+    paintReplays(j.replays || []);
     tick.textContent = ms.length + (ms.length === 1 ? " game live" : " games live") +
       " · " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
   }catch(e){

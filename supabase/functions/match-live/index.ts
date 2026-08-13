@@ -41,10 +41,13 @@ const CHANNELS: Array<{ c: string; lang: string }> = [
 const norm = (s: unknown) => String(s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
 // Same loose key the site uses: the client says "Aurora Gaming", fixtures say
 // "Aurora", and a stream title may say either.
+// Spaces are stripped entirely at the end: a stream title said "Boom Boys" while
+// the game server said "BoomBoys", and that one space was enough to lose the
+// match between them.
 const tkey = (s: unknown) =>
   norm(s).replace(/[.\-_'"]/g, " ")
     .replace(/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g, " ")
-    .replace(/\s+/g, " ").trim();
+    .replace(/\s+/g, "").trim();
 
 let _streams: { at: number; data: any[] } | null = null;
 let _heroes: { at: number; data: Record<string, any> } | null = null;
@@ -104,7 +107,10 @@ async function teamLogos(league: number): Promise<Record<string, any>> {
    finished-game list is the authority: aggregate it into series and drop anything
    already settled. That is what stopped Aurora 2-0 GamerLegion from sitting on the
    page at "41 minutes" after the series had ended. */
-let _fin: { at: number; league: number; ids: Set<string>; decided: Set<string> } | null = null;
+let _fin: {
+  at: number; league: number; ids: Set<string>; decided: Set<string>;
+  wins: Record<string, Record<string, number>>;
+} | null = null;
 const FIN_TTL = 120_000;
 async function finished(league: number) {
   if (_fin && _fin.league === league && Date.now() - _fin.at < FIN_TTL) return _fin;
@@ -132,7 +138,7 @@ async function finished(league: number) {
   Object.entries(wins).forEach(([k, w]) => {
     if (Math.max(...Object.values(w)) >= 2) decided.add(k);   // Bo3
   });
-  _fin = { at: Date.now(), league, ids, decided };
+  _fin = { at: Date.now(), league, ids, decided, wins };
   return _fin;
 }
 
@@ -167,9 +173,40 @@ function streamsFor(streams: any[], a: string, b: string) {
     .map(s => ({ channel: s.channel, lang: s.lang, url: s.url, title: s.title }));
 }
 
-// A game that has ended can linger in /live for a long time, so staleness is the
-// only usable signal. Same thresholds the main feed settled on.
-const STALE_RUNNING = 6 * 60, STALE_DRAFT = 25 * 60;
+/* Is the game actually being played?
+   Measured 13 Aug 2026: of ten TI entries in /live, SEVEN had a frozen clock —
+   ended games that OpenDota keeps serving for hours. last_update_time is useless
+   for this because it is stamped when the whole snapshot refreshes, so every
+   entry reads the same few seconds old whether it is live or long dead. And
+   deactivate_time is only set on some of them.
+   A live game's clock advances; a dead one's does not. So sample game_time and
+   compare against the previous sample. The page polls every 20s, which keeps
+   this isolate warm and the samples flowing.
+   A frozen entry is NOT marked dead permanently — a technical pause also freezes
+   the clock, and the stored sample is deliberately left untouched so the game
+   reappears the moment its clock moves again. */
+type Sample = { gt: number; at: number };
+const _clock = new Map<string, Sample>();
+const CLOCK_GAP_MS = 45_000;   // samples must be this far apart to judge
+// Only used before two samples exist. Live games measured ~1000s of drift,
+// finished ones 1600–8800s, so this is deliberately generous: better to show a
+// dead game for one poll than to hide a live one.
+const COLD_DRIFT_MAX = 2400;
+
+function isBeingPlayed(g: any, nowSec: number): boolean {
+  const id = String(g.match_id);
+  const gt = g.game_time ?? 0;
+  const nowMs = Date.now();
+  const prev = _clock.get(id);
+  if (!prev) {
+    _clock.set(id, { gt, at: nowMs });
+    const drift = (nowSec - (g.activate_time ?? nowSec)) - gt;
+    return drift <= COLD_DRIFT_MAX;
+  }
+  if (nowMs - prev.at < CLOCK_GAP_MS) return true;      // too soon to tell; keep showing
+  if (gt > prev.gt) { _clock.set(id, { gt, at: nowMs }); return true; }
+  return false;                                          // clock stopped
+}
 
 Deno.serve(async (req) => {
   const url = new URL(req.url);
@@ -209,9 +246,10 @@ Deno.serve(async (req) => {
       // The whole series is settled, so nothing of it is still being played.
       if (fin.decided.has(k)) return;
 
+      // The decisive test: is the clock actually moving?
+      if (!isBeingPlayed(g, now)) return;
+
       const drafting = (g.game_time ?? 0) <= 0;
-      const age = g.last_update_time ? now - g.last_update_time : 1e9;
-      if (age > (drafting ? STALE_DRAFT : STALE_RUNNING)) return;
       // one row per pairing, newest match id wins
       const prev = seen.get(k);
       if (prev && Number(prev.matchId) >= Number(g.match_id)) return;
@@ -247,6 +285,13 @@ Deno.serve(async (req) => {
         },
         // positive = radiant ahead, in gold
         netWorthLead: g.radiant_lead ?? null,
+        // Series standing so far, from games already finished. Without it the
+        // kill score reads like the whole result and an ongoing series looks
+        // like a replay of something already decided.
+        series: {
+          a: (fin.wins[k] || {})[tkey(a)] || 0,
+          b: (fin.wins[k] || {})[tkey(b)] || 0,
+        },
         streams: streamsFor(streams, a, b),
         stats: `https://www.opendota.com/matches/${g.match_id}`,
       });
@@ -257,8 +302,21 @@ Deno.serve(async (req) => {
     // whatever had been running longest.
     const matches = [...seen.values()]
       .sort((x, y) => (x.startedAgo ?? 1e9) - (y.startedAgo ?? 1e9));
+    /* Channels broadcasting something that has no live game behind it.
+       Valve reruns finished series on the spare channels between rounds, and
+       those look identical to a live broadcast from the outside — same channel,
+       same title format. Listing them separately keeps the top of the page
+       honest: "live" means a game server with a moving clock, nothing else. */
+    const livePairs = new Set(matches.map((m: any) =>
+      [tkey(m.radiant.name), tkey(m.dire.name)].sort().join("|")));
+    const replays = streams.filter(s => {
+      if (!s.teamA || !s.teamB) return false;
+      return !livePairs.has([tkey(s.teamA), tkey(s.teamB)].sort().join("|"));
+    });
+
     return new Response(JSON.stringify({
       matches,
+      replays,
       streamsAll: streams,
       leagueId: wanted,
       updatedAt: new Date().toISOString(),
