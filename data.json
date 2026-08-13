@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T01:14:36.190136+00:00",
+    "lastUpdated": "2026-08-13T03:35:00.730847+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1885,7 +1885,7 @@
             "id": "gs-r1-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T10:00:00+08:00",
+            "scheduled": "2026-08-13T11:00:00+08:00",
             "teamA": {
               "name": "Team Falcons",
               "score": null
@@ -1899,7 +1899,7 @@
             "id": "gs-r1-m2",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T10:00:00+08:00",
+            "scheduled": "2026-08-13T11:00:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
               "score": null
@@ -1913,7 +1913,7 @@
             "id": "gs-r1-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T10:00:00+08:00",
+            "scheduled": "2026-08-13T11:30:00+08:00",
             "teamA": {
               "name": "BoomBoys",
               "score": null
@@ -1927,7 +1927,7 @@
             "id": "gs-r1-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T10:00:00+08:00",
+            "scheduled": "2026-08-13T11:30:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
               "score": null
@@ -1941,7 +1941,7 @@
             "id": "gs-r1-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T13:00:00+08:00",
+            "scheduled": "2026-08-13T14:00:00+08:00",
             "teamA": {
               "name": "Team Spirit",
               "score": null
@@ -1955,7 +1955,7 @@
             "id": "gs-r1-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T13:00:00+08:00",
+            "scheduled": "2026-08-13T14:00:00+08:00",
             "teamA": {
               "name": "Team Liquid",
               "score": null
@@ -1969,7 +1969,7 @@
             "id": "gs-r1-m7",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T13:00:00+08:00",
+            "scheduled": "2026-08-13T14:00:00+08:00",
             "teamA": {
               "name": "Aurora",
               "score": null
@@ -1983,7 +1983,7 @@
             "id": "gs-r1-m8",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-13T13:00:00+08:00",
+            "scheduled": "2026-08-13T14:00:00+08:00",
             "teamA": {
               "name": "Team Yandex",
               "score": null
