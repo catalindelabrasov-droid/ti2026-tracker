@@ -14,7 +14,7 @@
  *     already moved.
  */
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL   = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 

@@ -1546,7 +1546,11 @@ function render(d){
   <div class="wrap">
     <div class="tabview on" id="view-ti">
       ${renderLive(d)}${renderPrize(d,champion)}${renderQualifiers(d)}${renderTeams(d)}${renderGroups(d)}${renderBracket(d)}
-      <footer><a href="/app" class="foot-app">📱 Put it on your phone</a><br>
+      <footer><a href="/app" class="foot-app">📱 Put it on your phone</a>
+        <!-- Permanent way in. The prompt inside Live &amp; Upcoming only shows
+             while a game is running, so without this the page is unreachable
+             between rounds. -->
+        <a href="watch.html" class="foot-app">▶ Watch live games</a><br>
         ${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA) &amp; OpenDota.<br>
         Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
         Fan-made tracker, not affiliated with Valve.</footer>

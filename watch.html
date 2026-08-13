@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Watch — The International 2026</title>
-<!-- Standalone preview. Nothing on the live site links here yet, and this page
-     loads none of the site's code, so it cannot affect anything already running. -->
-<meta name="robots" content="noindex">
+<!-- Linked from the site footer and from every live match card. This page
+     deliberately loads none of the main page's code, so a fault here cannot
+     take the tracker down. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -21,6 +21,10 @@
     -webkit-font-smoothing:antialiased;padding:16px 12px 40px}
   .wrap{max-width:860px;margin:0 auto}
 
+  .back{display:inline-block;margin-bottom:10px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);
+    text-decoration:none}
+  .back:hover{color:var(--aegis)}
   header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   h1{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
   .sub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;
@@ -114,8 +118,11 @@
 </head>
 <body>
 <div class="wrap">
+  <!-- A page reached from the site has to lead back into it, or it is a dead
+       end: people arrive here from a match card and then have nowhere to go. -->
+  <a class="back" href="/">← The International 2026 tracker</a>
   <header>
-    <h1>The International 2026</h1>
+    <h1>Live games</h1>
     <span class="sub"><span class="dot"></span><span id="tick">connecting…</span></span>
   </header>
   <p class="note">
