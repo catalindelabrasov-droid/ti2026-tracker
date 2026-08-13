@@ -91,8 +91,11 @@ try{
 # and no server-side check could see it: the feed was correct, the page was not.
 try{
   $page=(Invoke-WebRequest "$SITE/index.html?cb=$(Get-Random)" -UseBasicParsing).Content
-  $fn=[regex]::Match($page,'async function fetchLiveFeed\([\s\S]{0,2000}?\n\}')
-  Chk "page keeps unknown feed fields" ($fn.Success -and $fn.Value -match '\{\s*\.\.\.j') "spreads the response"
+  # NOT $fn: PowerShell variable names are case-insensitive, so $fn and $FN are
+  # the same variable, and this quietly overwrote the functions base URL with a
+  # regex Match — every later call built an invalid URI.
+  $feedFn=[regex]::Match($page,'async function fetchLiveFeed\([\s\S]{0,2000}?\n\}')
+  Chk "page keeps unknown feed fields" ($feedFn.Success -and $feedFn.Value -match '\{\s*\.\.\.j') "spreads the response"
   Chk "page consumes tiSeries" ($page -match 'LIVE_FEED\.tiSeries|tiSeries') ""
 }catch{ No "index.html fetch" $_.Exception.Message }
 
@@ -132,7 +135,10 @@ if(Test-Path $SB){
       try{
         $r=Invoke-RestMethod -Uri "$FN/updater-watchdog?$($p.q)=1&dry=1" -Headers @{ "x-tick-secret"=$sec } -TimeoutSec 60
         Chk "dispatcher answers: $($p.n)" ($r.ok -eq $true) "$($r.action)"
-      }catch{ No "dispatcher answers: $($p.n)" ("HTTP " + [int]$_.Exception.Response.StatusCode) }
+      }catch{
+        $code = if($_.Exception.Response){ [int]$_.Exception.Response.StatusCode } else { $null }
+        No "dispatcher answers: $($p.n)" $(if($code){ "HTTP $code" } else { $_.Exception.Message })
+      }
     }
     $names=@((Q "select jobname from cron.job where active and jobname in ('full-tick','score-tick');") | ForEach-Object { $_.jobname })
     Chk "update cron jobs scheduled" (($names -contains 'full-tick') -and ($names -contains 'score-tick')) ($names -join ', ')
