@@ -519,6 +519,21 @@
   .tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft)}
   .tbl tr:hover td{background:var(--panel)}
   .tbl .rank{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);width:42px}
+  /* Two scores on one card, each labelled, so neither can be mistaken for the
+     other: the big pair is the SERIES, the strip below is the game on screen. */
+  .lc-serieslbl{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-faint);text-align:right;margin:-6px 0 2px}
+  .lc-now{display:flex;align-items:center;gap:8px;margin-top:9px;padding:7px 10px;
+    background:rgba(255,255,255,.035);border-radius:5px;border-left:2px solid var(--live)}
+  .lc-nowlbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-dim)}
+  .lc-nowkills{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--ink);margin-left:auto}
+  .lc-nowkills i{font-style:normal;color:var(--ink-faint);margin:0 2px}
+  .lc-nowunit{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint)}
+  .lc-nowmin{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--live);
+    padding-left:8px;border-left:1px solid var(--line)}
+
   /* A team's own matches, shown in its panel — the roster is often empty this
      early and an empty panel is worse than no panel. */
   .td-mlist{display:flex;flex-direction:column;gap:1px;margin-bottom:4px}
@@ -1516,6 +1531,28 @@ function placeIs(label,n){
 function tiMergedMatches(d){
   const out=allMatches(d).map(m=>({...m,
     teamA:{...(m.teamA||{})}, teamB:{...(m.teamB||{})}}));
+
+  // First, the server's roll-up of EVERY series, decided or not. A series
+  // leaves the live feed the moment it ends and the page would then fall back
+  // to the published schedule, which lags by minutes — that is how BoomBoys v
+  // OG read 1-0 and "live" on the site when it had finished 2-0.
+  ((LIVE_FEED&&LIVE_FEED.tiSeries)||[]).forEach(s=>{
+    const a=tnorm(s.a), b=tnorm(s.b);
+    const i=out.findIndex(m=>{
+      const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
+      if(!x||!y||x==="tbd"||y==="tbd") return false;
+      return (x===a&&y===b)||(x===b&&y===a);
+    });
+    if(i<0) return;
+    const f=out[i];
+    const flipped=tnorm(f.teamA&&f.teamA.name)!==a;
+    f.teamA.score=flipped?s.sb:s.sa;
+    f.teamB.score=flipped?s.sa:s.sb;
+    // Decide the status from the score, not from what the schedule believes.
+    const need=Math.floor((f.bestOf||3)/2)+1;
+    if(Math.max(f.teamA.score,f.teamB.score)>=need) f.status="completed";
+  });
+
   liveProMatches().forEach(lm=>{
     const a=tnorm(lm.teamA&&lm.teamA.name), b=tnorm(lm.teamB&&lm.teamB.name);
     if(!a||!b) return;
@@ -1636,15 +1673,21 @@ function liveCard(m){
   const played=(typeof a.score==='number'&&typeof b.score==='number')?a.score+b.score:null;
   const gameNo=(m.status==='live'&&played!=null)?played+1:null;
   const bo=m.bestOf?`Bo${m.bestOf}`:'';
-  const gameBit=gameNo?`${bo?bo+' · ':''}game ${gameNo}`:bo;
-  const kills=(m.killsA!=null&&m.killsB!=null)?` · ${m.killsA}–${m.killsB} kills`:'';
+  const seriesTag=(m.status==='live'&&typeof a.score==='number'&&typeof b.score==='number')
+    ? `<div class="lc-serieslbl">Series${bo?' · '+bo:''}</div>` : '';
   return`<div class="lcard ${m.status==='live'?'is-live':''}" data-mid="${esc(m.id)}" data-teams="${esc((a.name||'')+' '+(b.name||''))}" data-status="${esc(m.status)}">
     <div class="lcard-top"><span class="lc-stage">${esc(m.stage||'')}</span>${statusBadge(m.status)}</div>
+    ${seriesTag}
     <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${score(a.score)}</span></div>
     <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24,b.logo)}<span class="lc-score">${score(b.score)}</span></div>
+    ${m.status==='live'&&(gameNo||m.killsA!=null)?`<div class="lc-now">
+      <span class="lc-nowlbl">Game ${gameNo||'?'}</span>
+      ${m.killsA!=null&&m.killsB!=null?`<span class="lc-nowkills">${m.killsA}<i>–</i>${m.killsB}</span><span class="lc-nowunit">kills</span>`:''}
+      ${m.gameMinute!=null?`<span class="lc-nowmin">${m.gameMinute}'</span>`:''}
+    </div>`:''}
     <div class="lc-foot"><span class="lc-time">${m.status==='live'
-        ? `● ${gameBit?esc(gameBit)+' · ':''}${m.gameMinute!=null?m.gameMinute+"'":'live'}`
-        : esc(time)}${kills}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):(m.status==='live'?'':' · '+esc(bo||'Bo3'))}</span>
+        ? `● live${bo?' · '+esc(bo):''}`
+        : esc(time)}${m.fromStratz?(m.spectators?' · '+formatSpectators(m.spectators)+' watching':''):(m.status==='live'?'':' · '+esc(bo||'Bo3'))}</span>
       <span class="lc-actions">${watchButton(m,false)}${m.fromStratz?'':`<button class="bell ${on?'on':''}" data-notif="${esc(m.id)}" title="Notify me about this match">${on?'🔔':'🔕'}</button>`}</span></div>
   </div>`;
 }

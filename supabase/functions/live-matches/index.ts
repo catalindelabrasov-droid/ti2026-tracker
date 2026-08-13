@@ -33,6 +33,7 @@ const CORS = {
 let _leagues: Record<number, any> | null = null;
 let _teams: Record<number, { name: string; logo: string | null }> | null = null;
 let _tiPrize: { id: number; name: string; prizePool: number } | null = null;
+let _tiLeagueId: number | null = null;
 let _tournaments: any[] | null = null;
 let _meta: any[] | null = null;
 let _heroes: Record<number, any> | null = null;
@@ -166,11 +167,17 @@ async function loadLookups() {
       jget("/leagues"), jget("/teams"), jget("/proMatches"),
     ]);
     // leagues map
-    _leagues = {}; _tiPrize = null;
+    _leagues = {}; _tiPrize = null; _tiLeagueId = null;
     for (const l of (lgs || [])) {
       if (!l.leagueid) continue;
       _leagues[l.leagueid] = { name: l.name, tier: l.tier || null, prizePool: l.prizepool || 0 };
       const nm = (l.name || "").toLowerCase();
+      // Remember the id whatever the prize pool says. OpenDota reports TI's
+      // prizepool as 0, so gating the id on it meant we never knew which
+      // league TI was — and the series roll-up below needs the id, not money.
+      if (nm.includes("international 2026") && !nm.includes("qualifier")) {
+        _tiLeagueId = l.leagueid;
+      }
       if (nm.includes("international 2026") && !nm.includes("qualifier") && l.prizepool) {
         _tiPrize = { id: l.leagueid, name: l.name, prizePool: l.prizepool };
       }
@@ -661,10 +668,29 @@ Deno.serve(async (req) => {
       // A missing series score is a worse card, not a broken page.
       console.error("series attach failed", String(e).slice(0, 200));
     }
+
+    // Every TI series, decided or not — not just the ones still being played.
+    //
+    // A series drops out of the live feed the moment it ends, and the page then
+    // falls back to the published schedule, which Liquipedia updates minutes
+    // later. That is how BoomBoys v OG sat on the site reading 1-0 and "live"
+    // when it had actually finished 2-0. Shipping the whole roll-up means the
+    // page never has to fall back to a slower source.
+    let tiSeries: any[] = [];
+    try {
+      if (_tiLeagueId) {
+        const det = await fetchLeagueDetail(_tiLeagueId);
+        tiSeries = (det && det.series) || [];
+      }
+    } catch (e) {
+      console.error("tiSeries failed", String(e).slice(0, 200));
+    }
     const tournaments = (_tournaments || []).map((t) => ({ ...t, live: liveLeagueIds.has(t.id) }));
 
     return new Response(JSON.stringify({
-      liveMatches, tournaments, tiPrize: _tiPrize, meta: _meta || [],
+      liveMatches, tournaments, tiPrize: _tiPrize,
+      tiLeagueId: _tiLeagueId, tiSeries,
+      meta: _meta || [],
       topTeams: _topTeams || [], topPlayers: _topPlayers || [],
       ladder: _ladder || null,
       ratingsUpdatedAt: _ddAsOf,
