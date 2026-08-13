@@ -33,6 +33,10 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
   .note{font-size:12px;color:var(--ink-faint);line-height:1.6;margin:10px 0 18px}
 
+  /* A column so cards can be reordered with `order` instead of being moved in
+     the DOM — moving a node that contains an iframe reloads it, which pauses
+     whatever stream is playing inside. */
+  #app{display:flex;flex-direction:column}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
     overflow:hidden;margin-bottom:14px}
   .chead{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--panel-2);
@@ -236,26 +240,40 @@ function netWorth(m){
   </div>`;
 }
 
-function streamRow(m){
+/* The buttons only. Deliberately separate from the player below.
+   The channel list churns on its own — Twitch titles and liveness are re-read
+   every 90 seconds — and rebuilding the whole block on that churn destroyed and
+   recreated the <iframe>, which pauses whatever you were watching. The buttons
+   may be redrawn freely; the player must not be touched unless YOU change it. */
+function streamButtons(m){
   if (!m.streams || !m.streams.length){
-    return `<div class="streams"><span class="slbl">Stream</span>
-      <span class="nostream">No official channel is showing this match right now.</span></div>`;
+    return `<span class="slbl">Stream</span>
+      <span class="nostream">No official channel is showing this match right now.</span>`;
   }
   const pick = chosen[m.matchId];
   const btns = m.streams.map(s =>
     `<button class="sbtn ${pick===s.channel?"on":""}" data-play="${esc(m.matchId)}" data-ch="${esc(s.channel)}"
       title="${esc(s.title||s.channel)}">${esc(s.lang)}</button>`).join("");
-  return `<div class="streams">
-      <span class="slbl">Watch here</span>${btns}
+  return `<span class="slbl">Watch here</span>${btns}
       ${pick ? `<button class="sbtn ghost" data-stop="${esc(m.matchId)}">stop</button>` : ""}
-      <a class="sbtn ghost" href="${esc(m.streams[0].url)}" target="_blank" rel="noopener noreferrer">twitch ↗</a>
-    </div>
-    ${pick ? `<iframe class="player" allowfullscreen
-        src="https://player.twitch.tv/?channel=${encodeURIComponent(pick)}&parent=${encodeURIComponent(PARENT)}"></iframe>` : ""}`;
+      <a class="sbtn ghost" href="${esc(m.streams[0].url)}" target="_blank" rel="noopener noreferrer">twitch ↗</a>`;
+}
+
+// The player itself. Rendered only when the chosen channel actually changes.
+function playerFrame(m){
+  const pick = chosen[m.matchId];
+  if (!pick) return "";
+  return `<iframe class="player" allowfullscreen
+      src="https://player.twitch.tv/?channel=${encodeURIComponent(pick)}&parent=${encodeURIComponent(PARENT)}"></iframe>`;
+}
+
+function streamRow(m){
+  return `<div class="streams" data-btns>${streamButtons(m)}</div>
+    <div class="playerslot" data-player>${playerFrame(m)}</div>`;
 }
 
 function card(m){
-  return `<div class="card" data-mid="${esc(m.matchId)}" data-draft="${esc(draftKey(m))}" data-skey="${esc(streamKey(m))}">
+  return `<div class="card" data-mid="${esc(m.matchId)}" data-draft="${esc(draftKey(m))}" data-skey="${esc(streamKey(m))}" data-pkey="${esc(chosen[m.matchId]||"")}">
     <div class="chead">
       <span class="badge">● Live</span>
       <span class="draftlbl">${m.drafting ? "Draft in progress" : esc(seriesText(m))}</span>
@@ -309,14 +327,27 @@ function paint(matches){
         updateStats(el.querySelector('.hstrip[data-h="rad"]'), m.radiant.players);
         updateStats(el.querySelector('.hstrip[data-h="dir"]'), m.dire.players);
       }
+      // Buttons and player are updated independently on purpose.
+      // The button list changes on its own as Twitch titles are re-read; the
+      // player must survive that, or the stream pauses every time the channel
+      // list wobbles. Only a change of CHOSEN channel may rebuild the iframe.
       if (el.dataset.skey !== streamKey(m)){
         el.dataset.skey = streamKey(m);
-        el.querySelector(".streamslot").innerHTML = streamRow(m);
+        const btns = el.querySelector("[data-btns]");
+        if (btns) btns.innerHTML = streamButtons(m);
+      }
+      if (el.dataset.pkey !== (chosen[m.matchId] || "")){
+        el.dataset.pkey = chosen[m.matchId] || "";
+        const slot = el.querySelector("[data-player]");
+        if (slot) slot.innerHTML = playerFrame(m);
       }
     }
     if (FOCUS) el.classList.toggle("focus", pairKey(m.radiant.name, m.dire.name) === FOCUS);
-    const want = app.children[i];
-    if (want !== el) app.insertBefore(el, want || null);
+    // Order with CSS, never by moving the node.
+    // Cards are sorted by game minute, which changes constantly — and moving an
+    // element that contains an <iframe> makes the browser reload it, pausing the
+    // stream. Setting `order` reshuffles the view without touching the DOM.
+    el.style.order = i;
   });
 
   // Scroll to the deep-linked game once, not on every 20s refresh.
