@@ -1296,7 +1296,7 @@ function startCountdown(d){
 function render(d){
   DATA=d;const m=d.meta||{};buildLogoMap(d);
   const upd=m.lastUpdated?new Date(m.lastUpdated).toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}):"unknown";
-  const champion=((d.prizePool||{}).distribution||[]).find(x=>x.place==="1st"&&x.team);
+  const champion=((d.prizePool||{}).distribution||[]).find(x=>placeIs(x.place,1)&&x.team);
   const root=document.createElement("div");root.id="app";
   root.innerHTML=`
   ${m.demo?`<div class="demo-banner">DEMO DATA — sample results so you can see every feature. Swap in real data anytime.</div>`:""}
@@ -1466,6 +1466,18 @@ function liveProMatches(){
   }));
 }
 const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
+
+/* Liquipedia labels prize placements "1", "2", "5-6"; earlier code here looked
+   for "1st" and so never matched anything. That meant the champion banner
+   could not light up even after the Aegis was lifted. Accept both, and treat a
+   shared placement like "5-6" as covering every place in the range. */
+function placeIs(label,n){
+  const s=String(label||"").trim().toLowerCase().replace(/(st|nd|rd|th)\b/g,"");
+  if(!s) return false;
+  const r=s.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+  if(r) return n>=+r[1] && n<=+r[2];
+  return +s===n;
+}
 
 // TI 2026's own live and upcoming matches only.
 function liveMatchesOf(d){
@@ -4173,9 +4185,9 @@ function lgComputeLeaderboard(lg){
 function lgOutcomePickRows(lg){
   const o=lg.outcomes||{};
   const dist=((DATA||{}).prizePool||{}).distribution||[];
-  const teamAt=(place)=>{ const e=dist.find(x=>x.place===place&&x.team); return e?e.team:null; };
-  const champ=teamAt("1st");
-  const top4=["1st","2nd","3rd","4th"].map(teamAt);
+  const teamAt=(n)=>{ const e=dist.find(x=>placeIs(x.place,n)&&x.team); return e?e.team:null; };
+  const champ=teamAt(1);
+  const top4=[1,2,3,4].map(teamAt);
   const top4Known=top4.every(Boolean);
   const rows=[];
 

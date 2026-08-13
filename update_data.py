@@ -143,6 +143,61 @@ def parse_prize_pool(wt):
     return int(m.group(1).replace(",", ""))
 
 
+def fetch_live_prize_pool():
+    """
+    The live prize pool, which is NOT on the main page.
+
+    TI's page carries |prizepoolusd={{:The International/2026/prizepool}} — a
+    transclusion, not a number — so the regex above finds nothing and the total
+    sat at the $1,600,000 base all through the event. There is no Battle Pass
+    or Compendium in 2026; 30% of every supporter bundle sale is added instead,
+    and Liquipedia keeps the running figure on that subpage as a bare integer.
+
+    Returns None on any doubt, so a bad read never overwrites a good number.
+    """
+    wt = get_wikitext("The International/2026/prizepool")
+    if not wt:
+        return None
+    digits = re.sub(r"[^\d]", "", wt)
+    if not digits:
+        return None
+    total = int(digits)
+    # Sanity rails: it can only grow from the base, and TI has never come near
+    # fifty million. Anything outside that is a parse gone wrong, not news.
+    if total < 1_600_000 or total > 50_000_000:
+        print(f"  ! prize pool {total} outside sane range; ignoring", file=sys.stderr)
+        return None
+    return total
+
+
+def parse_prize_shares(wt):
+    """
+    Placement shares from the prize table, as exact multipliers.
+
+    Liquipedia writes each slot as a fraction of the running total:
+      {{Slot|place=1|usdprize={{...prizepool_total * .42498973833048 round 0}}
+    so the split can be recomputed every time the pool grows, rather than
+    freezing whatever the amounts happened to be when the page was written.
+    """
+    shares = []
+    for m in re.finditer(
+            r"\{\{Slot\|place=([^|]+)\|usdprize=.*?prizepool_total\}\}\s*\*\s*"
+            r"(\.[0-9]+)\s*round[^}]*\}\}\}\}(.*?)(?=\{\{Slot\||\}\}\s*$)",
+            wt, re.I | re.S):
+        place = clean(m.group(1))
+        try:
+            share = float(m.group(2))
+        except ValueError:
+            continue
+        team_m = re.search(r"\{\{TeamOpponent\|([^|}\n]+)", m.group(3) or "")
+        shares.append({
+            "place": place,
+            "share": share,
+            "team": clean(team_m.group(1)) if team_m else None,
+        })
+    return shares or None
+
+
 def parse_prize_distribution(wt):
     """
     Parse {{prize pool ...}} rows of the form:
@@ -1604,18 +1659,47 @@ def main():
 
     changed = []
 
-    # Prize pool total
-    pp = parse_prize_pool(wt)
-    if pp:
-        data["prizePool"]["total"] = pp
-        data["meta"]["basePrizePool"] = pp
-        changed.append("prizePool.total")
+    # Prize pool. The base is what Valve put in; the total is that plus the
+    # supporter-bundle share, which moves daily while the event is on.
+    base = parse_prize_pool(wt)
+    if base:
+        data["meta"]["basePrizePool"] = base
+    base = data["meta"].get("basePrizePool") or 1_600_000
 
-    # Prize distribution
-    dist = parse_prize_distribution(wt)
-    if dist:
-        data["prizePool"]["distribution"] = dist
+    live = fetch_live_prize_pool()
+    total = live or data.get("prizePool", {}).get("total") or base
+    if total != data.get("prizePool", {}).get("total"):
+        data["prizePool"]["total"] = total
+        changed.append("prizePool.total")
+    if live:
+        added = live - base
+        data["prizePool"]["note"] = (
+            f"${base:,} base plus ${added:,} from supporter bundle sales "
+            f"(30% of each bundle). No Battle Pass or Compendium in 2026."
+        )
+
+    # Prize distribution, recomputed from the placement shares so the amounts
+    # track the pool as it grows instead of freezing at the base split.
+    shares = parse_prize_shares(wt)
+    if shares:
+        old_teams = {r.get("place"): r.get("team")
+                     for r in (data.get("prizePool", {}).get("distribution") or [])}
+        data["prizePool"]["distribution"] = [
+            {
+                "place": s["place"],
+                "amount": int(round(total * s["share"])),
+                # Keep a team we already knew if this pass didn't see one, so a
+                # decided placement is never blanked by a quiet parse.
+                "team": s["team"] or old_teams.get(s["place"]),
+            }
+            for s in shares
+        ]
         changed.append("prizePool.distribution")
+    else:
+        dist = parse_prize_distribution(wt)
+        if dist:
+            data["prizePool"]["distribution"] = dist
+            changed.append("prizePool.distribution")
 
     # Teams, rosters and qualifier winners — the participants table on the
     # main page carries all three ({{Opponent|Name|players=...{{Person}}...
