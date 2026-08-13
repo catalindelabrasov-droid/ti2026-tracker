@@ -533,6 +533,8 @@
     text-transform:uppercase;color:var(--ink-faint)}
   .lc-nowmin{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--live);
     padding-left:8px;border-left:1px solid var(--line)}
+  .lc-nowdraft{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--live);margin-left:auto}
 
   /* A team's own matches, shown in its panel — the roster is often empty this
      early and an empty panel is worse than no panel. */
@@ -1672,6 +1674,9 @@ function liveCard(m){
   // played right now. Games already finished = the two series scores added up.
   const played=(typeof a.score==='number'&&typeof b.score==='number')?a.score+b.score:null;
   const gameNo=(m.status==='live'&&played!=null)?played+1:null;
+  // Before the horn OpenDota reports minute 0 and 0 kills, which rendered as a
+  // real-looking "0–0 kills 0'". Say what is actually happening instead.
+  const drafting=m.status==='live'&&m.gameMinute!=null&&m.gameMinute<=0;
   const bo=m.bestOf?`Bo${m.bestOf}`:'';
   const seriesTag=(m.status==='live'&&typeof a.score==='number'&&typeof b.score==='number')
     ? `<div class="lc-serieslbl">Series${bo?' · '+bo:''}</div>` : '';
@@ -1681,9 +1686,8 @@ function liveCard(m){
     <div class="lc-team ${w==='A'?'win':w==='B'?'lose':''}">${teamWithLogo(a.name,24,a.logo)}<span class="lc-score">${score(a.score)}</span></div>
     <div class="lc-team ${w==='B'?'win':w==='A'?'lose':''}">${teamWithLogo(b.name,24,b.logo)}<span class="lc-score">${score(b.score)}</span></div>
     ${m.status==='live'&&(gameNo||m.killsA!=null)?`<div class="lc-now">
-      <span class="lc-nowlbl">Game ${gameNo||'?'}</span>
-      ${m.killsA!=null&&m.killsB!=null?`<span class="lc-nowkills">${m.killsA}<i>–</i>${m.killsB}</span><span class="lc-nowunit">kills</span>`:''}
-      ${m.gameMinute!=null?`<span class="lc-nowmin">${m.gameMinute}'</span>`:''}
+      ${gameNo?`<span class="lc-nowlbl">Game ${gameNo}</span>`:`<span class="lc-nowlbl">Now</span>`}
+      ${drafting?`<span class="lc-nowdraft">Drafting</span>`:`${m.killsA!=null&&m.killsB!=null?`<span class="lc-nowkills">${m.killsA}<i>–</i>${m.killsB}</span><span class="lc-nowunit">kills</span>`:''}${m.gameMinute!=null?`<span class="lc-nowmin">${m.gameMinute}'</span>`:''}`}
     </div>`:''}
     <div class="lc-foot"><span class="lc-time">${m.status==='live'
         ? `● live${bo?' · '+esc(bo):''}`
@@ -3613,7 +3617,16 @@ async function fetchLiveFeed(){
     const live=j.liveMatches||[];
     // register any team logos the feed provides, so teamWithLogo picks them up
     try{ live.forEach(m=>{ [m.teamA,m.teamB].forEach(t=>{ if(t&&t.name&&t.logo&&!_logoMap[t.name.toLowerCase()]) _logoMap[t.name.toLowerCase()]=t.logo; }); }); }catch(e){}
-    return {liveMatches:live, events:j.events||[], tournaments:j.tournaments||[], meta:j.meta||[], topTeams:j.topTeams||[], topPlayers:j.topPlayers||[], tiPrize:j.tiPrize||null, ladder:j.ladder||null, ratingSource:j.ratingSource||null, ratingsUpdatedAt:j.ratingsUpdatedAt||null, updatedAt:j.updatedAt};
+    // Spread the response first, then pin the fields we depend on to safe
+    // defaults. Listing every key by hand meant a new one — tiSeries, the
+    // whole point of the last fix — was silently dropped on the way in, and
+    // the page went on quietly using the stale schedule instead.
+    return {...j,
+      liveMatches:live, events:j.events||[], tournaments:j.tournaments||[],
+      meta:j.meta||[], topTeams:j.topTeams||[], topPlayers:j.topPlayers||[],
+      tiPrize:j.tiPrize||null, tiSeries:j.tiSeries||[], tiLeagueId:j.tiLeagueId||null,
+      ladder:j.ladder||null, ratingSource:j.ratingSource||null,
+      ratingsUpdatedAt:j.ratingsUpdatedAt||null, updatedAt:j.updatedAt};
   }catch(e){ return {liveMatches:[],events:[]}; }
 }
 async function loadData(skipOverride){
