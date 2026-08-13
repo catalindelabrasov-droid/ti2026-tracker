@@ -171,15 +171,23 @@ async function newlyPredictable(lockLeadMin: number) {
 
   const now = Date.now();
   for (const m of all) {
-    if (!m?.id || m.status === "completed") continue;
+    if (!m?.id) continue;
     const a = String(m.teamA?.name ?? "").trim();
     const b = String(m.teamB?.name ?? "").trim();
     if (!a || !b || a === "TBD" || b === "TBD") continue;
-    // Already locked or under way: telling someone to pick it now is a lie.
-    if (m.scheduled) {
+
+    // Mirror the lock rule exactly, or we advertise picks the site refuses and
+    // stay silent about ones it allows.
+    //
+    // Under way or finished: telling someone to pick it is a lie.
+    if (m.status === "live" || m.status === "completed") continue;
+    // A clock deadline only exists when the league keeps one. With lockLeadMin
+    // at 0 the scheduled time means nothing — TI's schedule slips by an hour and
+    // a match sitting past its slot, unplayed, is still perfectly pickable.
+    if (lockLeadMin > 0 && m.scheduled) {
       const t = Date.parse(m.scheduled);
       if (Number.isFinite(t) && t - now <= lockLeadMin * 60000) continue;
-    } else if (m.status === "live") continue;
+    }
     out.push({ key: `predict:${m.id}:${[a, b].sort().join("|")}`, a, b });
   }
   return out;
@@ -265,7 +273,11 @@ Deno.serve(async (req) => {
     for (const m of await liveNow(leagues)) {
       jobs.push({ key: m.key, kind: "live", line: `${m.a} vs ${m.b}` });
     }
-    const lockLead = Number(await config("push_predict_lock_lead_min", 30)) || 30;
+    // NOT `|| 30`: 0 is a real setting meaning "no clock deadline, open until it
+    // starts", and || turns it straight back into 30 minutes — which is how this
+    // silently announced nothing while three matches sat open to predict.
+    const rawLead = Number(await config("push_predict_lock_lead_min", 0));
+    const lockLead = Number.isFinite(rawLead) ? rawLead : 0;
     for (const m of await newlyPredictable(lockLead)) {
       jobs.push({ key: m.key, kind: "predict", line: `${m.a} vs ${m.b}` });
     }
