@@ -58,6 +58,41 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const force = url.searchParams.get("force") === "1";
   const dry = url.searchParams.get("dry") === "1";
+  const fast = url.searchParams.get("fast") === "1";
+
+  // The quarter-hour scoring pass.
+  //
+  // GitHub's `schedule` trigger is the unreliable part — it dropped both the
+  // 07:00 and 07:15 slots on TI day two. `workflow_dispatch` fires immediately,
+  // so pg_cron keeps the clock and GitHub only runs the job. No staleness check
+  // and no cooldown: this is a heartbeat, not a rescue, and it deliberately
+  // ignores data.json's age because the fast pass never touches data.json — it
+  // writes match_results, which is what league points are scored from.
+  if (fast) {
+    if (!GH_TOKEN) return Response.json({ ok: false, error: "GH_TOKEN not set" }, { status: 500 });
+    if (dry) return Response.json({ ok: true, action: "would-dispatch-fast" });
+    const gh = await fetch(
+      `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GH_TOKEN}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "ti-updater-watchdog",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ref: "main", inputs: { mode: "fast" } }),
+      },
+    );
+    if (gh.status === 204) {
+      await cfgSet("scorer_last_dispatch", new Date().toISOString());
+      return Response.json({ ok: true, action: "dispatched-fast" });
+    }
+    return Response.json(
+      { ok: false, action: "fast-dispatch-failed", status: gh.status, body: (await gh.text()).slice(0, 200) },
+      { status: 502 },
+    );
+  }
 
   try {
     // How old is what the site is actually serving?

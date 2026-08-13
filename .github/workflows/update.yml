@@ -6,13 +6,16 @@ name: Update TI 2026 data
 on:
   schedule:
     # Full run, hourly: Liquipedia structure + rosters + world ranking, and the
-    # only one that commits data.json. Stays polite to Liquipedia.
+    # only trigger that commits data.json. Stays polite to Liquipedia.
+    #
+    # There is deliberately NO quarter-hour schedule here. GitHub's `schedule`
+    # trigger is best-effort and gets deprioritised on public repos: it dropped
+    # two consecutive hours on TI opening night, and both the 07:00 and 07:15
+    # slots on day two. The 15-minute scoring pass is driven from Supabase
+    # pg_cron instead, which calls updater-watchdog?fast=1 and dispatches this
+    # workflow with mode=fast. workflow_dispatch fires immediately, so the
+    # reliable timer keeps the clock and GitHub only runs the job.
     - cron: "0 * * * *"
-    # Fast run, on the quarter hours: OpenDota scores straight into the league
-    # backend so points move within ~15 min of a series ending. Costs 2 API
-    # calls, touches no third party but OpenDota, and commits nothing - the page
-    # already merges live scores at render time, so there is nothing to publish.
-    - cron: "15,30,45 * * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -49,7 +52,7 @@ jobs:
           # League backend: finished results feed the prediction leaderboard.
           SUPABASE_URL: https://hqpynfzatnmwvlxdfhsw.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
-          FAST: ${{ (github.event.schedule == '15,30,45 * * * *' || inputs.mode == 'fast') && '1' || '' }}
+          FAST: ${{ inputs.mode == 'fast' && '1' || '' }}
         run: |
           if [ -n "$FAST" ]; then
             python update_data.py --fast
@@ -61,7 +64,7 @@ jobs:
       # writes to Supabase, not to the repo - and committing every 15 minutes
       # would mean 96 deploys a day for a file the page already corrects live.
       - name: Commit changes if data changed
-        if: ${{ github.event.schedule != '15,30,45 * * * *' && inputs.mode != 'fast' }}
+        if: ${{ inputs.mode != 'fast' }}
         run: |
           git config user.name  "ti-data-bot"
           git config user.email "actions@users.noreply.github.com"
