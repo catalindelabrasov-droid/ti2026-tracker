@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -130,6 +130,9 @@ const gold = n => Math.abs(n) >= 1000 ? (Math.abs(n)/1000).toFixed(1) + "k" : St
 // Which stream the viewer chose to play inline, per match. Kept across refreshes
 // so a reload of the data does not rip the video out from under them.
 const chosen = {};
+// last payload, so tapping a stream repaints instantly instead of waiting for
+// the next poll
+let lastMatches = [];
 
 function heroCell(p){
   // hero_id is 0 until that player has actually been drafted, so the tile has to
@@ -145,7 +148,7 @@ function heroCell(p){
 function draftBlock(m){
   const picked = [...m.radiant.players, ...m.dire.players].some(p => p.heroId);
   if (m.drafting && !picked){
-    const names = s => s.players.map(p => esc(p.player || "—")).join(" · ");
+    const names = s => s.players.map(p => esc(p.player || "—")).join(" Â· ");
     return `<div class="draft">
       <div class="drafting">Draft in progress — heroes not picked yet</div>
       <div class="sidelbl rad">Radiant — ${esc(m.radiant.name)}</div>
@@ -197,23 +200,32 @@ function streamRow(m){
   return `<div class="streams">
       <span class="slbl">Watch here</span>${btns}
       ${pick ? `<button class="sbtn ghost" data-stop="${esc(m.matchId)}">stop</button>` : ""}
-      <a class="sbtn ghost" href="${esc(open.url)}" target="_blank" rel="noopener noreferrer">open on twitch ↗</a>
+      <a class="sbtn ghost" href="${esc(open.url)}" target="_blank" rel="noopener noreferrer">open on twitch â†—</a>
     </div>
     ${pick ? `<iframe class="player" allowfullscreen
         src="https://player.twitch.tv/?channel=${encodeURIComponent(pick)}&parent=${encodeURIComponent(PARENT)}&muted=false"></iframe>` : ""}`;
 }
 
+function clockText(m){
+  return m.drafting ? "Drafting" : (m.gameMinute != null ? m.gameMinute + "'" : "");
+}
+function draftKey(m){
+  return [...m.radiant.players, ...m.dire.players].map(p => p.heroId || 0).join(",");
+}
+function streamKey(m){
+  return (chosen[m.matchId] || "") + "|" + (m.streams || []).map(s => s.channel).join(",");
+}
+
 function card(m){
-  const state = m.drafting ? "Drafting" : (m.gameMinute != null ? m.gameMinute + "'" : "");
-  return `<div class="card">
+  return `<div class="card" data-mid="${esc(m.matchId)}" data-draft="${esc(draftKey(m))}" data-skey="${esc(streamKey(m))}">
     <div class="chead">
-      <span class="badge">● Live</span>
+      <span class="badge">â— Live</span>
       <span>Game ${m.matchId}</span>
-      <span class="clock">${esc(state)}</span>
+      <span class="clock">${esc(clockText(m))}</span>
     </div>
     <div class="teams">
       <div class="side">
-        ${m.radiant.logo ? `<img class="tlogo" src="${esc(m.radiant.logo)}" alt="" loading="lazy">` : `<span class="tlogo"></span>`}
+        ${m.radiant.logo ? `<img class="tlogo" src="${esc(m.radiant.logo)}" alt="">` : `<span class="tlogo"></span>`}
         <span class="tname">${esc(m.radiant.name)}</span>
       </div>
       <div>
@@ -221,14 +233,56 @@ function card(m){
         <span class="klbl">kills</span>
       </div>
       <div class="side r">
-        ${m.dire.logo ? `<img class="tlogo" src="${esc(m.dire.logo)}" alt="" loading="lazy">` : `<span class="tlogo"></span>`}
+        ${m.dire.logo ? `<img class="tlogo" src="${esc(m.dire.logo)}" alt="">` : `<span class="tlogo"></span>`}
         <span class="tname">${esc(m.dire.name)}</span>
       </div>
     </div>
-    ${netWorth(m)}
-    ${draftBlock(m)}
-    ${streamRow(m)}
+    <div class="nwslot">${netWorth(m)}</div>
+    <div class="draftslot">${draftBlock(m)}</div>
+    <div class="streamslot">${streamRow(m)}</div>
   </div>`;
+}
+
+/* Update in place instead of rewriting the list.
+   Replacing innerHTML every 20 seconds destroys and rebuilds the <iframe>, which
+   restarts the stream the viewer is watching — the whole point of embedding it
+   here. It also re-fetches every portrait and makes the page flicker. So only
+   the parts that actually changed are touched: the clock and kills every time,
+   the draft only when a hero is picked, the stream row only when the choice or
+   the channel list changes. */
+function paint(matches){
+  const app = document.getElementById("app");
+  const live = new Set(matches.map(m => m.matchId));
+
+  // drop games that ended
+  [...app.querySelectorAll(".card")].forEach(el => {
+    if (!live.has(el.dataset.mid)) el.remove();
+  });
+  const empty = app.querySelector(".empty");
+  if (empty && matches.length) empty.remove();
+
+  matches.forEach((m, i) => {
+    let el = app.querySelector(`.card[data-mid="${CSS.escape(m.matchId)}"]`);
+    if (!el){
+      app.insertAdjacentHTML("beforeend", card(m));
+      el = app.querySelector(`.card[data-mid="${CSS.escape(m.matchId)}"]`);
+      return;
+    }
+    el.querySelector(".clock").textContent = clockText(m);
+    el.querySelector(".kills").innerHTML = `${m.radiant.kills}<i>–</i>${m.dire.kills}`;
+    el.querySelector(".nwslot").innerHTML = netWorth(m);
+    if (el.dataset.draft !== draftKey(m)){
+      el.dataset.draft = draftKey(m);
+      el.querySelector(".draftslot").innerHTML = draftBlock(m);
+    }
+    if (el.dataset.skey !== streamKey(m)){
+      el.dataset.skey = streamKey(m);
+      el.querySelector(".streamslot").innerHTML = streamRow(m);
+    }
+    // keep newest-first ordering without moving anything unnecessarily
+    const want = app.children[i];
+    if (want !== el) app.insertBefore(el, want || null);
+  });
 }
 
 async function refresh(){
@@ -239,16 +293,17 @@ async function refresh(){
     if (!r.ok) throw new Error("HTTP " + r.status);
     const j = await r.json();
     const ms = j.matches || [];
+    lastMatches = ms;
     if (!ms.length){
       const n = (j.streamsAll || []).length;
       app.innerHTML = `<div class="empty"><b>Nothing live right now</b>
         No TI 2026 game is currently being played.
         ${n ? `${n} official channel${n===1?" is":"s are"} still broadcasting — the next game will appear here automatically.` : ""}</div>`;
     } else {
-      app.innerHTML = ms.map(card).join("");
+      paint(ms);
     }
     tick.textContent = ms.length + (ms.length === 1 ? " game live" : " games live") +
-      " · updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+      " Â· updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
   }catch(e){
     tick.textContent = "reconnecting…";
     if (!document.querySelector(".card")){
@@ -257,12 +312,13 @@ async function refresh(){
   }
 }
 
-// play / stop the inline stream
+// play / stop the inline stream — repaint from what we already have so the
+// video appears on tap instead of after the next network round trip
 document.addEventListener("click", e => {
   const play = e.target.closest("[data-play]");
-  if (play){ chosen[play.dataset.play] = play.dataset.ch; refresh(); return; }
+  if (play){ chosen[play.dataset.play] = play.dataset.ch; paint(lastMatches); return; }
   const stop = e.target.closest("[data-stop]");
-  if (stop){ delete chosen[stop.dataset.stop]; refresh(); }
+  if (stop){ delete chosen[stop.dataset.stop]; paint(lastMatches); }
 });
 
 refresh();
@@ -270,3 +326,4 @@ setInterval(refresh, 20000);
 </script>
 </body>
 </html>
+
