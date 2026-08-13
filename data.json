@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T08:03:38.669576+00:00",
+    "lastUpdated": "2026-08-13T08:50:25.064766+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1940,25 +1940,25 @@
           {
             "id": "gs-r1-m5",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T14:45:00+08:00",
             "teamA": {
               "name": "Team Spirit",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Xtreme Gaming",
-              "score": null
+              "score": 0
             }
           },
           {
             "id": "gs-r1-m6",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-13T13:55:00+08:00",
             "teamA": {
               "name": "Team Liquid",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Vici Gaming",
