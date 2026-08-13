@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T09:51:00.914480+00:00",
+    "lastUpdated": "2026-08-13T10:01:02.826605+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1832,17 +1832,17 @@
         "losses": 0
       },
       {
-        "team": "HULIGANI",
-        "wins": 0,
-        "losses": 0
-      },
-      {
         "team": "Team Yandex",
-        "wins": 0,
+        "wins": 1,
         "losses": 0
       },
       {
         "team": "GamerLegion",
+        "wins": 0,
+        "losses": 1
+      },
+      {
+        "team": "HULIGANI",
         "wins": 0,
         "losses": 1
       },
@@ -2015,15 +2015,15 @@
           {
             "id": "gs-r2-m2",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-13T16:40:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Iron Wing",
-              "score": null
+              "score": 0
             }
           },
           {
