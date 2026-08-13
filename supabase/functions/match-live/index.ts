@@ -76,6 +76,27 @@ async function resolveStreams() {
   return data;
 }
 
+// Team logos.
+//
+// /live gives team_logo_radiant as a bare UGC id ("2026094195660244377"), which
+// cannot be turned into a URL — the real one carries a content hash. The league
+// teams endpoint has the full logo_url, so map it by team_id instead.
+let _teams: { at: number; league: number; data: Record<string, any> } | null = null;
+const TEAM_TTL = 30 * 60 * 1000;
+async function teamLogos(league: number): Promise<Record<string, any>> {
+  if (_teams && _teams.league === league && Date.now() - _teams.at < TEAM_TTL) return _teams.data;
+  try {
+    const r = await fetch(`${OPENDOTA}/leagues/${league}/teams`, { headers: UA });
+    const rows = await r.json();
+    const map: Record<string, any> = {};
+    (rows || []).forEach((t: any) => {
+      if (t.team_id) map[String(t.team_id)] = { name: t.name || null, logo: t.logo_url || null };
+    });
+    _teams = { at: Date.now(), league, data: map };
+    return map;
+  } catch (_e) { return _teams?.data ?? {}; }
+}
+
 async function heroes(): Promise<Record<string, any>> {
   if (_heroes && Date.now() - _heroes.at < HERO_TTL) return _heroes.data;
   try {
@@ -124,14 +145,15 @@ Deno.serve(async (req) => {
     }
 
     const leagueParam = url.searchParams.get("league");
-    const [streams, heroMap, liveRaw] = await Promise.all([
+    const wanted = leagueParam ? Number(leagueParam) : 19719;
+    const [streams, heroMap, teamMap, liveRaw] = await Promise.all([
       resolveStreams(),
       heroes(),
+      teamLogos(wanted),
       fetch(`${OPENDOTA}/live`, { headers: UA }).then(r => r.json()).catch(() => []),
     ]);
 
     const now = Math.floor(Date.now() / 1000);
-    const wanted = leagueParam ? Number(leagueParam) : 19719;
     const seen = new Map<string, any>();
 
     (Array.isArray(liveRaw) ? liveRaw : []).forEach((g: any) => {
@@ -167,12 +189,12 @@ Deno.serve(async (req) => {
         spectators: g.spectators ?? 0,
         radiant: {
           name: a, kills: g.radiant_score ?? 0, teamId: g.team_id_radiant ?? null,
-          logo: g.team_logo_radiant ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/team_logos/${g.team_id_radiant}.png` : null,
+          logo: teamMap[String(g.team_id_radiant)]?.logo ?? null,
           players: side(0),
         },
         dire: {
           name: b, kills: g.dire_score ?? 0, teamId: g.team_id_dire ?? null,
-          logo: g.team_logo_dire ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/team_logos/${g.team_id_dire}.png` : null,
+          logo: teamMap[String(g.team_id_dire)]?.logo ?? null,
           players: side(1),
         },
         // positive = radiant ahead, in gold

@@ -73,6 +73,11 @@
   .sidelbl{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.12em;
     text-transform:uppercase;margin-bottom:5px}
   .sidelbl.rad{color:var(--radiant)} .sidelbl.dir{color:var(--dire)}
+  .hero-ph{width:100%;aspect-ratio:16/9;background:var(--panel-3);display:flex;
+    align-items:center;justify-content:center;color:var(--ink-faint);font-size:13px}
+  .drafting{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--aegis);margin-bottom:10px}
+  .lineup{font-size:12.5px;color:var(--ink-dim);line-height:1.6}
 
   /* streams */
   .streams{border-top:1px solid var(--line-soft);padding:11px 12px;display:flex;
@@ -127,16 +132,40 @@ const gold = n => Math.abs(n) >= 1000 ? (Math.abs(n)/1000).toFixed(1) + "k" : St
 const chosen = {};
 
 function heroCell(p){
+  // hero_id is 0 until that player has actually been drafted, so the tile has to
+  // stand on its own without a portrait rather than showing a broken image.
   return `<div class="hero">
-    ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">` : `<img alt="">`}
+    ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">`
+            : `<div class="hero-ph">?</div>`}
     <div class="pname">${esc(p.player || "—")}</div>
-    <div class="hname">${esc(p.hero || "")}</div>
+    <div class="hname">${esc(p.hero || "not picked")}</div>
+  </div>`;
+}
+
+function draftBlock(m){
+  const picked = [...m.radiant.players, ...m.dire.players].some(p => p.heroId);
+  if (m.drafting && !picked){
+    const names = s => s.players.map(p => esc(p.player || "—")).join(" · ");
+    return `<div class="draft">
+      <div class="drafting">Draft in progress — heroes not picked yet</div>
+      <div class="sidelbl rad">Radiant — ${esc(m.radiant.name)}</div>
+      <div class="lineup">${names(m.radiant)}</div>
+      <div class="sidelbl dir" style="margin-top:8px">Dire — ${esc(m.dire.name)}</div>
+      <div class="lineup">${names(m.dire)}</div>
+    </div>`;
+  }
+  return `<div class="draft">
+    <div class="sidelbl rad">Radiant — ${esc(m.radiant.name)}</div>
+    <div class="drow">${m.radiant.players.map(heroCell).join("")}</div>
+    <div class="sidelbl dir">Dire — ${esc(m.dire.name)}</div>
+    <div class="drow">${m.dire.players.map(heroCell).join("")}</div>
   </div>`;
 }
 
 function netWorth(m){
   const lead = m.netWorthLead;
-  if (lead == null) return "";
+  // Nothing to compare before the horn.
+  if (lead == null || m.drafting) return "";
   // Cap the bar at 25k so an early 2k lead is still visible and a blowout does
   // not just peg the end.
   const pct = Math.max(-1, Math.min(1, lead / 25000));
@@ -197,12 +226,7 @@ function card(m){
       </div>
     </div>
     ${netWorth(m)}
-    <div class="draft">
-      <div class="sidelbl rad">Radiant — ${esc(m.radiant.name)}</div>
-      <div class="drow">${m.radiant.players.map(heroCell).join("")}</div>
-      <div class="sidelbl dir">Dire — ${esc(m.dire.name)}</div>
-      <div class="drow">${m.dire.players.map(heroCell).join("")}</div>
-    </div>
+    ${draftBlock(m)}
     ${streamRow(m)}
   </div>`;
 }
