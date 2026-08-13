@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-13T12:00:58.201103+00:00",
+    "lastUpdated": "2026-08-13T12:50:56.788399+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2919995,
-    "note": "$1,600,000 base plus $1,319,995 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2921908,
+    "note": "$1,600,000 base plus $1,321,908 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1240968,
+        "amount": 1241781,
         "team": null
       },
       {
         "place": "2",
-        "amount": 379643,
+        "amount": 379892,
         "team": null
       },
       {
         "place": "3",
-        "amount": 262757,
+        "amount": 262929,
         "team": null
       },
       {
         "place": "4",
-        "amount": 175211,
+        "amount": 175326,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 145989,
+        "amount": 146085,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 116768,
+        "amount": 116844,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 52504,
+        "amount": 52538,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29222,
+        "amount": 29241,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14611,
+        "amount": 14620,
         "team": null
       }
     ]
@@ -1797,17 +1797,12 @@
     "note": "Top 8 advance to the Main Event playoffs. Field finalized after qualifiers (June 28).",
     "standings": [
       {
-        "team": "Aurora Gaming",
-        "wins": 1,
-        "losses": 0
-      },
-      {
         "team": "BoomBoys",
-        "wins": 1,
+        "wins": 2,
         "losses": 0
       },
       {
-        "team": "Iron Wing",
+        "team": "Aurora Gaming",
         "wins": 1,
         "losses": 0
       },
@@ -1835,6 +1830,11 @@
         "team": "Team Yandex",
         "wins": 1,
         "losses": 0
+      },
+      {
+        "team": "Iron Wing",
+        "wins": 1,
+        "losses": 1
       },
       {
         "team": "GamerLegion",
@@ -2005,7 +2005,7 @@
             "scheduled": "2026-08-13T18:00:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
-              "score": 0
+              "score": 1
             },
             "teamB": {
               "name": "Team Falcons",
@@ -2015,11 +2015,11 @@
           {
             "id": "gs-r2-m2",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-13T16:40:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Iron Wing",
@@ -2071,11 +2071,11 @@
           {
             "id": "gs-r2-m6",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-13T17:30:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "OG",
