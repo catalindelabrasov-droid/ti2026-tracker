@@ -1,5 +1,24 @@
 project_id = "hqpynfzatnmwvlxdfhsw"
 
+# Every function here is called by something that has no user session, so none
+# of them can require a JWT. They are gated by their own shared secret instead
+# (x-tick-secret, read from app_config by the cron jobs).
+#
+# These entries are load-bearing: `supabase functions deploy` applies the
+# default (verify_jwt = true) to any function NOT listed here, so deploying a
+# function without its entry silently starts rejecting its own caller with 401.
+# That is exactly what happened to updater-watchdog on 13 Aug 2026 — the
+# watchdog and the 15-minute scoring pass both went dark until it was noticed.
+
 [functions.live-matches]
 # Public data endpoint the static site calls directly — no user session exists.
+verify_jwt = false
+
+[functions.push-tick]
+# Called by pg_cron every 2 minutes; authenticated by x-tick-secret.
+verify_jwt = false
+
+[functions.updater-watchdog]
+# Called by pg_cron (staleness rescue, and the quarter-hour scoring pass via
+# ?fast=1); authenticated by x-tick-secret.
 verify_jwt = false
