@@ -596,7 +596,10 @@
   .sw-res{background:none;border:0;padding:0;font:inherit;cursor:pointer;text-align:left}
   .sw-res:hover{text-decoration:underline}
   @media(max-width:560px){
-    .mitems{margin-left:0;flex-basis:100%;padding-left:47px}
+    /* A phone cannot fit 12 slots on one line: without wrapping the backpack ran
+       past the panel edge and was simply invisible. Wrapping breaks it exactly
+       where it should -- main inventory above, neutral + backpack below. */
+    .mitems{margin-left:0;flex-basis:100%;padding-left:47px;flex-wrap:wrap;min-width:0;row-gap:3px}
     .mgpm,.mlh{display:none}
   }
 
