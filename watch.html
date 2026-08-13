@@ -58,41 +58,49 @@
   .tk{font-family:'Oswald',sans-serif;font-size:30px;font-weight:600;line-height:1;flex:none;min-width:38px;text-align:right}
   .tblock.rad .tk{color:var(--radiant)} .tblock.dir .tk{color:var(--dire)}
 
-  .hstrip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
-  .hero{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:4px;
-    overflow:hidden;text-align:center;min-width:0}
-  .hero img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--panel-3)}
-  .hero-ph{width:100%;aspect-ratio:16/9;background:var(--panel-3);display:flex;align-items:center;
-    justify-content:center;color:var(--ink-faint);font-size:12px}
-  .pname{font-size:10.5px;font-weight:600;padding:3px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hname{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink-faint);
-    padding:0 2px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pstat{display:flex;align-items:center;justify-content:center;gap:4px;padding:0 2px}
-  .plvl{font-family:'JetBrains Mono',monospace;font-size:8px;color:#0b0e13;background:var(--ink-dim);
-    border-radius:3px;padding:0 3px;line-height:12px;min-width:13px}
-  .pkda{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ink-dim)}
-  .pnw{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--aegis);padding:1px 2px 2px}
-  .plh{font-style:normal;color:var(--ink-faint)}
-  /* six item slots, drawn even when empty so the tile never jumps */
-  /* minmax(0,1fr), not 1fr: a 1fr track floors at min-content, so children with
-     width:100% resolve circularly and blow the track out — the six item slots
-     came out 73px wide inside a 59px tile and pushed the row off the screen. */
-  .pitems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:0 3px 4px}
-  /* Fixed height, no aspect-ratio.
-     aspect-ratio inside a grid track kept sizing the box from its HEIGHT rather
-     than its width — a 54px row made a 73px-wide slot inside a 16px track — and
-     every fix for that just moved the circularity somewhere else. A plain height
-     removes the whole class of problem: the track sets the width, this sets the
-     height, and neither depends on the other. */
-  .pitem{width:100%;height:13px;min-width:0;align-self:start;
-    border-radius:2px;display:block;object-fit:cover}
+  /* One ROW per player rather than a tall tile.
+     The portrait used to be the largest thing on screen with the numbers
+     crammed beneath it, and the items were squashed into a 13px strip then
+     cropped by object-fit — every icon came out an unreadable smear. A row
+     gives the face a glanceable size and the stats and items real width. */
+  .hstrip{display:flex;flex-direction:column;gap:1px;background:var(--line-soft);
+    border-radius:4px;overflow:hidden}
+  .prow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:6px 8px;background:var(--bg-2);min-width:0}
+  .pface{position:relative;flex:none;line-height:0}
+  .phero{width:44px;height:25px;object-fit:cover;display:block;
+    background:var(--panel-3);border-radius:3px}
+  .hero-ph{width:44px;height:25px;display:flex;align-items:center;justify-content:center;
+    background:var(--panel-3);border-radius:3px;color:var(--ink-faint);font-size:11px}
+  .prow.dead .phero{filter:grayscale(1);opacity:.4}
+  .respawn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--live);
+    background:rgba(0,0,0,.55);border-radius:3px}
+  .pwho{display:flex;flex-direction:column;min-width:0;flex:1 1 78px}
+  .pname{font-size:12.5px;font-weight:600;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hname{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .plvl{flex:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#0b0e13;
+    background:var(--ink-dim);border-radius:3px;padding:1px 5px;min-width:20px;text-align:center}
+  .pkda{flex:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink);
+    min-width:52px;text-align:center}
+  .pnw{flex:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--aegis);
+    min-width:38px;text-align:right}
+  .plh{flex:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-faint);
+    min-width:34px;text-align:right}
+  /* Items keep their real 4:3 shape, at a size you can actually recognise. */
+  .pitems{display:flex;gap:3px;flex:0 0 auto;margin-left:auto}
+  .pitem{width:29px;height:22px;flex:none;border-radius:2px;display:block;object-fit:cover}
   /* NOT ".empty": that is the page-level empty-state panel, and its 26px 16px
-     padding was being applied to this 16px item slot, forcing it to 34x54 and
-     blowing the whole hero row off the screen. Class names are global. */
-  .pitem-none{background:var(--panel-3);opacity:.45}
-  .hero.dead img{filter:grayscale(1);opacity:.45}
-  .respawn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--live);
-    background:rgba(0,0,0,.55);margin-top:-14px;position:relative;padding:1px 0}
+     padding was landing on the item slot and blowing the row off the screen.
+     Class names are global. */
+  .pitem-none{background:var(--panel-3);opacity:.4}
+  @media(max-width:520px){
+    /* Items take their own line instead of squeezing the name to nothing. */
+    .pitems{margin-left:52px;flex-basis:100%;justify-content:flex-start}
+    .plh{display:none}
+  }
   .delayed{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;
     text-transform:uppercase;color:var(--ink-faint);padding:0 12px 8px}
 
@@ -141,7 +149,13 @@
   .rerun-go{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);flex:none}
   footer{margin-top:22px;font-size:11px;color:var(--ink-faint);line-height:1.7}
   a{color:var(--aegis)}
-  @media(min-width:620px){ .tname{font-size:19px} .tk{font-size:34px} .hero img{aspect-ratio:1.5} }
+  @media(min-width:620px){
+    .tname{font-size:19px} .tk{font-size:34px}
+    /* Room to breathe on a real screen: bigger face, bigger items. */
+    .phero,.hero-ph{width:56px;height:32px}
+    .pitem{width:34px;height:26px}
+    .pname{font-size:13.5px}
+  }
 </style>
 </head>
 <body>
@@ -238,35 +252,42 @@ const draftKey  = m => [...m.radiant.players, ...m.dire.players].map(p => p.hero
 const streamKey = m => (chosen[m.matchId] || "") + "|" + (m.streams || []).map(s => s.channel).join(",");
 
 function itemGrid(p){
-  if (!Array.isArray(p.items) || !p.items.some(Boolean)) return "";
-  // Six slots always drawn, empty ones included, so the tile does not jump
-  // around every time something is bought or sold.
-  return `<div class="pitems">${p.items.map(it =>
+  if (!Array.isArray(p.items)) return "";
+  // Six slots always drawn, empty ones included, so the row does not shuffle
+  // every time something is bought or sold.
+  return p.items.map(it =>
     it && it.img
       ? `<img class="pitem" src="${esc(it.img)}" alt="${esc(it.name||"")}" title="${esc(it.name||"")}" loading="lazy">`
       : `<span class="pitem pitem-none"></span>`
-  ).join("")}</div>`;
+  ).join("");
 }
 
+/* One row per player, not a tall tile.
+   The portrait used to be the biggest thing on screen and the numbers were
+   crammed underneath it — while the items got squashed to a 13px strip and
+   cropped, which turned every icon into an unreadable smear. A row puts the
+   face at a glanceable size and gives the stats and the six items the width
+   they need. */
 function heroCell(p){
-  // hero_id stays 0 until that player is drafted, so the tile has to stand on
-  // its own without a portrait rather than showing a broken image
-  // Level / KDA / net worth only exist on the Valve feed; the OpenDota fallback
-  // has no per-player stats, so the tile degrades to just player + hero.
+  // hero_id stays 0 until that player is drafted, so the row has to stand on
+  // its own without a portrait rather than showing a broken image.
   const hasStats = p.level != null || p.netWorth != null;
   const dead = (p.respawn ?? 0) > 0;
-  return `<div class="hero${dead?" dead":""}">
-    ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">` : `<div class="hero-ph">?</div>`}
-    ${dead ? `<div class="respawn">${p.respawn}s</div>` : ""}
-    <div class="pname">${esc(p.player || "—")}</div>
-    <div class="hname">${esc(p.hero || "picking")}</div>
-    ${hasStats ? `<div class="pstat">
-        <span class="plvl">${p.level ?? "-"}</span>
-        <span class="pkda">${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}</span>
-      </div>
-      <div class="pnw">${p.netWorth != null ? gold(p.netWorth) : ""}<i class="plh">${
-        p.lastHits != null ? ` ${p.lastHits}/${p.denies ?? 0}` : ""}</i></div>
-      ${itemGrid(p)}` : ""}
+  return `<div class="prow${dead?" dead":""}">
+    <div class="pface">
+      ${p.img ? `<img class="phero" src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">`
+              : `<span class="phero hero-ph">?</span>`}
+      ${dead ? `<span class="respawn">${p.respawn}s</span>` : ""}
+    </div>
+    <div class="pwho">
+      <span class="pname">${esc(p.player || "—")}</span>
+      <span class="hname">${esc(p.hero || "picking")}</span>
+    </div>
+    ${hasStats ? `<span class="plvl">${p.level ?? "-"}</span>
+      <span class="pkda">${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}</span>
+      <span class="pnw">${p.netWorth != null ? gold(p.netWorth) : ""}</span>
+      <span class="plh">${p.lastHits != null ? `${p.lastHits}/${p.denies ?? 0}` : ""}</span>
+      <div class="pitems">${itemGrid(p)}</div>` : ""}
   </div>`;
 }
 
@@ -279,14 +300,15 @@ function updateStats(strip, players){
           nw = c.querySelector(".pnw"), lh = c.querySelector(".plh");
     if (lvl) lvl.textContent = p.level ?? "-";
     if (kda) kda.textContent = `${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}`;
-    if (nw)  nw.childNodes[0] && (nw.childNodes[0].nodeValue = p.netWorth != null ? gold(p.netWorth) : "");
-    if (lh)  lh.textContent = p.lastHits != null ? ` ${p.lastHits}/${p.denies ?? 0}` : "";
-    // dead/alive
+    if (nw)  nw.textContent = p.netWorth != null ? gold(p.netWorth) : "";
+    if (lh)  lh.textContent = p.lastHits != null ? `${p.lastHits}/${p.denies ?? 0}` : "";
+    // dead/alive — the countdown sits over the portrait
     c.classList.toggle("dead", (p.respawn ?? 0) > 0);
+    const face = c.querySelector(".pface");
     let r = c.querySelector(".respawn");
     if ((p.respawn ?? 0) > 0){
-      if (!r){ r = document.createElement("div"); r.className = "respawn"; c.insertBefore(r, c.children[1] || null); }
-      r.textContent = `${p.respawn}s`;
+      if (!r && face){ r = document.createElement("span"); r.className = "respawn"; face.appendChild(r); }
+      if (r) r.textContent = `${p.respawn}s`;
     } else if (r) r.remove();
     // Items change constantly. Swap only the slots that actually differ, so the
     // icons that stayed put are never re-fetched and never flicker.
