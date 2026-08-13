@@ -18,6 +18,11 @@ verify_jwt = false
 # Called by pg_cron every 2 minutes; authenticated by x-tick-secret.
 verify_jwt = false
 
+[functions.match-live]
+# Live match detail + stream resolution for the watch page; called by a static
+# page with no user session.
+verify_jwt = false
+
 [functions.updater-watchdog]
 # Called by pg_cron (staleness rescue, and the quarter-hour scoring pass via
 # ?fast=1); authenticated by x-tick-secret.

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Watch — The International 2026</title>
+<!-- Standalone preview. Nothing on the live site links here yet, and this page
+     loads none of the site's code, so it cannot affect anything already running. -->
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
+    --line:#28303f;--line-soft:#1f2632;--ink:#e9eef5;--ink-dim:#8e99ac;--ink-faint:#5b6478;
+    --aegis:#d9a441;--aegis-bright:#f3c764;--win:#4ec98f;--live:#ef5350;--radiant:#4ec98f;
+    --dire:#ef5350;--radius:5px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;padding:16px 12px 40px}
+  .wrap{max-width:820px;margin:0 auto}
+
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  h1{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+  .sub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-dim)}
+  .tick{display:inline-flex;align-items:center;gap:5px;color:var(--ink-faint)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--live);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .note{font-size:12px;color:var(--ink-faint);line-height:1.6;margin:10px 0 18px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    overflow:hidden;margin-bottom:14px}
+  .chead{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--panel-2);
+    border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:9.5px;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--ink-dim)}
+  .badge{display:inline-flex;align-items:center;gap:5px;color:var(--live)}
+  .clock{margin-left:auto;color:var(--ink)}
+
+  /* teams + kills */
+  .teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:14px 12px 10px}
+  .side{display:flex;align-items:center;gap:9px;min-width:0}
+  .side.r{flex-direction:row-reverse;text-align:right}
+  .tlogo{width:34px;height:34px;object-fit:contain;flex:none;background:var(--panel-3);border-radius:4px}
+  .tname{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;line-height:1.15;
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .kills{font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+  .kills i{font-style:normal;color:var(--ink-faint);margin:0 4px;font-size:18px}
+  .klbl{display:block;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8px;
+    letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase;margin-top:-2px}
+
+  /* net worth swing */
+  .nw{padding:4px 12px 14px}
+  .nwbar{position:relative;height:6px;background:var(--line-soft);border-radius:3px;overflow:hidden}
+  .nwfill{position:absolute;top:0;bottom:0;transition:left .5s ease,right .5s ease,width .5s ease}
+  .nwmid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--ink-faint);opacity:.6}
+  .nwlbl{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;
+    font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-top:6px}
+  .nwlead{color:var(--ink)}
+
+  /* draft */
+  .draft{border-top:1px solid var(--line-soft);padding:12px}
+  .drow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+  .drow:last-child{margin-bottom:0}
+  .hero{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:4px;
+    overflow:hidden;text-align:center}
+  .hero img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--panel-3)}
+  .hname{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.02em;color:var(--ink-faint);
+    padding:3px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pname{font-size:10.5px;font-weight:600;padding:0 2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sidelbl{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.12em;
+    text-transform:uppercase;margin-bottom:5px}
+  .sidelbl.rad{color:var(--radiant)} .sidelbl.dir{color:var(--dire)}
+
+  /* streams */
+  .streams{border-top:1px solid var(--line-soft);padding:11px 12px;display:flex;
+    align-items:center;gap:7px;flex-wrap:wrap}
+  .slbl{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:2px}
+  .sbtn{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
+    background:var(--panel-3);border:1px solid var(--line);color:var(--ink);
+    padding:5px 10px;border-radius:20px;cursor:pointer;text-decoration:none;display:inline-block}
+  .sbtn:hover{border-color:var(--aegis);color:var(--aegis)}
+  .sbtn.on{background:var(--aegis);color:#0b0e13;border-color:var(--aegis);font-weight:600}
+  .sbtn.ghost{color:var(--ink-dim)}
+  .player{border-top:1px solid var(--line-soft);background:#000;aspect-ratio:16/9;width:100%;display:block}
+  .nostream{font-size:11.5px;color:var(--ink-faint);padding:0 0 0 2px}
+
+  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:8px;
+    padding:26px 16px;text-align:center;color:var(--ink-dim);font-size:14px;line-height:1.6}
+  .empty b{display:block;color:var(--ink);font-family:'Oswald',sans-serif;font-size:17px;
+    text-transform:uppercase;margin-bottom:6px}
+  footer{margin-top:22px;font-size:11px;color:var(--ink-faint);line-height:1.7}
+  a{color:var(--aegis)}
+  @media(min-width:620px){
+    .tname{font-size:17px} .kills{font-size:32px} .hero img{aspect-ratio:1.4}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The International 2026</h1>
+    <span class="sub tick"><span class="dot"></span><span id="tick">connecting…</span></span>
+  </header>
+  <p class="note">
+    Live games as they happen — draft, kill score and the gold swing — plus the exact
+    official channel carrying each match, in your language. Refreshes on its own.
+  </p>
+  <div id="app"><div class="empty"><b>Loading</b>Fetching live matches…</div></div>
+  <footer>
+    Match data from OpenDota. Streams are the official Valve broadcast channels listed on
+    Liquipedia and play through Twitch's own embedded player — we don't rehost anything.
+  </footer>
+</div>
+
+<script>
+const FN = "https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/match-live";
+const PARENT = location.hostname || "dota2tileague.com";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const gold = n => Math.abs(n) >= 1000 ? (Math.abs(n)/1000).toFixed(1) + "k" : String(Math.abs(n));
+
+// Which stream the viewer chose to play inline, per match. Kept across refreshes
+// so a reload of the data does not rip the video out from under them.
+const chosen = {};
+
+function heroCell(p){
+  return `<div class="hero">
+    ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.hero||"")}" loading="lazy">` : `<img alt="">`}
+    <div class="pname">${esc(p.player || "—")}</div>
+    <div class="hname">${esc(p.hero || "")}</div>
+  </div>`;
+}
+
+function netWorth(m){
+  const lead = m.netWorthLead;
+  if (lead == null) return "";
+  // Cap the bar at 25k so an early 2k lead is still visible and a blowout does
+  // not just peg the end.
+  const pct = Math.max(-1, Math.min(1, lead / 25000));
+  const half = Math.abs(pct) * 50;
+  const style = lead >= 0
+    ? `left:50%;width:${half}%;background:var(--radiant)`
+    : `right:50%;width:${half}%;background:var(--dire)`;
+  const who = lead === 0 ? "even" : (lead > 0 ? m.radiant.name : m.dire.name);
+  return `<div class="nw">
+    <div class="nwbar"><div class="nwfill" style="${style}"></div><div class="nwmid"></div></div>
+    <div class="nwlbl">
+      <span>${esc(m.radiant.name)}</span>
+      <span class="nwlead">${lead === 0 ? "even gold" : esc(who) + " +" + gold(lead) + " gold"}</span>
+      <span>${esc(m.dire.name)}</span>
+    </div>
+  </div>`;
+}
+
+function streamRow(m){
+  if (!m.streams || !m.streams.length){
+    return `<div class="streams"><span class="slbl">Stream</span>
+      <span class="nostream">No official channel is showing this match right now.</span></div>`;
+  }
+  const pick = chosen[m.matchId];
+  const btns = m.streams.map(s =>
+    `<button class="sbtn ${pick===s.channel?"on":""}" data-play="${esc(m.matchId)}" data-ch="${esc(s.channel)}"
+      title="${esc(s.title||s.channel)}">${esc(s.lang)}</button>`).join("");
+  const open = m.streams[0];
+  return `<div class="streams">
+      <span class="slbl">Watch here</span>${btns}
+      ${pick ? `<button class="sbtn ghost" data-stop="${esc(m.matchId)}">stop</button>` : ""}
+      <a class="sbtn ghost" href="${esc(open.url)}" target="_blank" rel="noopener noreferrer">open on twitch ↗</a>
+    </div>
+    ${pick ? `<iframe class="player" allowfullscreen
+        src="https://player.twitch.tv/?channel=${encodeURIComponent(pick)}&parent=${encodeURIComponent(PARENT)}&muted=false"></iframe>` : ""}`;
+}
+
+function card(m){
+  const state = m.drafting ? "Drafting" : (m.gameMinute != null ? m.gameMinute + "'" : "");
+  return `<div class="card">
+    <div class="chead">
+      <span class="badge">● Live</span>
+      <span>Game ${m.matchId}</span>
+      <span class="clock">${esc(state)}</span>
+    </div>
+    <div class="teams">
+      <div class="side">
+        ${m.radiant.logo ? `<img class="tlogo" src="${esc(m.radiant.logo)}" alt="" loading="lazy">` : `<span class="tlogo"></span>`}
+        <span class="tname">${esc(m.radiant.name)}</span>
+      </div>
+      <div>
+        <div class="kills">${m.radiant.kills}<i>–</i>${m.dire.kills}</div>
+        <span class="klbl">kills</span>
+      </div>
+      <div class="side r">
+        ${m.dire.logo ? `<img class="tlogo" src="${esc(m.dire.logo)}" alt="" loading="lazy">` : `<span class="tlogo"></span>`}
+        <span class="tname">${esc(m.dire.name)}</span>
+      </div>
+    </div>
+    ${netWorth(m)}
+    <div class="draft">
+      <div class="sidelbl rad">Radiant — ${esc(m.radiant.name)}</div>
+      <div class="drow">${m.radiant.players.map(heroCell).join("")}</div>
+      <div class="sidelbl dir">Dire — ${esc(m.dire.name)}</div>
+      <div class="drow">${m.dire.players.map(heroCell).join("")}</div>
+    </div>
+    ${streamRow(m)}
+  </div>`;
+}
+
+async function refresh(){
+  const app = document.getElementById("app");
+  const tick = document.getElementById("tick");
+  try{
+    const r = await fetch(FN + "?cb=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const ms = j.matches || [];
+    if (!ms.length){
+      const n = (j.streamsAll || []).length;
+      app.innerHTML = `<div class="empty"><b>Nothing live right now</b>
+        No TI 2026 game is currently being played.
+        ${n ? `${n} official channel${n===1?" is":"s are"} still broadcasting — the next game will appear here automatically.` : ""}</div>`;
+    } else {
+      app.innerHTML = ms.map(card).join("");
+    }
+    tick.textContent = ms.length + (ms.length === 1 ? " game live" : " games live") +
+      " · updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  }catch(e){
+    tick.textContent = "reconnecting…";
+    if (!document.querySelector(".card")){
+      app.innerHTML = `<div class="empty"><b>Can't reach the live feed</b>Trying again shortly.</div>`;
+    }
+  }
+}
+
+// play / stop the inline stream
+document.addEventListener("click", e => {
+  const play = e.target.closest("[data-play]");
+  if (play){ chosen[play.dataset.play] = play.dataset.ch; refresh(); return; }
+  const stop = e.target.closest("[data-stop]");
+  if (stop){ delete chosen[stop.dataset.stop]; refresh(); }
+});
+
+refresh();
+setInterval(refresh, 20000);
+</script>
+</body>
+</html>
