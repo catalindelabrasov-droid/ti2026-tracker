@@ -89,8 +89,23 @@ jobs:
               exit 0
             fi
             echo "Push rejected, rebasing onto origin/main and retrying..."
-            git pull --rebase --autostash origin main || exit 1
+            git pull --rebase --autostash origin main || break
             sleep 3
           done
-          echo "Could not push data.json after 3 attempts"
+
+          # Losing the race is not a failure IF someone else already published
+          # data at least as fresh as ours. Two runs can start in the same second
+          # when pg_cron jobs coincide on the hour; both fetch, both commit, one
+          # wins. Failing the loser sent a red build email for a job that did
+          # exactly what it was meant to do, and a red build nobody trusts is how
+          # a real failure gets missed. A genuinely stuck push still fails.
+          git fetch origin main --quiet || true
+          ours=$(git show HEAD:data.json 2>/dev/null | python -c "import json,sys;print(json.load(sys.stdin)['meta']['lastUpdated'])" 2>/dev/null || echo "")
+          theirs=$(git show origin/main:data.json 2>/dev/null | python -c "import json,sys;print(json.load(sys.stdin)['meta']['lastUpdated'])" 2>/dev/null || echo "")
+          echo "ours=$ours  origin=$theirs"
+          if [ -n "$theirs" ] && [ -n "$ours" ] && [ "$theirs" \> "$ours" -o "$theirs" = "$ours" ]; then
+            echo "Another run published data at least as fresh ($theirs). Nothing lost — not a failure."
+            exit 0
+          fi
+          echo "Could not push data.json, and origin has nothing newer. This one is real."
           exit 1

@@ -55,6 +55,19 @@ async function cfgSet(key: string, value: string) {
   });
 }
 
+/* Was a run already dispatched moments ago?
+   Guards against two coinciding pg_cron jobs starting two workflow runs in the
+   same second — they then race each other to push data.json and the loser fails
+   the job for nothing. Deliberately short: this must never suppress the NEXT
+   scheduled run, only a duplicate of the one just sent. */
+const DUP_WINDOW_SEC = 90;
+async function dispatchedRecently(): Promise<boolean> {
+  const last = await cfgGet("updater_last_dispatch");
+  if (!last) return false;
+  const age = (Date.now() - Date.parse(last)) / 1000;
+  return Number.isFinite(age) && age >= 0 && age < DUP_WINDOW_SEC;
+}
+
 Deno.serve(async (req) => {
   if (TICK_SECRET && req.headers.get("x-tick-secret") !== TICK_SECRET) {
     return new Response("no", { status: 401 });
@@ -70,6 +83,16 @@ Deno.serve(async (req) => {
   // its own, so there is nothing to double-fire against.
   if (full) {
     if (!GH_TOKEN) return Response.json({ ok: false, error: "GH_TOKEN not set" }, { status: 500 });
+    /* Never dispatch twice within the same minute.
+       On the hour THREE pg_cron jobs fire in the same 4 milliseconds — the
+       hourly full-tick and the ten-minute watchdog both land on this function.
+       Two workflow runs then start at the same second, both fetch, both commit,
+       and one loses the push race and fails the job. The data still gets out
+       (the winner publishes) but it emails a red build for something entirely
+       benign, which is how a real failure gets ignored. */
+    if (!force && (await dispatchedRecently())) {
+      return Response.json({ ok: true, action: "skipped-duplicate-full" });
+    }
     if (dry) return Response.json({ ok: true, action: "would-dispatch-full" });
     const gh = await fetch(
       `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
