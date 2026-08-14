@@ -3651,7 +3651,13 @@ function openRegion(d,region){
    dropped you at the very top and you had to find your place again. */
 function restorePageScroll(){
   const y=_pageReturnY; _pageReturnY=0;
-  // After the class comes off, so the page is its full height again.
+  if(!y) return;
+  /* Straight away, then once more after the next frame. The class has already
+     come off so the page is its full height and the first call usually lands;
+     the second corrects it if layout was still settling. Doing it ONLY on the
+     next frame would have meant nothing happened at all whenever the page was
+     hidden — browsers pause requestAnimationFrame then, and it never fires. */
+  window.scrollTo(0,y);
   requestAnimationFrame(()=>window.scrollTo(0,y));
 }
 function closeRegionPage(){
