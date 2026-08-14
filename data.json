@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T06:30:14.314249+00:00",
+    "lastUpdated": "2026-08-14T07:00:56.233148+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2954409,
-    "note": "$1,600,000 base plus $1,354,409 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2955896,
+    "note": "$1,600,000 base plus $1,355,896 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1255594,
+        "amount": 1256225,
         "team": null
       },
       {
         "place": "2",
-        "amount": 384118,
+        "amount": 384311,
         "team": null
       },
       {
         "place": "3",
-        "amount": 265854,
+        "amount": 265987,
         "team": null
       },
       {
         "place": "4",
-        "amount": 177276,
+        "amount": 177365,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 147710,
+        "amount": 147784,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118144,
+        "amount": 118203,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53123,
+        "amount": 53149,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29566,
+        "amount": 29581,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14783,
+        "amount": 14790,
         "team": null
       }
     ]
@@ -1817,6 +1817,11 @@
         "losses": 0
       },
       {
+        "team": "Nigma Galaxy",
+        "wins": 2,
+        "losses": 1
+      },
+      {
         "team": "Aurora Gaming",
         "wins": 1,
         "losses": 1
@@ -1828,16 +1833,6 @@
       },
       {
         "team": "Iron Wing",
-        "wins": 1,
-        "losses": 1
-      },
-      {
-        "team": "LGD Gaming",
-        "wins": 1,
-        "losses": 1
-      },
-      {
-        "team": "Nigma Galaxy",
         "wins": 1,
         "losses": 1
       },
@@ -1855,6 +1850,11 @@
         "team": "Vici Gaming",
         "wins": 1,
         "losses": 1
+      },
+      {
+        "team": "LGD Gaming",
+        "wins": 1,
+        "losses": 2
       },
       {
         "team": "HULIGANI",
@@ -2160,7 +2160,7 @@
           {
             "id": "gs-r3-m4",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T12:10:00+08:00",
             "teamA": {
               "name": "LGD Gaming",
@@ -2168,7 +2168,7 @@
             },
             "teamB": {
               "name": "Nigma Galaxy",
-              "score": 1
+              "score": 2
             }
           },
           {
