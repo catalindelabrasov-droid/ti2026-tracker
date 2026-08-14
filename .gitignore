@@ -18,3 +18,6 @@ keystore.properties
 
 # Snapshot of the auth settings changed for the deletion flow. Local only.
 .auth-config-backup.json
+
+# Netlify CLI local state - machine-specific, hardcodes an absolute path.
+.netlify/
