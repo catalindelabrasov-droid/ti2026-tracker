@@ -1563,7 +1563,18 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 let _logoMap={};
 function buildLogoMap(d){
   _logoMap={};
-  const add=(name,logo)=>{if(name&&logo)_logoMap[name.toLowerCase()]=logo;};
+  /* Key each logo under BOTH the spelling it arrived with and its canonical
+     form. The participants page and the match pages disagree: the logo is
+     published against "Iron Wing" while the roster is filed under "Iron Wing
+     TI 2026", so the Teams tab drew a grey placeholder for a team whose logo we
+     already had. Same drift that mis-scored predictions; this is the cosmetic
+     end of it. */
+  const add=(name,logo)=>{
+    if(!name||!logo) return;
+    _logoMap[name.toLowerCase()]=logo;
+    let c=null; try{ c=canonTeam(name); }catch(e){}
+    if(c&&c.toLowerCase()!==name.toLowerCase()&&!_logoMap[c.toLowerCase()]) _logoMap[c.toLowerCase()]=logo;
+  };
   (d.teams||[]).forEach(t=>{ if(typeof t==="object") add(t.name,t.logo); });
   (d.qualifiers||[]).forEach(q=>{
     (q.teams||[]).forEach(t=>{ if(typeof t==="object") add(t.name,t.logo); });
@@ -1585,7 +1596,10 @@ function teamInitials(name){
 function teamLogo(name,size,directUrl){
   const n=(name||"").trim();
   if(!n||n==="TBD"||n.toUpperCase()==="TBD") return `<span class="tlogo tlogo-tbd" style="--s:${size||20}px">?</span>`;
-  const url=directUrl||_logoMap[n.toLowerCase()];
+  // Direct URL, then the exact spelling, then the canonical one — so a name the
+  // logo was never published under still finds it.
+  let url=directUrl||_logoMap[n.toLowerCase()];
+  if(!url){ try{ const c=canonTeam(n); if(c) url=_logoMap[c.toLowerCase()]; }catch(e){} }
   if(url) return `<img class="tlogo" style="--s:${size||20}px" src="${esc(url)}" alt="" loading="lazy" onerror="this.outerHTML=window.__logoFallback(${JSON.stringify(n).replace(/"/g,'&quot;')},${size||20})">`;
   return logoFallback(n,size||20);
 }
