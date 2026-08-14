@@ -5181,7 +5181,7 @@ async function lgReplayPendingPick(){
   localStorage.removeItem(LS_PENDPICK);
   try{
     const uid=s._uid||await lgCurrentUserId();
-    const {error}=await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:p.mid,pick:p.pick,score_a:p.sa,score_b:p.sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"});
+    const {error}=await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:p.mid,pick:canonTeam(p.pick),score_a:p.sa,score_b:p.sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"});
     if(error) throw error;
     s.predictions=s.predictions||{};
     s.predictions[p.mid]={pick:p.pick,sa:p.sa,sb:p.sb,locked:true,at:Date.now()};
@@ -5979,7 +5979,7 @@ function wireLeaguePanel(){
     // locally once it accepts — otherwise the UI shows a lock that isn't real.
     if(SB_READY()){
       const uid=s._uid||await lgCurrentUserId();
-      const {error}=await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:mid,pick,score_a:+sa,score_b:+sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"});
+      const {error}=await SB.from("predictions").upsert({league_id:s.id,user_id:uid,match_id:mid,pick:canonTeam(pick),score_a:+sa,score_b:+sb,locked:true,locked_at:new Date().toISOString()},{onConflict:"league_id,user_id,match_id"});
       if(error){
         console.warn("save prediction failed",error);
         toast("Couldn't lock that pick", error.message||"The deadline may have passed.");
