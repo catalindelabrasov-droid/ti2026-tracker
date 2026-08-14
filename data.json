@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T07:00:56.233148+00:00",
+    "lastUpdated": "2026-08-14T07:15:11.351742+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1797,8 +1797,8 @@
     "note": "Top 8 advance to the Main Event playoffs. Field finalized after qualifiers (June 28).",
     "standings": [
       {
-        "team": "BoomBoys",
-        "wins": 2,
+        "team": "TEAM VISION",
+        "wins": 3,
         "losses": 0
       },
       {
@@ -1812,9 +1812,9 @@
         "losses": 0
       },
       {
-        "team": "TEAM VISION",
+        "team": "BoomBoys",
         "wins": 2,
-        "losses": 0
+        "losses": 1
       },
       {
         "team": "Nigma Galaxy",
@@ -2118,7 +2118,7 @@
           {
             "id": "gs-r3-m1",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T12:30:00+08:00",
             "teamA": {
               "name": "BoomBoys",
@@ -2126,7 +2126,7 @@
             },
             "teamB": {
               "name": "TEAM VISION",
-              "score": 1
+              "score": 2
             }
           },
           {
@@ -2175,7 +2175,7 @@
             "id": "gs-r3-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T16:00:00+08:00",
+            "scheduled": "2026-08-14T16:30:00+08:00",
             "teamA": {
               "name": "Aurora Gaming",
               "score": null
@@ -2189,7 +2189,7 @@
             "id": "gs-r3-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T16:00:00+08:00",
+            "scheduled": "2026-08-14T15:00:00+08:00",
             "teamA": {
               "name": "Vici Gaming",
               "score": null
@@ -2217,7 +2217,7 @@
             "id": "gs-r3-m8",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T16:00:00+08:00",
+            "scheduled": "2026-08-14T16:30:00+08:00",
             "teamA": {
               "name": "Xtreme Gaming",
               "score": null
@@ -2238,7 +2238,7 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "TEAM VISION",
               "score": null
             },
             "teamB": {
