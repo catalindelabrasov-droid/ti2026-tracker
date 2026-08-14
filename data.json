@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T05:45:12.378026+00:00",
+    "lastUpdated": "2026-08-14T06:00:53.452352+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2952298,
-    "note": "$1,600,000 base plus $1,352,298 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2954409,
+    "note": "$1,600,000 base plus $1,354,409 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1254696,
+        "amount": 1255594,
         "team": null
       },
       {
         "place": "2",
-        "amount": 383843,
+        "amount": 384118,
         "team": null
       },
       {
         "place": "3",
-        "amount": 265664,
+        "amount": 265854,
         "team": null
       },
       {
         "place": "4",
-        "amount": 177149,
+        "amount": 177276,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 147604,
+        "amount": 147710,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118059,
+        "amount": 118144,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53085,
+        "amount": 53123,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29545,
+        "amount": 29566,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14772,
+        "amount": 14783,
         "team": null
       }
     ]
@@ -1852,14 +1852,14 @@
         "losses": 1
       },
       {
-        "team": "HULIGANI",
-        "wins": 0,
+        "team": "Vici Gaming",
+        "wins": 1,
         "losses": 1
       },
       {
-        "team": "Vici Gaming",
+        "team": "HULIGANI",
         "wins": 0,
-        "losses": 1
+        "losses": 2
       },
       {
         "team": "OG",
@@ -2099,7 +2099,7 @@
           {
             "id": "gs-r2-m8",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T10:00:00+08:00",
             "teamA": {
               "name": "HULIGANI",
@@ -2107,7 +2107,7 @@
             },
             "teamB": {
               "name": "Vici Gaming",
-              "score": 1
+              "score": 2
             }
           }
         ]
@@ -2147,7 +2147,7 @@
             "id": "gs-r3-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T13:30:00+08:00",
+            "scheduled": "2026-08-14T13:45:00+08:00",
             "teamA": {
               "name": "Iron Wing",
               "score": null
@@ -2223,7 +2223,7 @@
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "HULIGANI",
               "score": null
             }
           }
