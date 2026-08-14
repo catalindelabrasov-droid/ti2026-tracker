@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Delete your account — dota2tileague.com</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0b0e13;--panel:#151b26;--panel-2:#1b2230;
+    --line:#28303f;--line-soft:#1f2632;--ink:#e9eef5;--ink-dim:#8e99ac;--ink-faint:#5b6478;
+    --aegis:#d9a441;--win:#4ec98f;--live:#ef5350;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;padding:16px 12px 60px;line-height:1.65}
+  .wrap{max-width:560px;margin:0 auto}
+  a{color:var(--aegis)}
+  .back{display:inline-block;margin-bottom:14px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);text-decoration:none}
+  .back:hover{color:var(--aegis)}
+  h1{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;line-height:1.2}
+  p{margin:9px 0;font-size:14.5px}
+  p.dim{color:var(--ink-dim);font-size:13.5px}
+  b{color:var(--ink)}
+  ul{margin:8px 0 8px 20px;font-size:14px;color:var(--ink-dim)} li{margin:4px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px;margin:18px 0}
+  .card.danger{border-color:rgba(239,83,80,.45);background:linear-gradient(150deg,rgba(239,83,80,.09),rgba(239,83,80,.02))}
+  .card.good{border-color:rgba(78,201,143,.45);background:linear-gradient(150deg,rgba(78,201,143,.10),rgba(78,201,143,.02))}
+  label{display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+  input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+    color:var(--ink);font:inherit;font-size:15px;padding:11px 12px}
+  input:focus{outline:none;border-color:var(--aegis)}
+  button{font:inherit;cursor:pointer;border-radius:6px;padding:12px 16px;width:100%;
+    font-size:14.5px;font-weight:600;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);
+    margin-top:12px}
+  button:hover:not(:disabled){border-color:var(--aegis)}
+  button:disabled{opacity:.55;cursor:default}
+  button.danger{background:var(--live);border-color:var(--live);color:#fff}
+  button.danger:hover:not(:disabled){filter:brightness(1.1)}
+  .msg{margin-top:12px;font-size:13.5px;line-height:1.6}
+  .msg.err{color:var(--live)}
+  .msg.ok{color:var(--win)}
+  .steps{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+  footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink-faint);line-height:1.9}
+  footer a{color:var(--ink-dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Back to the tracker</a>
+  <h1>Delete your account</h1>
+
+  <!-- Step 1: ask for the email, send the confirmation link. -->
+  <div id="step1">
+    <div class="steps">Step 1 of 2 — confirm it's you</div>
+    <p>Enter the email address you signed up with. We'll send you a link. Opening that link brings
+       you back here to confirm — the same way signing up worked, only in reverse.</p>
+    <p class="dim">Nothing is deleted until you come back and confirm. Asking for the link does not
+       start anything.</p>
+    <div class="card">
+      <label for="em">Your email address</label>
+      <input id="em" type="email" autocomplete="email" placeholder="you@example.com" spellcheck="false">
+      <button id="send">Email me the confirmation link</button>
+      <div class="msg" id="m1"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: they arrived from the link and have a session. -->
+  <div id="step2" style="display:none">
+    <div class="steps">Step 2 of 2 — confirm deletion</div>
+    <p>You're about to permanently delete the account for <b id="who"></b>.</p>
+    <div class="card danger">
+      <p style="margin-top:0"><b>This cannot be undone.</b> It removes:</p>
+      <ul>
+        <li>your account and sign-in</li>
+        <li>your nickname and profile</li>
+        <li>every prediction you have made, and your place on every leaderboard</li>
+        <li>your membership of every league</li>
+        <li>your notification subscription</li>
+      </ul>
+      <p class="dim" style="margin-bottom:0">If you run a league, it is handed to whoever joined it
+         first so the other members keep their predictions. A league with nobody left in it is
+         deleted with your account.</p>
+    </div>
+    <button class="danger" id="del">Permanently delete my account</button>
+    <button id="cancel">Cancel — keep my account</button>
+    <div class="msg" id="m2"></div>
+  </div>
+
+  <!-- Step 3: done. -->
+  <div id="done" style="display:none">
+    <div class="card good">
+      <p style="margin-top:0"><b>Your account has been deleted.</b></p>
+      <p id="doneDetail" class="dim" style="margin-bottom:0"></p>
+    </div>
+    <p>Nothing personal remains. You're welcome back any time — you'd just sign up again.</p>
+    <p><a href="/">Back to the tracker &rarr;</a></p>
+  </div>
+
+  <p class="dim" id="footNote">Changed your mind? Just close this page —
+     <a href="/">go back to the tracker</a>. See also
+     <a href="legal.html#privacy">what we store and why</a>.</p>
+
+  <footer>
+    Fan-made tracker. Not affiliated with, endorsed by or sponsored by Valve Corporation.<br>
+    <a href="/">Tracker</a> · <a href="guide.html">How it works</a> ·
+    <a href="legal.html">Terms, privacy &amp; disclaimer</a>
+  </footer>
+</div>
+
+<script>
+const SUPABASE_URL="https://hqpynfzatnmwvlxdfhsw.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxcHluZnphdG5td3ZseGRmaHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzE0NjUsImV4cCI6MjA5NzM0NzQ2NX0.lVTsgb1DwTkzeb-G3403IGY3jWvFg4TNbetZR6ANkj0";
+const FN=SUPABASE_URL.replace(".supabase.co",".functions.supabase.co")+"/delete-account";
+const $=(s)=>document.querySelector(s);
+let SB=null;
+/* Its OWN storage key, deliberately.
+   Sharing the tracker's session would mean anyone already signed in lands
+   straight on the confirm step — one tap from a public footer link to permanent
+   deletion, with no email and no re-authentication. On a shared or borrowed
+   device that is a trap. Under a separate key this page can only ever be
+   unlocked by the link we email, which is the whole point of the flow. */
+try{
+  if(window.supabase) SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+    auth:{ storageKey:"ti2026_delete_flow", persistSession:true, detectSessionInUrl:true }
+  });
+}catch(e){}
+
+function show(which){
+  $("#step1").style.display = which==="step1"?"":"none";
+  $("#step2").style.display = which==="step2"?"":"none";
+  $("#done").style.display  = which==="done" ?"":"none";
+  $("#footNote").style.display = which==="done"?"none":"";
+}
+
+/* Did they arrive by clicking the emailed link? supabase-js reads the token out
+   of the URL fragment and stores a session, so the presence of a session IS the
+   proof that they can read that inbox. */
+async function boot(){
+  if(!SB){ $("#m1").className="msg err"; $("#m1").textContent="Couldn't reach the server. Reload the page and try again."; return; }
+  const {data}=await SB.auth.getSession();
+  if(data && data.session && data.session.user){
+    $("#who").textContent=data.session.user.email||"your account";
+    show("step2");
+    // Drop the token out of the address bar so it isn't left in history or
+    // copied into a chat along with the link.
+    if(location.hash) history.replaceState(null,"",location.pathname);
+  }else{
+    show("step1");
+  }
+}
+SB && SB.auth.onAuthStateChange((_e,s)=>{ if(s && s.user && $("#step2").style.display==="none") boot(); });
+
+$("#send").addEventListener("click",async()=>{
+  const email=($("#em").value||"").trim();
+  const m=$("#m1");
+  /* Bail BEFORE the try below. That catch deliberately reports success for
+     every failure — it must not reveal whether an address is registered — which
+     means it would also swallow "the library never loaded" and cheerfully tell
+     someone an email is on its way that can never arrive. */
+  if(!SB){
+    m.className="msg err";
+    m.textContent="Couldn't reach the server — an ad-blocker or network filter may be blocking it. Reload the page, or try a different browser.";
+    return;
+  }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+    m.className="msg err"; m.textContent="That doesn't look like an email address."; return;
+  }
+  const btn=$("#send"); btn.disabled=true; btn.textContent="Sending…";
+  m.className="msg"; m.textContent="";
+  try{
+    /* shouldCreateUser:false is load-bearing. Without it, typing an address that
+       has no account CREATES one — so a page for deleting accounts would quietly
+       make them instead. */
+    const {error}=await SB.auth.signInWithOtp({
+      email,
+      options:{ shouldCreateUser:false, emailRedirectTo:location.origin+"/delete-account.html" }
+    });
+    if(error) throw error;
+    m.className="msg ok";
+    m.innerHTML="<b>Check your inbox.</b> If an account exists for that address, a confirmation link is on its way. Open it on this device and you'll come back here to confirm.";
+    btn.textContent="Link sent";
+  }catch(e){
+    /* Deliberately vague, and deliberately the SAME message as success: telling a
+       stranger whether an address is registered here is exactly the probe the
+       signup flow already refuses to answer. */
+    m.className="msg ok";
+    m.innerHTML="<b>Check your inbox.</b> If an account exists for that address, a confirmation link is on its way. Open it on this device and you'll come back here to confirm.";
+    btn.textContent="Link sent";
+  }
+});
+
+$("#cancel").addEventListener("click",async()=>{
+  try{ await SB.auth.signOut(); }catch(e){}
+  location.href="/";
+});
+
+$("#del").addEventListener("click",async()=>{
+  const btn=$("#del"), m=$("#m2");
+  btn.disabled=true; $("#cancel").disabled=true; btn.textContent="Deleting…";
+  m.className="msg"; m.textContent="";
+  try{
+    const {data}=await SB.auth.getSession();
+    const tok=data && data.session && data.session.access_token;
+    if(!tok) throw new Error("link_expired");
+    const r=await fetch(FN,{method:"POST",headers:{Authorization:"Bearer "+tok}});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok) throw new Error(j.error||"delete_failed");
+
+    const lg=j.leagues||{};
+    const bits=[];
+    if(lg.rehomed) bits.push(lg.rehomed===1?"1 league you ran was handed to its longest-standing member":lg.rehomed+" leagues you ran were handed to their longest-standing members");
+    if(lg.removed) bits.push(lg.removed===1?"1 empty league was deleted with it":lg.removed+" empty leagues were deleted with it");
+    $("#doneDetail").textContent=bits.length?bits.join(". ")+".":"";
+    try{ await SB.auth.signOut(); }catch(e){}
+    try{ Object.keys(localStorage).filter(k=>k.indexOf("ti2026_")===0).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+    show("done");
+  }catch(e){
+    const why=String(e.message||e);
+    m.className="msg err";
+    m.textContent = why==="link_expired"
+      ? "That link has expired. Close this page and request a new one — nothing has been deleted."
+      : "Something went wrong and nothing was deleted. Try again in a moment, or email support@dota2tileague.com.";
+    btn.disabled=false; $("#cancel").disabled=false;
+    btn.textContent="Permanently delete my account";
+  }
+});
+
+boot();
+</script>
+</body>
+</html>

@@ -15,3 +15,6 @@ keystore.properties
 
 # ...except the one APK we publish for sideloading.
 !downloads/*.apk
+
+# Snapshot of the auth settings changed for the deletion flow. Local only.
+.auth-config-backup.json

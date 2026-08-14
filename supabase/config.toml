@@ -27,3 +27,10 @@ verify_jwt = false
 # Called by pg_cron (staleness rescue, and the quarter-hour scoring pass via
 # ?fast=1); authenticated by x-tick-secret.
 verify_jwt = false
+
+[functions.delete-account]
+# NOT public. The function verifies the caller's token itself and deletes only
+# that user — it accepts no id and no email. Left false because the platform's
+# own check answers a bare 401 with no body, and the page has to distinguish
+# "your link expired, request another" from "the server is down".
+verify_jwt = false

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How it works — dota2tileague.com</title>
+<meta name="description" content="How to use the tracker and the prediction leagues: every section explained, how scoring works, and how to run your own tournament.">
+<!-- Deliberately loads none of the tracker's code. A fault here cannot take the
+     live site down, and this page keeps working if the backend is unreachable. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
+    --line:#28303f;--line-soft:#1f2632;--ink:#e9eef5;--ink-dim:#8e99ac;--ink-faint:#5b6478;
+    --aegis:#d9a441;--win:#4ec98f;--live:#ef5350;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;padding:16px 12px 60px;line-height:1.65}
+  .wrap{max-width:760px;margin:0 auto}
+  a{color:var(--aegis)}
+  .back{display:inline-block;margin-bottom:14px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);text-decoration:none}
+  .back:hover{color:var(--aegis)}
+  h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.02em;line-height:1.2}
+  .lede{color:var(--ink-dim);font-size:15px;margin:10px 0 26px}
+  h2{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;margin:34px 0 4px;
+    scroll-margin-top:14px;padding-top:20px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:0;padding-top:0}
+  h3{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;margin:20px 0 4px;color:var(--ink)}
+  p{margin:8px 0;font-size:14.5px}
+  p.dim{color:var(--ink-dim);font-size:13.5px}
+  ul,ol{margin:8px 0 8px 20px;font-size:14.5px}
+  li{margin:5px 0}
+  b{color:var(--ink)}
+  code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--ink)}
+  /* Contents list — the site map itself. */
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 8px}
+  .toc-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+  .toc ol{margin:0 0 0 18px;font-size:14px}
+  .toc a{text-decoration:none} .toc a:hover{text-decoration:underline}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0}
+  .card.warn{border-color:var(--aegis);background:linear-gradient(150deg,rgba(217,164,65,.10),rgba(217,164,65,.02))}
+  .card-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--aegis);margin-bottom:6px}
+  /* Scoring table. Scrolls inside itself so the page never scrolls sideways. */
+  .tw{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:8px}
+  table{border-collapse:collapse;width:100%;min-width:440px;font-size:13.5px}
+  th{background:var(--panel-2);text-align:left;padding:9px 12px;font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-dim);white-space:nowrap}
+  td{padding:9px 12px;border-top:1px solid var(--line-soft);vertical-align:top}
+  td.pts{font-family:'JetBrains Mono',monospace;color:var(--aegis);white-space:nowrap;text-align:right}
+  td.off{color:var(--ink-faint)}
+  .tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.09em;
+    text-transform:uppercase;padding:1px 6px;border-radius:20px;border:1px solid var(--line);color:var(--ink-faint)}
+  .tag.on{color:var(--win);border-color:rgba(78,201,143,.4)}
+  /* FAQ */
+  details{border-top:1px solid var(--line-soft);padding:11px 0}
+  details:first-of-type{border-top:0}
+  summary{cursor:pointer;font-weight:600;font-size:14.5px;list-style:none;display:flex;gap:8px;align-items:flex-start}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"+";color:var(--aegis);font-family:'JetBrains Mono',monospace;flex:none;line-height:1.5}
+  details[open] summary::before{content:"–"}
+  details p{color:var(--ink-dim);font-size:13.5px;margin:7px 0 0 18px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink-faint);line-height:1.9}
+  footer a{color:var(--ink-dim)}
+  @media(max-width:560px){ h1{font-size:22px} .lede{font-size:14px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Back to the tracker</a>
+  <h1>How this site works</h1>
+  <p class="lede">Everything here is free and nothing is bet. You follow The International,
+     and if you want, you predict it against your friends for points and bragging rights.</p>
+
+  <nav class="toc">
+    <div class="toc-lbl">Contents</div>
+    <ol>
+      <li><a href="#watch">Following the tournament</a></li>
+      <li><a href="#leagues">Prediction leagues</a></li>
+      <li><a href="#scoring">How scoring works</a></li>
+      <li><a href="#tournaments">Running your own tournament</a></li>
+      <li><a href="#phone">Notifications and your phone</a></li>
+      <li><a href="#faq">Common questions</a></li>
+      <li><a href="#account">Your account and your data</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="watch">1 · Following the tournament</h2>
+  <p>You do not need an account for any of this. Open the site and it is all there.</p>
+
+  <h3>Live &amp; Upcoming</h3>
+  <p>The rail at the top. One card per match, newest first. While a series is being played the card
+     shows the <b>series score</b> as the big number — that is games won, the thing that decides who
+     goes through. Underneath it, smaller and labelled, is the kill score in the game currently
+     being played. Those two numbers get confused constantly, which is why they are separated.</p>
+  <p class="dim">Fixtures whose teams are not drawn yet are hidden until the draw lands. There is
+     nothing to read in a "TBD vs TBD" card and they used to bury the real ones.</p>
+
+  <h3>Seeing every game of a match</h3>
+  <p>Anywhere you see a played match, a <code>N GAMES</code> button or a clickable result opens the
+     full breakdown: a tab per game, both drafts, all ten players with hero, level, KDA, net worth,
+     GPM, last hits, their six items, the neutral and anything left in the backpack.</p>
+  <p>It works from the live cards, the Group Stage board, the playoff bracket, and from the match
+     list inside any team's panel — so you can read a team's whole tournament game by game.</p>
+
+  <h3>Group Stage</h3>
+  <p>Sixteen teams, Swiss format. Teams are grouped by <b>record</b>, not by an invented ladder
+     position: first to <b>3 wins</b> goes through to the playoffs, <b>3 losses</b> knocks you out.
+     Each team's row shows one mark per round, their latest result, and what is at stake.
+     Tap a team for its matches and roster.</p>
+
+  <h3>Playoffs</h3>
+  <p>Double elimination. It fills in once the group stage decides who is through.</p>
+
+  <h3>Watch</h3>
+  <p><a href="watch.html">The watch page</a> puts every live game on one screen — draft, live score,
+     gold swing, and the stream in your language. It only appears in the footer and on live cards
+     while something is actually being played, so it is never a dead link.</p>
+  <p class="dim">Streams run behind the game server by design, to stop players watching their own
+     match. Where we know the delay, the stats shown next to a stream are rewound to match what you
+     are seeing, so nothing on screen spoils the fight you are about to watch.</p>
+
+  <h3>Prize, Qualifiers, Teams, Players, Heroes</h3>
+  <p>The prize pool and how it splits by placement. The regional qualifiers that decided the field.
+     Team rosters and ratings, the players on the highest-rated teams, and hero statistics.</p>
+
+  <h2 id="leagues">2 · Prediction leagues</h2>
+  <p>A league is a private group of friends predicting the same matches. Points, a leaderboard,
+     nothing at stake.</p>
+
+  <h3>Creating one</h3>
+  <ol>
+    <li>Hit <b>🏆 Create League</b> in the toolbar at the top.</li>
+    <li>Give it a name and choose a rules preset — you can change every rule individually.</li>
+    <li>You are the admin. You get a <b>join code</b> and a share link.</li>
+  </ol>
+
+  <h3>Adding people</h3>
+  <p>Send them the share link, or give them the join code and they enter it under
+     <b>Join a league</b>. There is no invite list to manage and no approving people one by one —
+     anyone with the code is in. Only share it with people you want in it.</p>
+  <p class="dim">You can look around a league before signing up. You are only asked to make an
+     account when you lock your first pick, and the pick you already made is kept.</p>
+
+  <h3>Making picks</h3>
+  <ol>
+    <li>Open the league, go to <b>Predictions</b>.</li>
+    <li>For each match, tap the team you think wins, then the series score.</li>
+    <li>Hit <b>🔒 Lock prediction</b>.</li>
+  </ol>
+  <p><b>Locking is final.</b> Once locked you cannot change it, and it reveals what everyone else
+     picked for that match. That is the trade: you see theirs, they see yours.</p>
+
+  <h3>When picks close</h3>
+  <p>By default a match stays open <b>until it actually starts</b> — not at a fixed clock time.
+     Schedules slip constantly and a countdown that closes an hour before a match that starts two
+     hours late just costs people picks. The admin can set a lead time if they want one.</p>
+  <p class="dim">This is enforced on the server, not in the page, so it cannot be worked around.</p>
+
+  <h3>Tournament outcomes</h3>
+  <p>Separate from match picks: who lifts the Aegis, and your top four. Worth much more than a
+     single match, and they settle when the tournament finishes.</p>
+
+  <h3>Leaderboard and My Picks</h3>
+  <p><b>Leaderboard</b> ranks everyone on points. <b>My Picks</b> is your own history — what you
+     called, what happened, and what each one earned. Some bonuses (streaks, and calls nobody else
+     made) can only be worked out once everyone's picks are in, so they land on the leaderboard
+     rather than on the individual card.</p>
+
+  <h2 id="scoring">3 · How scoring works</h2>
+  <p>Every rule below can be switched on or off by the league admin, and the points changed.
+     This is what a new league starts with:</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Rule</th><th>What earns it</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td><b>Winner</b> <span class="tag on">on</span></td><td>You picked the team that won the series.</td><td class="pts">10</td></tr>
+      <tr><td><b>Exact score</b> <span class="tag on">on</span></td><td>On top of the winner, you called the scoreline exactly — you said 2–1 and it finished 2–1.</td><td class="pts">15</td></tr>
+      <tr><td><b>Clean sweep</b> <span class="tag on">on</span></td><td>You called a whitewash and got it: no games dropped, so 2–0 or 3–0.</td><td class="pts">8</td></tr>
+      <tr><td><b>Upset bonus</b> <span class="tag on">on</span></td><td>You backed the lower-ranked team and they won.</td><td class="pts">10</td></tr>
+      <tr><td><b>Streak bonus</b> <span class="tag on">on</span></td><td>For calling several series in a row correctly.</td><td class="pts">5 each</td></tr>
+      <tr><td><b>Champion</b> <span class="tag on">on</span></td><td>The team you picked to lift the Aegis wins it.</td><td class="pts">50</td></tr>
+      <tr><td><b>Grand finalists</b> <span class="tag on">on</span></td><td>For each team you named that reaches the grand final.</td><td class="pts">25 each</td></tr>
+      <tr><td><b>Top 4</b> <span class="tag on">on</span></td><td>For each team you put in your top four that finishes top four. Order doesn't matter.</td><td class="pts">20 each</td></tr>
+      <tr><td class="off"><b>Game count</b> <span class="tag">off</span></td><td class="off">Right number of games even if you backed the wrong team — 2–1 and 1–2 are the same length.</td><td class="pts">6</td></tr>
+      <tr><td class="off"><b>Lone wolf</b> <span class="tag">off</span></td><td class="off">Nobody else in the league called that result.</td><td class="pts">5</td></tr>
+      <tr><td class="off"><b>First game</b> <span class="tag">off</span></td><td class="off">You called who takes the opening game of the series.</td><td class="pts">5</td></tr>
+      <tr><td class="off"><b>Reverse sweep</b> <span class="tag">off</span></td><td class="off">You called a comeback from match point — losing 0–2 in a Bo5 and still winning.</td><td class="pts">12</td></tr>
+      <tr><td class="off"><b>Perfect day</b> <span class="tag">off</span></td><td class="off">Every pick you locked on a single day came in.</td><td class="pts">25</td></tr>
+      <tr><td class="off"><b>Top 8</b> <span class="tag">off</span></td><td class="off">For each team you put in your top eight that finishes top eight.</td><td class="pts">10 each</td></tr>
+      <tr><td class="off"><b>Champion from LB</b> <span class="tag">off</span></td><td class="off">A bonus if your champion wins it the hard way, from the lower bracket.</td><td class="pts">20</td></tr>
+      <tr><td class="off"><b>Wrong picks cost</b> <span class="tag">off</span></td><td class="off">Points taken off when a pick is wrong, so a guess costs you something.</td><td class="pts">−5</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="dim">Ties are broken first on exact-score hits, then on the champion pick.</p>
+
+  <h2 id="tournaments">4 · Running your own tournament</h2>
+  <p>Separate from the TI tracker: run a bracket for your own group, and a permanent ladder that
+     keeps rating teams between events.</p>
+  <h3>Creating one</h3>
+  <ol>
+    <li>Hit <b>⚔️ Create Tournament</b> in the toolbar.</li>
+    <li>Pick the format — single elimination, double elimination, groups, or Swiss.</li>
+    <li>Add teams. Each team has a name and its players.</li>
+    <li>The bracket generates itself once the teams are in.</li>
+  </ol>
+  <h3>Reporting results</h3>
+  <p>After a match, either captain hits <b>Report result</b> and enters the score. You can attach the
+     Dota match ID, which is checked against the real game so a reported result has something behind
+     it. The other side confirms, and the bracket advances.</p>
+  <h3>The ladder</h3>
+  <p>Permanent, no start or end. Teams challenge each other, play, and their rating moves — a proper
+     rating system, so beating a strong team is worth more than beating a weak one.</p>
+
+  <h2 id="phone">5 · Notifications and your phone</h2>
+  <h3>Match notifications</h3>
+  <p>Tap the <b>🔔</b> on any match card to be told when it starts. The bell in the toolbar shows
+     how many you are following. If you are in a league you can also be told when new matches open
+     for predictions and when the leaderboard changes.</p>
+  <p class="dim">Your browser asks permission first and you can withdraw it at any time in your
+     browser or phone settings. On iPhone, notifications only work if you have added the site to
+     your home screen.</p>
+  <h3>Putting it on your phone</h3>
+  <p>Open <a href="/app">the app page</a>. It installs like a normal app, works offline for anything
+     already loaded, and updates itself.</p>
+
+  <h2 id="faq">6 · Common questions</h2>
+
+  <details><summary>Is this gambling? Can I win money?</summary>
+    <p>No, and no. There is no entry fee, no stake, no wagering and no prize of any value — not
+       money, not goods, not credit. Leagues are private groups of friends playing for points and
+       bragging rights only. Nothing on this site can be bought, sold or cashed out.</p></details>
+
+  <details><summary>Do I need an account?</summary>
+    <p>Only to lock predictions. Watching the tournament, reading the bracket, the teams, the game
+       histories and the watch page all work signed out.</p></details>
+
+  <details><summary>Why is the score different from what my stream shows?</summary>
+    <p>Streams are delayed by a few minutes on purpose, so players cannot watch their own game.
+       The site shows what has actually happened on the game server, which is ahead of your stream.
+       The watch page rewinds its stats to match the delay, so use that if you want no spoilers.</p></details>
+
+  <details><summary>A score looks wrong.</summary>
+    <p>Match data comes from Valve, OpenDota and Liquipedia, and each one lags differently. The site
+       prefers the fastest reliable source and corrects itself within a few minutes. If something is
+       still wrong after that, tell us — the address is at the bottom of this page.</p></details>
+
+  <details><summary>Can I change a prediction after locking it?</summary>
+    <p>No. Locking reveals what everyone else picked for that match, so letting you change yours
+       afterwards would break the whole thing.</p></details>
+
+  <details><summary>I missed a match — can I still predict it?</summary>
+    <p>Not once it has started. The cut-off is enforced on the server, so it is the same for
+       everyone, including the league admin.</p></details>
+
+  <details><summary>I did not get my confirmation email.</summary>
+    <p>Check spam first. If you have signed up with that address before, no new email is sent —
+       that is deliberate, so strangers cannot probe which addresses are registered. Sign in
+       instead, or reset your password.</p></details>
+
+  <details><summary>Can I change my nickname?</summary>
+    <p>Yes, from your account menu. It updates everywhere, including leagues you have already
+       joined.</p></details>
+
+  <details><summary>Who runs this?</summary>
+    <p>A fan-made, non-commercial project. It is not affiliated with, endorsed by or sponsored by
+       Valve Corporation. There are no ads and nothing is sold.</p></details>
+
+  <h2 id="account">7 · Your account and your data</h2>
+  <p>We hold as little as possible: the email address you signed up with, your nickname, the
+     predictions you make, and — only if you turned notifications on — the anonymous address your
+     browser gives us to send them to. No tracking, no analytics, no advertising, nothing sold or
+     shared.</p>
+  <p><b>You can delete your account yourself, at any time.</b> It removes your profile, your league
+     memberships, every prediction you made and your notification subscription, permanently.</p>
+  <p><a href="delete-account.html">Delete my account &rarr;</a> · <a href="legal.html#privacy">What we
+     store and why</a> · <a href="legal.html#terms">Terms</a> · <a href="legal.html#disclaimer">Disclaimer</a></p>
+
+  <footer>
+    Fan-made tracker. Not affiliated with, endorsed by or sponsored by Valve Corporation.<br>
+    Source data via <a href="https://liquipedia.net/dota2/The_International/2026" rel="noopener">Liquipedia</a>
+    (<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license noopener">CC BY-SA 3.0</a>),
+    OpenDota and the Steam Web API.<br>
+    <a href="/">Tracker</a> · <a href="legal.html">Terms, privacy &amp; disclaimer</a> ·
+    <a href="delete-account.html">Delete your account</a> ·
+    <a href="mailto:support@dota2tileague.com">support@dota2tileague.com</a>
+  </footer>
+</div>
+</body>
+</html>

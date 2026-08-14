@@ -1,0 +1,53 @@
+headersOrigin = "config"
+plugins = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\Users\\Azog\\Desktop\\ti2026-tracker"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "rm -f test_no_login.html"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[headers]]
+for = "/sw.js"
+
+[headers.values]
+Cache-Control = "public, max-age=0, must-revalidate"
+Service-Worker-Allowed = "/"
+
+[[headers]]
+for = "/manifest.webmanifest"
+
+[headers.values]
+Content-Type = "application/manifest+json"
+Cache-Control = "public, max-age=3600"
+
+[[headers]]
+for = "/icons/*"
+
+[headers.values]
+Cache-Control = "public, max-age=604800"
+
+[[headers]]
+for = "/.well-known/assetlinks.json"
+
+[headers.values]
+Content-Type = "application/json"

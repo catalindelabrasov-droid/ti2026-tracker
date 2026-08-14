@@ -1487,6 +1487,31 @@ function formatSpectators(n){ n=+n||0; if(n>=1000) return (n/1000).toFixed(n>=10
 const $=s=>document.querySelector(s);
 function saveNotif(){localStorage.setItem(LS_NOTIF,JSON.stringify([...notifIds]));}
 function matchWinner(m){if(!m)return null;const a=m.teamA||{},b=m.teamB||{};if(a.score==null||b.score==null)return null;if(a.score>b.score)return"A";if(b.score>a.score)return"B";return null;}
+/* Is this a match of THIS tournament?
+   Our watch page only covers TI, so anything played elsewhere has to keep its
+   external link. Shared by the watch buttons and the live ticker at the top —
+   the ticker used to carry its own idea of this and kept sending people
+   straight to Twitch long after the buttons had stopped.
+   Three ways to know, cheapest first: it is one of our own fixture ids; the
+   feed tagged it with the TI league; or — when the feed gives no league id at
+   all, which is most of the time — both sides are teams in this tournament,
+   which is definitional and needs no id. */
+function isTIMatch(m){
+  if(!m) return false;
+  if(/^(gs|me|el)-/.test(m.id||"")) return true;          // one of our own fixtures
+  const tiId=(typeof LIVE_FEED!=="undefined"&&LIVE_FEED&&LIVE_FEED.tiLeagueId)||null;
+  /* When the feed gives a league id AND we know TI's, that is the answer and we
+     do not second-guess it by team names. Two TI teams meeting at some OTHER
+     event would otherwise be sent to a watch page that has never heard of the
+     match, which reads as "isn't being played right now" while it is live on
+     screen. Every match the feed returns does carry a league id. */
+  if(m.leagueId!=null&&tiId!=null) return String(m.leagueId)===String(tiId);
+  // No id to go on: both sides being teams in this tournament is definitional.
+  const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
+  if(!a||!b||a==="TBD"||b==="TBD") return false;
+  const field=tiFieldNames();
+  return field.length>0 && field.includes(canonTeam(a)) && field.includes(canonTeam(b));
+}
 function watchButton(m,mini){
   // Shows a "Watch" link when the match has a stream/watch URL and isn't finished.
   const url=m.streamUrl||m.stream||m.watch||"";
@@ -1501,9 +1526,7 @@ function watchButton(m,mini){
      Anything that is not a TI fixture keeps the old external link, because the
      watch page only covers this league. */
   const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
-  const isTI=/^(gs|me|el)-/.test(m.id||"")
-    || (typeof LIVE_FEED!=="undefined" && LIVE_FEED && LIVE_FEED.tiLeagueId && m.leagueId===LIVE_FEED.tiLeagueId);
-  if(m.status==="live" && isTI && a && b && a!=="TBD" && b!=="TBD"){
+  if(m.status==="live" && isTIMatch(m) && a && b && a!=="TBD" && b!=="TBD"){
     const href=`watch.html?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
     return `<a class="watch ${mini?'mini':''}" href="${esc(href)}" title="Watch this match on our live page">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${label}</a>`;
@@ -1646,10 +1669,22 @@ function render(d){
         <!-- Permanent way in. The prompt inside Live &amp; Upcoming only shows
              while a game is running, so without this the page is unreachable
              between rounds. -->
-        <a href="watch.html" class="foot-app">▶ Watch live games</a><br>
-        ${m.demo?"Demo dataset for preview. ":""}Source data via Liquipedia (CC-BY-SA) &amp; OpenDota.<br>
+        <a href="watch.html" class="foot-app">▶ Watch live games</a>
+        <a href="guide.html" class="foot-app">? How it works</a><br>
+        ${m.demo?"Demo dataset for preview. ":""}Source data via
+        <a href="https://liquipedia.net/dota2/The_International/2026" rel="noopener">Liquipedia</a>
+        (<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license noopener">CC BY-SA 3.0</a>),
+        OpenDota &amp; the Steam Web API.<br>
         Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
-        Fan-made tracker, not affiliated with Valve.</footer>
+        Fan-made tracker. Not affiliated with, endorsed by or sponsored by Valve Corporation.
+        Dota 2 and The International are trademarks of Valve Corporation.<br>
+        <a href="guide.html">How it works</a> ·
+        <a href="legal.html#terms">Terms</a> ·
+        <a href="legal.html#privacy">Privacy</a> ·
+        <a href="legal.html#disclaimer">Disclaimer</a> ·
+        <a href="delete-account.html">Delete your account</a> ·
+        <a href="mailto:support@dota2tileague.com">support@dota2tileague.com</a><br>
+        <span style="opacity:.75">Free to play. No entry fee, no stake and no prizes — this is not gambling.</span></footer>
     </div>
     <div class="tabview" id="view-tournaments">${renderTournaments()}</div>
     <div class="tabview" id="view-teams">
@@ -2163,7 +2198,19 @@ function renderLiveStrip(){
     // played, which read as a result and told people Falcons were 27-9 up.
     const sa=m.seriesA, sb=m.seriesB;
     const shown=(sa!=null&&sb!=null)?`${sa}–${sb}`:"vs";
-    return `<a class="ls-game" href="${esc(m.watch||'#')}" target="_blank" rel="noopener" title="${esc(m.event||'')}">
+    /* A TI match goes to our own watch page, like every other watch link on the
+       site. Only a match from some other event still leaves for Twitch, and
+       only that one opens a new tab. */
+    /* Canonical names in the link. The ticker reads the raw feed, which spells
+       teams the way the game client does; the watch page matches on the names
+       the tournament uses, and cannot bridge a pair like BetBoom Team /
+       BoomBoys on its own. */
+    const ti=isTIMatch(m)&&a.name&&b.name;
+    const href=ti?`watch.html?a=${encodeURIComponent(canonTeam(a.name))}&b=${encodeURIComponent(canonTeam(b.name))}`
+                 :(m.watch||'#');
+    const ext=ti?'':' target="_blank" rel="noopener"';
+    const tip=ti?'Watch this match on our live page':(m.event||'');
+    return `<a class="ls-game" href="${esc(href)}"${ext} title="${esc(tip)}">
       <b>${esc(a.name||'?')}</b> <span class="ls-sc">${shown}</span> <b>${esc(b.name||'?')}</b>
       ${m.gameMinute!=null?`<span class="ls-min">${m.gameMinute}'</span>`:''}</a>`;
   }).join("");
@@ -3298,12 +3345,18 @@ async function openEvent(leagueId,name,tier){
     // straight through to the stream — that's the reason to open an event.
     const live=liveProMatches().filter(m=>String(m.leagueId)===String(leagueId));
     const liveBlock=live.length?`<div class="rb-lab"><span class="rl-live"></span> Playing right now</div>
-      ${live.map(m=>`<a class="ev-match ev-live" href="${esc(m.watch||'#')}" target="_blank" rel="noopener">
+      ${live.map(m=>{
+        // Open THIS event and it may well be TI — in which case it belongs on
+        // our watch page like every other live link, not off to Twitch.
+        const ti=isTIMatch(m)&&m.teamA&&m.teamB&&m.teamA.name&&m.teamB.name;
+        const href=ti?`watch.html?a=${encodeURIComponent(canonTeam(m.teamA.name))}&b=${encodeURIComponent(canonTeam(m.teamB.name))}`
+                     :(m.watch||'#');
+        return `<a class="ev-match ev-live" href="${esc(href)}"${ti?'':' target="_blank" rel="noopener"'}>
         <span class="ev-team">${teamLogo(m.teamA.name,20,m.teamA.logo)}${esc(m.teamA.name)}</span>
         <span class="ev-score">${m.teamA.score??0}–${m.teamB.score??0}</span>
         <span class="ev-team right">${esc(m.teamB.name)}${teamLogo(m.teamB.name,20,m.teamB.logo)}</span>
         <span class="ev-when live">${m.gameMinute!=null?m.gameMinute+"′":'LIVE'} ▸</span>
-      </a>`).join("")}`:"";
+      </a>`;}).join("")}`:"";
     const rows=s.map(x=>{
       const done=(x.sa+x.sb)>0;
       const aWin=x.sa>x.sb, bWin=x.sb>x.sa;
