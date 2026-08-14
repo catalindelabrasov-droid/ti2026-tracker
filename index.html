@@ -697,13 +697,37 @@
     text-transform:none;color:var(--ink-faint);margin-left:10px}
 
   /* Entry point to the watch page. Shown only while a game is being played. */
-  .watch-all{display:block;margin:0 0 12px;padding:10px 13px;border-radius:5px;
-    background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--live);
-    text-decoration:none;color:var(--ink);font-family:'Oswald',sans-serif;font-size:14px;
-    font-weight:500;letter-spacing:.01em}
-  .watch-all:hover{border-color:var(--aegis);border-left-color:var(--aegis);color:var(--aegis)}
-  .watch-all span{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;
-    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
+  /* The way in to the watch page. It only shows while something is live, so it
+     has one job for a short window and should read as the offer it is rather
+     than as another row of small print. Centred, because a left-aligned line in
+     a full-width box looks like a label; centred it looks like a button. */
+  .watch-all{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:7px;margin:0 0 14px;padding:20px 18px;border-radius:8px;
+    background:linear-gradient(150deg,rgba(239,83,80,.13),rgba(239,83,80,.03));
+    border:1px solid rgba(239,83,80,.42);
+    text-decoration:none;color:var(--ink);font-family:'Oswald',sans-serif;
+    transition:border-color .15s,background .15s,transform .15s}
+  .watch-all .wa-title{display:flex;align-items:center;gap:10px;
+    font-size:23px;font-weight:600;line-height:1.15;letter-spacing:.01em}
+  /* Play mark, drawn rather than an image so it inherits the hover colour. */
+  .watch-all .wa-title::before{content:"";flex:none;width:0;height:0;
+    border-style:solid;border-width:9px 0 9px 15px;
+    border-color:transparent transparent transparent var(--live);transition:border-color .15s}
+  .watch-all:hover{border-color:var(--live);transform:translateY(-1px);
+    background:linear-gradient(150deg,rgba(239,83,80,.2),rgba(239,83,80,.05))}
+  .watch-all:hover .wa-title::before{border-left-color:var(--ink)}
+  /* Its own class, not `.watch-all span`: that also matched the title and would
+     have dragged monospace, uppercase and a dim grey onto it. */
+  .watch-all .wa-sub{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  @media(max-width:560px){
+    /* On a phone the strapline wraps to two lines; the play mark and a 23px
+       heading would push the whole thing past the fold for no gain. */
+    .watch-all{padding:16px 14px}
+    .watch-all .wa-title{font-size:19px;gap:8px}
+    .watch-all .wa-title::before{border-width:7px 0 7px 12px}
+    .watch-all span{font-size:9px;letter-spacing:.07em;line-height:1.5}
+  }
 
   /* Swiss board — the group stage grouped by record instead of ranked 1..16 */
   .sw-prog{display:flex;align-items:center;gap:10px;margin:12px 0 4px}
@@ -2106,8 +2130,9 @@ function renderLive(d){
       <span class="live-status" id="liveStatus" title="This section refreshes automatically while you're online">
         <span class="ls-dot"></span><span class="ls-text">Auto-updating</span></span>
     </div>
-    ${anyLive?`<a class="watch-all" href="watch.html">Watch every live game on one page
-      <span>draft · live score · gold swing · every language stream</span></a>`:""}
+    ${anyLive?`<a class="watch-all" href="watch.html">
+      <span class="wa-title">Watch every live game on one page</span>
+      <span class="wa-sub">draft · live score · gold swing · every language stream</span></a>`:""}
     <div id="liveRail">${liveRailInner(d)}</div>
   </section>`;
 }
