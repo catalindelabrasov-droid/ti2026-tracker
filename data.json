@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T13:00:55.023756+00:00",
+    "lastUpdated": "2026-08-14T13:50:52.960676+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2967272,
-    "note": "$1,600,000 base plus $1,367,272 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2969561,
+    "note": "$1,600,000 base plus $1,369,561 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1261060,
+        "amount": 1262033,
         "team": null
       },
       {
         "place": "2",
-        "amount": 385790,
+        "amount": 386088,
         "team": null
       },
       {
         "place": "3",
-        "amount": 267011,
+        "amount": 267217,
         "team": null
       },
       {
         "place": "4",
-        "amount": 178048,
+        "amount": 178185,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 148353,
+        "amount": 148467,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118658,
+        "amount": 118750,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53354,
+        "amount": 53395,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29695,
+        "amount": 29718,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14847,
+        "amount": 14859,
         "team": null
       }
     ]
@@ -1807,6 +1807,11 @@
         "losses": 0
       },
       {
+        "team": "Aurora Gaming",
+        "wins": 2,
+        "losses": 1
+      },
+      {
         "team": "BoomBoys",
         "wins": 2,
         "losses": 1
@@ -1832,16 +1837,6 @@
         "losses": 1
       },
       {
-        "team": "Aurora Gaming",
-        "wins": 1,
-        "losses": 1
-      },
-      {
-        "team": "Team Yandex",
-        "wins": 1,
-        "losses": 1
-      },
-      {
         "team": "GamerLegion",
         "wins": 1,
         "losses": 2
@@ -1858,6 +1853,11 @@
       },
       {
         "team": "Team Resilience",
+        "wins": 1,
+        "losses": 2
+      },
+      {
+        "team": "Team Yandex",
         "wins": 1,
         "losses": 2
       },
@@ -2174,11 +2174,11 @@
           {
             "id": "gs-r3-m5",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T18:25:00+08:00",
             "teamA": {
               "name": "Aurora Gaming",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Team Yandex",
