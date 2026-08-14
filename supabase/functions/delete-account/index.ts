@@ -93,6 +93,42 @@ async function rehomeLeagues(uid: string) {
   return out;
 }
 
+/* What would this deletion take down with it?
+   Counts only things OTHER people are in. A league you run alone, or a
+   tournament nobody else entered, is yours to take with you. */
+async function ownedThings(uid: string) {
+  const rest = `${URL_}/rest/v1`;
+  const count = async (path: string) => {
+    const r = await fetch(`${rest}/${path}`, {
+      headers: { ...svc, Prefer: "count=exact", Range: "0-0" },
+    }).catch(() => null);
+    if (!r || !r.ok) return -1;                       // unknown: treat as blocking
+    const cr = r.headers.get("content-range") || "";  // "0-0/12"
+    const n = Number(cr.split("/")[1]);
+    return Number.isFinite(n) ? n : -1;
+  };
+
+  const leagueIds: string[] = await fetch(`${rest}/leagues?admin_id=eq.${uid}&select=id`, { headers: svc })
+    .then((r) => (r.ok ? r.json() : null)).then((a) => Array.isArray(a) ? a.map((x: any) => x.id) : [])
+    .catch(() => []);
+
+  let sharedLeagues = 0;
+  for (const id of leagueIds) {
+    const others = await count(`league_members?league_id=eq.${id}&user_id=neq.${uid}&select=user_id`);
+    if (others !== 0) sharedLeagues++;   // -1 (unknown) counts as shared, deliberately
+  }
+
+  const tournaments = await count(`tournaments?organiser_id=eq.${uid}&select=id`);
+  const ladderTeams = await count(`ladder_teams?captain_id=eq.${uid}&select=id`);
+
+  return {
+    sharedLeagues,
+    tournaments: tournaments < 0 ? 1 : tournaments,
+    ladderTeams: ladderTeams < 0 ? 1 : ladderTeams,
+    blocking: sharedLeagues + (tournaments < 0 ? 1 : tournaments) + (ladderTeams < 0 ? 1 : ladderTeams),
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
@@ -112,7 +148,23 @@ Deno.serve(async (req) => {
   const uid = user?.id;
   if (!uid) return json({ error: "link_expired" }, 401);
 
-  // The account first. Everything personal cascades from here: profile, league
+  /* GUARD — deleting this account would take other people's data with it.
+
+     leagues.admin_id, tournaments.organiser_id, tournament_teams.captain_id and
+     ladder_teams.captain_id are ALL declared ON DELETE CASCADE from auth.users,
+     and leagues cascade onwards into league_members, predictions and
+     outcome_predictions. So removing the admin of a six-person league silently
+     destroys that league and all six people's picks.
+
+     Until the hand-over runs inside the same transaction as the delete, refuse
+     rather than risk it. Erasure is a right, but it is this user's right — not a
+     licence to erase everyone who joined their league. */
+  const owns = await ownedThings(uid);
+  if (owns.blocking > 0) {
+    return json({ error: "owns_shared_content", owns }, 409);
+  }
+
+  // The account. Everything personal cascades from here: profile, league
   // memberships, predictions, outcome predictions, push subscriptions.
   let del: Response;
   try {

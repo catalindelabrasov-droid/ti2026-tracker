@@ -226,9 +226,15 @@ $("#del").addEventListener("click",async()=>{
   }catch(e){
     const why=String(e.message||e);
     m.className="msg err";
-    m.textContent = why==="link_expired"
-      ? "That link has expired. Close this page and request a new one — nothing has been deleted."
-      : "Something went wrong and nothing was deleted. Try again in a moment, or email support@dota2tileague.com.";
+    if(why==="owns_shared_content"){
+      /* Refusing here is the point: your account is yours to delete, the league
+         your friends joined is not yours to delete for them. */
+      m.innerHTML="<b>We can't delete this account yet.</b> You run a league, tournament or ladder team that other people are in, and deleting your account right now would take their predictions with it. Hand it over to someone else first — or email <a href=\"mailto:support@dota2tileague.com\">support@dota2tileague.com</a> and we'll move it for you. Nothing has been deleted.";
+    }else{
+      m.textContent = why==="link_expired"
+        ? "That link has expired. Close this page and request a new one — nothing has been deleted."
+        : "Something went wrong and nothing was deleted. Try again in a moment, or email support@dota2tileague.com.";
+    }
     btn.disabled=false; $("#cancel").disabled=false;
     btn.textContent="Permanently delete my account";
   }
