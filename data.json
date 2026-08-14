@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T10:00:54.264947+00:00",
+    "lastUpdated": "2026-08-14T10:30:11.909290+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1817,6 +1817,11 @@
         "losses": 1
       },
       {
+        "team": "Iron Wing",
+        "wins": 2,
+        "losses": 1
+      },
+      {
         "team": "Nigma Galaxy",
         "wins": 2,
         "losses": 1
@@ -1832,16 +1837,6 @@
         "losses": 1
       },
       {
-        "team": "Iron Wing",
-        "wins": 1,
-        "losses": 1
-      },
-      {
-        "team": "Team Falcons",
-        "wins": 1,
-        "losses": 1
-      },
-      {
         "team": "Team Yandex",
         "wins": 1,
         "losses": 1
@@ -1853,6 +1848,11 @@
       },
       {
         "team": "LGD Gaming",
+        "wins": 1,
+        "losses": 2
+      },
+      {
+        "team": "Team Falcons",
         "wins": 1,
         "losses": 2
       },
@@ -2146,11 +2146,11 @@
           {
             "id": "gs-r3-m3",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T13:45:00+08:00",
             "teamA": {
               "name": "Iron Wing",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Team Falcons",
@@ -2175,7 +2175,7 @@
             "id": "gs-r3-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T18:15:00+08:00",
+            "scheduled": "2026-08-14T18:25:00+08:00",
             "teamA": {
               "name": "Aurora Gaming",
               "score": null
