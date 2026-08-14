@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T10:30:11.909290+00:00",
+    "lastUpdated": "2026-08-14T11:00:55.546134+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2960589,
-    "note": "$1,600,000 base plus $1,360,589 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2962845,
+    "note": "$1,600,000 base plus $1,362,845 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1258220,
+        "amount": 1259179,
         "team": null
       },
       {
         "place": "2",
-        "amount": 384921,
+        "amount": 385214,
         "team": null
       },
       {
         "place": "3",
-        "amount": 266410,
+        "amount": 266613,
         "team": null
       },
       {
         "place": "4",
-        "amount": 177647,
+        "amount": 177782,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 148019,
+        "amount": 148132,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118391,
+        "amount": 118481,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53234,
+        "amount": 53274,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29628,
+        "amount": 29650,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14814,
+        "amount": 14825,
         "team": null
       }
     ]
@@ -1862,14 +1862,14 @@
         "losses": 2
       },
       {
-        "team": "HULIGANI",
-        "wins": 0,
+        "team": "Xtreme Gaming",
+        "wins": 1,
         "losses": 2
       },
       {
-        "team": "Xtreme Gaming",
+        "team": "HULIGANI",
         "wins": 0,
-        "losses": 2
+        "losses": 3
       },
       {
         "team": "OG",
@@ -2216,11 +2216,11 @@
           {
             "id": "gs-r3-m8",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T16:30:00+08:00",
             "teamA": {
               "name": "Xtreme Gaming",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "HULIGANI",
@@ -2340,7 +2340,7 @@
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "HULIGANI",
               "score": null
             }
           }
