@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T08:00:18.370821+00:00",
+    "lastUpdated": "2026-08-14T08:51:01.181356+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2955896,
-    "note": "$1,600,000 base plus $1,355,896 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2958373,
+    "note": "$1,600,000 base plus $1,358,373 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1256225,
+        "amount": 1257278,
         "team": null
       },
       {
         "place": "2",
-        "amount": 384311,
+        "amount": 384633,
         "team": null
       },
       {
         "place": "3",
-        "amount": 265987,
+        "amount": 266210,
         "team": null
       },
       {
         "place": "4",
-        "amount": 177365,
+        "amount": 177514,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 147784,
+        "amount": 147908,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118203,
+        "amount": 118302,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53149,
+        "amount": 53194,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29581,
+        "amount": 29606,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14790,
+        "amount": 14803,
         "team": null
       }
     ]
@@ -2132,15 +2132,15 @@
           {
             "id": "gs-r3-m2",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-14T15:25:00+08:00",
             "teamA": {
               "name": "Team Liquid",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "Team Spirit",
-              "score": null
+              "score": 1
             }
           },
           {
@@ -2154,7 +2154,7 @@
             },
             "teamB": {
               "name": "Team Falcons",
-              "score": 0
+              "score": 1
             }
           },
           {
@@ -2175,7 +2175,7 @@
             "id": "gs-r3-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T16:30:00+08:00",
+            "scheduled": "2026-08-14T17:00:00+08:00",
             "teamA": {
               "name": "Aurora Gaming",
               "score": null
@@ -2188,25 +2188,25 @@
           {
             "id": "gs-r3-m6",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-14T15:00:00+08:00",
             "teamA": {
               "name": "Vici Gaming",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "GamerLegion",
-              "score": null
+              "score": 1
             }
           },
           {
             "id": "gs-r3-m7",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-14T14:10:00+08:00",
             "teamA": {
               "name": "Team Resilience",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "OG",
@@ -2336,7 +2336,7 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "OG",
               "score": null
             },
             "teamB": {
