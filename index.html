@@ -1931,7 +1931,7 @@ function canonTeam(name){
    Gaming" onto "Aurora" is the point, collapsing two different teams onto each
    other would put a real score on the wrong match. Returns the index and
    whether the fixture lists the pair in the opposite order. */
-function findFixture(list,a,b){
+function findFixture(list,a,b,opts){
   const usable=m=>{
     const x=tnorm(m.teamA&&m.teamA.name), y=tnorm(m.teamB&&m.teamB.name);
     return !!x&&!!y&&x!=="tbd"&&y!=="tbd";
@@ -1939,7 +1939,7 @@ function findFixture(list,a,b){
   const na=tnorm(a), nb=tnorm(b);
   if(!na||!nb) return null;
   // Collect every exact hit rather than stopping at the first: a pairing that
-  // meets twice has two, and a live game belongs to the one still open.
+  // meets twice has two, and which one this result belongs to is a real choice.
   const exact=[];
   list.forEach((m,j)=>{
     if(!usable(m)) return;
@@ -1947,7 +1947,10 @@ function findFixture(list,a,b){
     if((x===na&&y===nb)||(x===nb&&y===na)) exact.push(j);
   });
   if(exact.length){
-    const i=pickOpen(list,exact);
+    // The pairing exists; if no candidate is eligible the answer is "none",
+    // never "try a looser match" — that would find these same fixtures again.
+    const i=chooseFixture(list,exact,opts);
+    if(i<0) return null;
     return {i,flipped:tnorm(list[i].teamA.name)!==na};
   }
   const ka=tkey(a), kb=tkey(b);
@@ -1962,7 +1965,8 @@ function findFixture(list,a,b){
   // Two DIFFERENT pairings collapsing onto one key is the dangerous case.
   const pairs=new Set(hits.map(j=>[tnorm(list[j].teamA.name),tnorm(list[j].teamB.name)].sort().join("|")));
   if(pairs.size>1) return null;
-  const j=pickOpen(list,hits);
+  const j=chooseFixture(list,hits,opts);
+  if(j<0) return null;
   return {i:j,flipped:tkey(list[j].teamA.name)!==ka};
 }
 /* The same pairing legitimately appears twice — group stage, then a playoff
@@ -1978,9 +1982,27 @@ function fxDecided(m){
   if(typeof sa!=="number"||typeof sb!=="number") return false;
   return Math.max(sa,sb)>=Math.floor((m.bestOf||3)/2)+1;
 }
-function pickOpen(list,hits){
-  const open=hits.find(j=>!fxDecided(list[j]));
-  return open!=null?open:hits[0];   // all finished: nothing to protect, keep the old behaviour
+/* Which of several fixtures with the same pairing this result belongs to.
+
+   `claimed` — a fixture already settled by an earlier series cannot be settled
+   again, the same rule the updater applies server-side. Without it, a feed that
+   lists series newest-first hands the PLAYOFF result to the group fixture
+   (it is the first one still open) and the group result to the playoff fixture:
+   both cards wrong until the schedule catches up.
+
+   `requireOpen` — a LIVE game can only belong to a fixture that is still open.
+   Returning "the first one" when every fixture is finished is what made the
+   previous attempt at this incomplete: the instant a rematch ended, the still-
+   lingering live entry was stamped back onto the completed group card, which is
+   the exact symptom it was meant to remove. Better to route nothing. */
+function chooseFixture(list,idxs,opts){
+  opts=opts||{};
+  let c=idxs;
+  if(opts.claimed&&opts.claimed.size) c=c.filter(j=>!opts.claimed.has(j));
+  if(!c.length) return -1;
+  const open=c.filter(j=>!fxDecided(list[j]));
+  if(opts.requireOpen) return open.length?open[0]:-1;
+  return open.length?open[0]:c[0];
 }
 
 /* Liquipedia labels prize placements "1", "2", "5-6"; earlier code here looked
@@ -2009,9 +2031,20 @@ function tiMergedMatches(d){
   // leaves the live feed the moment it ends and the page would then fall back
   // to the published schedule, which lags by minutes — that is how BoomBoys v
   // OG read 1-0 and "live" on the site when it had finished 2-0.
-  ((LIVE_FEED&&LIVE_FEED.tiSeries)||[]).forEach(s=>{
-    const hit=findFixture(out,s.a,s.b);
+  /* Oldest series first, and each one claims its fixture.
+     The feed lists series newest-first. With two meetings of the same pair and
+     neither scored yet in the schedule, the newest was handed the first fixture
+     still open — the GROUP one — and the older then went to the playoff slot,
+     putting each result on the other's card. Playing them in the order they
+     were actually played, and letting a fixture be settled once, removes the
+     ambiguity instead of guessing at it. */
+  const seriesClaimed=new Set();
+  const tiSeries=((LIVE_FEED&&LIVE_FEED.tiSeries)||[]).slice()
+    .sort((x,y)=>(x.start||0)-(y.start||0));
+  tiSeries.forEach(s=>{
+    const hit=findFixture(out,s.a,s.b,{claimed:seriesClaimed});
     if(!hit) return;
+    seriesClaimed.add(hit.i);
     const f=out[hit.i], flipped=hit.flipped;
     f.teamA.score=flipped?s.sb:s.sa;
     f.teamB.score=flipped?s.sa:s.sb;
@@ -2021,7 +2054,7 @@ function tiMergedMatches(d){
   });
 
   liveProMatches().forEach(lm=>{
-    const hit=findFixture(out,lm.teamA&&lm.teamA.name,lm.teamB&&lm.teamB.name);
+    const hit=findFixture(out,lm.teamA&&lm.teamA.name,lm.teamB&&lm.teamB.name,{requireOpen:true});
     if(!hit) return;
     const f=out[hit.i], flipped=hit.flipped;
     const A=flipped?lm.teamB:lm.teamA, B=flipped?lm.teamA:lm.teamB;
@@ -2064,7 +2097,7 @@ function liveMatchesOf(d){
   liveProMatches().forEach(lm=>{
     const a=tkey(lm.teamA&&lm.teamA.name), b=tkey(lm.teamB&&lm.teamB.name);
     if(!a||!b) return;
-    const hit=findFixture(out,lm.teamA&&lm.teamA.name,lm.teamB&&lm.teamB.name);
+    const hit=findFixture(out,lm.teamA&&lm.teamA.name,lm.teamB&&lm.teamB.name,{requireOpen:true});
     const i=hit?hit.i:-1;
     if(i>=0){
       // Upgrade the fixture in place so the card keeps its round label and Bo,
