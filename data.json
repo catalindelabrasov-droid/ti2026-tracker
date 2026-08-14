@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T12:00:51.213062+00:00",
+    "lastUpdated": "2026-08-14T12:50:53.805245+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2964341,
-    "note": "$1,600,000 base plus $1,364,341 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2966557,
+    "note": "$1,600,000 base plus $1,366,557 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1259815,
+        "amount": 1260756,
         "team": null
       },
       {
         "place": "2",
-        "amount": 385409,
+        "amount": 385697,
         "team": null
       },
       {
         "place": "3",
-        "amount": 266747,
+        "amount": 266947,
         "team": null
       },
       {
         "place": "4",
-        "amount": 177872,
+        "amount": 178005,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 148206,
+        "amount": 148317,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118541,
+        "amount": 118630,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53301,
+        "amount": 53341,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29665,
+        "amount": 29688,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14833,
+        "amount": 14844,
         "team": null
       }
     ]
@@ -2178,7 +2178,7 @@
             "scheduled": "2026-08-14T18:25:00+08:00",
             "teamA": {
               "name": "Aurora Gaming",
-              "score": 0
+              "score": 1
             },
             "teamB": {
               "name": "Team Yandex",
