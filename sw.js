@@ -6,15 +6,18 @@
  * So the rule is split by what the thing is:
  *   - the page itself and the results file go to the network first, because a
  *     result from twenty minutes ago is worse than a spinner;
- *   - icons and other static files come from the cache first, because they
- *     never change without the cache version changing too;
- *   - anything cross-origin (Supabase, Google Fonts) is left alone entirely.
- *     Tournaments, the ladder and sign-in are all live data — caching them
- *     would mean a captain reporting a result against a bracket that has
- *     already moved.
+ *   - icons, fonts and other static files come from the cache first, because
+ *     they never change without the cache version changing too;
+ *   - anything cross-origin (Supabase) is left alone entirely. Tournaments, the
+ *     ladder and sign-in are all live data — caching them would mean a captain
+ *     reporting a result against a bracket that has already moved.
+ *
+ * The fonts are ours now rather than Google's, which is why they can finally be
+ * precached: the cross-origin rule below meant they never were, so the installed
+ * app fell back to system fonts the moment it went offline.
  */
 
-const VERSION = 'v6';
+const VERSION = 'v7';   // bumped: fonts are now part of the shell
 const SHELL   = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -26,6 +29,13 @@ const PRECACHE = [
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
   '/icons/favicon-32.png',
+  /* Latin only. These are variable fonts, so ONE file per family covers every
+     weight — the three below are the whole typeface set for the app. latin-ext
+     carries accents this site barely uses and can fetch on demand rather than
+     cost every install another 113 KB. */
+  '/fonts/oswald-latin-571f3457.woff2',
+  '/fonts/inter-latin-3100e775.woff2',
+  '/fonts/jetbrains-mono-latin-83c005d4.woff2',
 ];
 
 self.addEventListener('install', event => {
@@ -142,7 +152,7 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;   // Supabase, fonts: hands off
+  if (url.origin !== self.location.origin) return;   // Supabase, Twitch: hands off
 
   if (request.mode === 'navigate' || url.pathname === '/index.html') {
     event.respondWith(networkFirst(request, SHELL));

@@ -25,6 +25,15 @@
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
+# Fonts never change under a given filename — a new weight or subset would be a
+# new file. So they can be held for a year, which is the whole point of serving
+# them ourselves rather than paying two extra handshakes to Google on every
+# cold visit.
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # Digital Asset Links, so the Android wrapper is trusted by this domain and
 # opens without a browser address bar.
 [[headers]]
