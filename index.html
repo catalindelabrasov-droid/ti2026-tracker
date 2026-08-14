@@ -1914,10 +1914,18 @@ function findFixture(list,a,b){
   };
   const na=tnorm(a), nb=tnorm(b);
   if(!na||!nb) return null;
-  let i=list.findIndex(m=>usable(m)&&
-    ((tnorm(m.teamA.name)===na&&tnorm(m.teamB.name)===nb)||
-     (tnorm(m.teamA.name)===nb&&tnorm(m.teamB.name)===na)));
-  if(i>=0) return {i,flipped:tnorm(list[i].teamA.name)!==na};
+  // Collect every exact hit rather than stopping at the first: a pairing that
+  // meets twice has two, and a live game belongs to the one still open.
+  const exact=[];
+  list.forEach((m,j)=>{
+    if(!usable(m)) return;
+    const x=tnorm(m.teamA.name), y=tnorm(m.teamB.name);
+    if((x===na&&y===nb)||(x===nb&&y===na)) exact.push(j);
+  });
+  if(exact.length){
+    const i=pickOpen(list,exact);
+    return {i,flipped:tnorm(list[i].teamA.name)!==na};
+  }
   const ka=tkey(a), kb=tkey(b);
   if(!ka||!kb||ka===kb) return null;
   const hits=[];
@@ -1927,12 +1935,28 @@ function findFixture(list,a,b){
     if((x===ka&&y===kb)||(x===kb&&y===ka)) hits.push(j);
   });
   if(!hits.length) return null;
-  // The same pairing legitimately appears more than once (group stage, then
-  // playoffs) — that is fine, take the first. Two DIFFERENT pairings collapsing
-  // to one key is the dangerous case, so bail out of that one.
+  // Two DIFFERENT pairings collapsing onto one key is the dangerous case.
   const pairs=new Set(hits.map(j=>[tnorm(list[j].teamA.name),tnorm(list[j].teamB.name)].sort().join("|")));
   if(pairs.size>1) return null;
-  return {i:hits[0],flipped:tkey(list[hits[0]].teamA.name)!==ka};
+  const j=pickOpen(list,hits);
+  return {i:j,flipped:tkey(list[j].teamA.name)!==ka};
+}
+/* The same pairing legitimately appears twice — group stage, then a playoff
+   rematch. A LIVE game between them belongs to whichever of those is still
+   open, never to the one already finished. Taking the first hit meant a
+   playoff rematch was painted onto the completed group card: for the whole
+   rematch, a finished Round 1 result read "● 0–1 vs OG · 24'", the team lost a
+   win off its Swiss record, and the actual playoff fixture stayed blank. */
+function fxDecided(m){
+  if(!m) return false;
+  if(m.status==="completed"||m.status==="done") return true;
+  const sa=(m.teamA||{}).score, sb=(m.teamB||{}).score;
+  if(typeof sa!=="number"||typeof sb!=="number") return false;
+  return Math.max(sa,sb)>=Math.floor((m.bestOf||3)/2)+1;
+}
+function pickOpen(list,hits){
+  const open=hits.find(j=>!fxDecided(list[j]));
+  return open!=null?open:hits[0];   // all finished: nothing to protect, keep the old behaviour
 }
 
 /* Liquipedia labels prize placements "1", "2", "5-6"; earlier code here looked
@@ -3914,6 +3938,15 @@ function computeGroupStandings(d){
     const a=(m.teamA||{}),b=(m.teamB||{});
     seed(a.name); seed(b.name);
     if(a.name==="TBD"||b.name==="TBD") return;
+    /* GROUP-STAGE MATCHES ONLY — the Swiss rounds (gs-) and the elimination
+       deciders played alongside them (el-), never the playoffs (me-).
+       Without this every playoff win also landed in the Swiss record, and the
+       Swiss stops at 3 wins: measured on the live site, three playoff wins put
+       a team at 5–0 in a stage that cannot pass 3, while its three beaten
+       opponents each picked up a group-stage loss they never suffered. The
+       board buckets teams by their W–L, so it would have split into buckets
+       labelled with records that cannot exist. */
+    if(!/^(gs|el)-/.test(m.id||"")) return;
     const sa=a.score, sb=b.score;
     if(typeof sa!=="number"||typeof sb!=="number") return;
     const need=Math.floor((m.bestOf||3)/2)+1;

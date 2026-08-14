@@ -490,24 +490,90 @@ def build_series_pair_map(rows, team_names):
     return out
 
 
-def _pick_series(candidates, scheduled_iso):
-    """Choose the right series for a match when a team pair met repeatedly."""
+def _stage_floor(data, key):
+    """Epoch seconds a stage begins, from meta.dates, or 0 if not published.
+
+    Used as an absolute floor so a bracket fixture can never be settled by a
+    series played before the Main Event started."""
+    dates = ((data.get("meta") or {}).get("dates") or {})
+    raw = dates.get(key) or ""
+    m = re.match(r"\s*(\d{4}-\d{2}-\d{2})", str(raw))
+    if not m:
+        return 0
+    try:
+        d = datetime.datetime.fromisoformat(m.group(1))
+        return d.replace(tzinfo=datetime.timezone.utc).timestamp()
+    except ValueError:
+        return 0
+
+
+def _pick_series(candidates, scheduled_iso, claimed=None, not_before=0):
+    """Choose the right series for a match when a team pair met repeatedly.
+
+    A SERIES SETTLES EXACTLY ONE FIXTURE. Two teams who met in the Swiss can
+    meet again in the playoffs, and the old code handed that rematch the series
+    they had already played: a lone candidate was returned without looking at
+    the date at all, and a fixture with no scheduled time fell through to "take
+    the most recent". Every one of the 14 playoff fixtures currently has no
+    scheduled time, and 18 Swiss pairings have already been played, so the first
+    bracket rematch would have stamped an old result onto a game nobody had
+    played — marking it completed, writing it to match_results, and thereby
+    closing predictions on it and scoring everyone against a fake result.
+
+    `claimed` carries the series ids already taken by earlier fixtures in this
+    run. Fixtures are walked qualifiers -> group stage -> bracket, so the Swiss
+    fixture takes its own series before any rematch can ask for it.
+    """
     if not candidates:
         return None
-    if len(candidates) == 1:
-        return candidates[0]
+    claimed = claimed if claimed is not None else set()
+    free = [s for s in candidates if s.get("sid") not in claimed]
+    if not free:
+        return None
+
     if scheduled_iso:
         try:
             ts = datetime.datetime.fromisoformat(scheduled_iso).timestamp()
-            best = min(candidates, key=lambda s: abs((s["start"] or 0) - ts))
-            # Only trust the time match within a generous window (36h);
-            # otherwise this match's series probably hasn't been played yet.
+            best = min(free, key=lambda s: abs((s["start"] or 0) - ts))
+            # Trust a time match within a generous window (36h).
             if abs((best["start"] or 0) - ts) <= 36 * 3600:
                 return best
-            return None
+            # Outside it, fall through rather than refusing outright. Published
+            # bracket dates are routinely placeholders and matches slip; a hard
+            # refusal here would strand a real result permanently — the match
+            # would sit "upcoming" with no score forever, and re-running would
+            # never repair it. The checks below are strict enough to stand
+            # alone.
         except ValueError:
             pass
-    return max(candidates, key=lambda s: s.get("start") or 0)
+
+    # No usable schedule — the playoff case, where all 14 bracket fixtures
+    # currently carry no time at all. One unclaimed series only settles this
+    # fixture if BOTH of the following hold.
+    if len(free) != 1:
+        return None
+    s = free[0]
+    start = s["start"] or 0
+
+    # 1. It cannot predate the stage this fixture belongs to. Without an
+    #    absolute floor the guard rested entirely on an earlier fixture having
+    #    claimed first, and that fails in at least three real ways: the group
+    #    fixture still reading TBD, its Liquipedia date being off by more than
+    #    the window, or the two pages spelling a team differently (this event
+    #    already has "Iron Wing" vs "Iron Wing TI 2026" and "BetBoom Team" vs
+    #    "BoomBoys"). Any one of those and a Swiss result lands on an unplayed
+    #    playoff match.
+    if not_before and start < not_before:
+        return None
+
+    # 2. It must be newer than anything already claimed for this pairing — a
+    #    rematch is by definition played after the meeting it repeats. Only
+    #    applies when something WAS claimed, so a first-ever meeting whose rows
+    #    carry no start_time is not stranded by a 0 > 0 comparison.
+    claimed_starts = [(c["start"] or 0) for c in candidates if c.get("sid") in claimed]
+    if claimed_starts and start <= max(claimed_starts):
+        return None
+    return s
 
 
 def _slug(s):
@@ -657,6 +723,14 @@ def merge_opendota_scores(data, series):
     if not series:
         return 0
     updated = 0
+    # Series already handed to an earlier fixture in this run. See _pick_series:
+    # this is what stops a playoff rematch inheriting the Swiss result.
+    claimed = set()
+    # Playoff fixtures belong to the Main Event, so nothing played before it
+    # started can settle one. Group fixtures keep a floor of 0 — they have real
+    # scheduled times and the date match already handles them.
+    main_event_floor = _stage_floor(data, "mainEvent")
+    floor = 0
 
     def apply(m):
         nonlocal updated
@@ -664,9 +738,11 @@ def merge_opendota_scores(data, series):
         na, nb = ta.get("name"), tb.get("name")
         if not na or not nb or na == "TBD" or nb == "TBD":
             return
-        s = _pick_series(series.get(_match_key(na, nb)), m.get("scheduled"))
+        s = _pick_series(series.get(_match_key(na, nb)), m.get("scheduled"), claimed, floor)
         if not s:
             return
+        if s.get("sid"):
+            claimed.add(s["sid"])
         if m.get("id"):
             _record_games(m["id"], s)
         # map series a/b back to this match's A/B by name
@@ -707,6 +783,7 @@ def merge_opendota_scores(data, series):
     for m in gs.get("eliminationMatches") or []:
         apply(m)
     br = data.get("bracket", {}) or {}
+    floor = main_event_floor          # everything below is the Main Event
     for side in ("upper", "lower"):
         for rnd in (br.get("rounds", {}) or {}).get(side, []) or []:
             for m in (rnd.get("matches") or []):
