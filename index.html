@@ -627,6 +627,10 @@
   .mback{background:none;border:0;padding:0 0 8px;cursor:pointer;font-family:'JetBrains Mono',monospace;
     font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-dim)}
   .mback:hover{color:var(--aegis)}
+  /* The date, shown only when these two met more than once and the title
+     alone would not say which meeting you are looking at. */
+  .msub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint);margin-left:6px;vertical-align:middle}
   .mtitle{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;margin:0 0 10px}
   .mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
   .mtab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
@@ -1891,6 +1895,13 @@ const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
    merge, so the match rendered twice: once on its fixture with no score, and
    once as an orphan card full of dashes. Strip the org decoration and compare
    what is left. */
+/* What counts as a group-stage match: the Swiss rounds and the elimination
+   deciders played alongside them, never the playoffs.
+   One definition, because three copies of it had drifted: the standings counted
+   gs- and el-, while the pips and the "beat X 2–0" line beside them counted only
+   gs-. Once the el- deciders are played a team's record would have included its
+   decider while the marks next to it did not. */
+const GROUP_ID=/^(gs|el)-/;
 const ORGWORDS=/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g;
 const tkey=(s)=>tnorm(s).replace(/[.\-_'"]/g," ").replace(ORGWORDS," ").replace(/\s+/g," ").trim();
 
@@ -2190,7 +2201,7 @@ function seriesGamesBtn(m,cls){
   const sa=(m.teamA||{}).score, sb=(m.teamB||{}).score;
   const n=(typeof sa==="number"?sa:0)+(typeof sb==="number"?sb:0);
   if(n<1) return "";
-  return `<button class="gbtn${cls?" "+cls:""}" data-series="${esc(a+"|"+b)}"
+  return `<button class="gbtn${cls?" "+cls:""}" data-series="${esc(a+"|"+b)}" data-sched="${esc(m.scheduled||"")}"
     title="See every game of this series">${n} ${n===1?"game":"games"}</button>`;
 }
 function liveCard(m){
@@ -3744,7 +3755,7 @@ function teamDetailHTML(d,name){
     const opp=(them||{}).name||"";
     const hit=done&&opp;
     return `<div class="td-mrow ${cls}${hit?" td-mclick":""}"${
-        hit?` data-series="${esc(name+"|"+opp)}" role="button" tabindex="0" title="See every game of this match"`:""}>
+        hit?` data-series="${esc(name+"|"+opp)}" data-sched="${esc(m.scheduled||"")}" role="button" tabindex="0" title="See every game of this match"`:""}>
       <span class="td-mopp">${esc((them||{}).name||'TBD')}</span>
       <span class="td-mscore">${mid}</span>
       <span class="td-mtag">${tag}</span>
@@ -3829,7 +3840,38 @@ function mDetailHTML(g){
     <div class="mlegend">Six working items, then the neutral, then anything left in the backpack.</div>`;
 }
 
-async function openMatch(a,b,backTo){
+/* The endpoint answers by team names, so it hands back every game those two
+   ever played in this league — both meetings once they meet twice, numbered
+   1..6 straight through. Split them back into the actual series.
+   Games of one Bo3 are a couple of hours apart; two meetings are days apart, so
+   a long gap is the boundary. */
+const M_SERIES_GAP=12*3600*1000;
+function mSplitSeries(games){
+  const out=[]; let cur=null;
+  games.slice().sort((x,y)=>(x.startTime||0)-(y.startTime||0)).forEach(g=>{
+    const t=(g.startTime||0)*1000;
+    if(!cur||!t||!cur.last||t-cur.last>M_SERIES_GAP){ cur={first:t,last:t,games:[]}; out.push(cur); }
+    cur.last=t||cur.last;
+    cur.games.push(g);
+  });
+  // Number within the meeting, not across both.
+  out.forEach(s=>s.games.forEach((g,i)=>{ g.game=i+1; }));
+  return out;
+}
+/* Which meeting this fixture is. With a kick-off time, the nearest one. Without
+   — every playoff slot has none — the most recent, because a rematch is played
+   after the meeting it repeats. */
+function mPickSeries(all,schedIso){
+  if(all.length<2) return all[0];
+  const ts=schedIso?new Date(schedIso).getTime():NaN;
+  if(!isNaN(ts)){
+    return all.reduce((best,s)=>
+      Math.abs((s.first||0)-ts)<Math.abs((best.first||0)-ts)?s:best, all[0]);
+  }
+  return all[all.length-1];
+}
+
+async function openMatch(a,b,backTo,schedIso){
   const key=a+"|"+b;
   _mOpen=key;
   // openModal closes whatever else is open, so coming from a team panel would
@@ -3854,15 +3896,21 @@ async function openMatch(a,b,backTo){
     wireMatchBack(body);
     return;
   }
-  const tabs=list.games.map((g,i)=>`<button class="mtab${i===list.games.length-1?" on":""}" data-mgame="${esc(g.matchId)}" data-mkey="${esc(key)}">Game ${g.game}</button>`).join("");
-  body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)}</div>
+  // Only this fixture's meeting, not every game the two have ever played.
+  const meetings=mSplitSeries(list.games);
+  const games=(mPickSeries(meetings,schedIso)||{games:list.games}).games;
+  const when=(meetings.length>1&&games[0]&&games[0].startTime)
+    ? `<span class="msub">${esc(new Date(games[0].startTime*1000)
+        .toLocaleDateString("en-US",{month:"short",day:"numeric"}))}</span>` : "";
+  const tabs=games.map((g,i)=>`<button class="mtab${i===games.length-1?" on":""}" data-mgame="${esc(g.matchId)}" data-mkey="${esc(key)}">Game ${g.game}</button>`).join("");
+  body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)} ${when}</div>
     <div class="mtabs">${tabs}</div><div id="mGameBody"></div>`;
   // Wire the tabs here: they are created now, long after wireTeams ran.
   body.querySelectorAll("[data-mgame]").forEach(t=>{
     t.addEventListener("click",()=>showGame(t.dataset.mgame,t.dataset.mkey));
   });
   wireMatchBack(body);
-  showGame(list.games[list.games.length-1].matchId,key);   // newest game first
+  showGame(games[games.length-1].matchId,key);   // newest game first
 }
 
 async function showGame(id,key){
@@ -3918,7 +3966,7 @@ function wireSeriesRows(root,backTo){
     const go=ev=>{
       ev.stopPropagation(); ev.preventDefault();
       const [a,b]=(el.getAttribute("data-series")||"").split("|");
-      if(a&&b) openMatch(a,b,backTo);
+      if(a&&b) openMatch(a,b,backTo,el.getAttribute("data-sched")||"");
     };
     el.addEventListener("click",go);
     el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" ") go(e); });
@@ -3955,7 +4003,7 @@ function wireTeams(d){
     el.addEventListener("click",ev=>{
       ev.stopPropagation(); ev.preventDefault();
       const [a,b]=(el.getAttribute("data-series")||"").split("|");
-      if(a&&b) openMatch(a,b);
+      if(a&&b) openMatch(a,b,null,el.getAttribute("data-sched")||"");
     });
   });
   document.querySelectorAll("[data-team]").forEach(el=>{
@@ -4004,7 +4052,7 @@ function computeGroupStandings(d){
        opponents each picked up a group-stage loss they never suffered. The
        board buckets teams by their W–L, so it would have split into buckets
        labelled with records that cannot exist. */
-    if(!/^(gs|el)-/.test(m.id||"")) return;
+    if(!GROUP_ID.test(m.id||"")) return;
     const sa=a.score, sb=b.score;
     if(typeof sa!=="number"||typeof sb!=="number") return;
     const need=Math.floor((m.bestOf||3)/2)+1;
@@ -4019,7 +4067,7 @@ function computeGroupStandings(d){
   // from "the stage is over".
   const total=tiMergedMatches(d).filter(m=>{
     const a=(m.teamA||{}).name,b=(m.teamB||{}).name;
-    return a&&b&&a!=="TBD"&&b!=="TBD"&&/^gs-/.test(m.id||"");
+    return a&&b&&a!=="TBD"&&b!=="TBD"&&GROUP_ID.test(m.id||"");
   }).length;
 
   // Nothing settled yet: keep the source's own list so the table still shows
@@ -4049,7 +4097,7 @@ function renderGroups(d){
 
   // Index every group-stage match by team once, rather than re-merging per team.
   const merged=tiMergedMatches(d);
-  const isGroup=m=>/^gs-/.test(m.id||"");
+  const isGroup=m=>GROUP_ID.test(m.id||"");
   const decidedIn=m=>{
     const a=(m.teamA||{}).score, b=(m.teamB||{}).score;
     return typeof a==="number"&&typeof b==="number"&&
@@ -4070,7 +4118,9 @@ function renderGroups(d){
     list.forEach(({m,home})=>{
       const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
       const os=(us||{}).score, ts=(them||{}).score;
-      if(decidedIn(m)){ pips.push(os>ts?"w":"l"); last={opp:(them||{}).name,os,ts,won:os>ts}; }
+      // `when` carries the kick-off through to the history view, so it opens
+      // THIS meeting rather than the most recent one these two ever played.
+      if(decidedIn(m)){ pips.push(os>ts?"w":"l"); last={opp:(them||{}).name,os,ts,won:os>ts,when:m.scheduled}; }
       else if(m.status==="live"){ live={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute}; }
       else if(!next&&m.scheduled){ next={opp:(them||{}).name,when:m.scheduled}; }
     });
@@ -4084,7 +4134,7 @@ function renderGroups(d){
      result opens the match while tapping anywhere else opens the team. */
   const lineFor=(i,team)=>
      i.live?`<span class="sw-live">● ${i.live.os}–${i.live.ts} vs ${esc(i.live.opp||"TBD")}${i.live.min!=null?" · "+i.live.min+"'":""}</span>`
-    :i.last?`<button class="sw-res ${i.last.won?"won":"lost"}" data-series="${esc(team+"|"+(i.last.opp||""))}"
+    :i.last?`<button class="sw-res ${i.last.won?"won":"lost"}" data-series="${esc(team+"|"+(i.last.opp||""))}" data-sched="${esc(i.last.when||"")}"
         title="See every game of this series">${i.last.won?"beat":"lost to"} ${esc(i.last.opp||"")} ${i.last.os}–${i.last.ts}</button>`
     :i.next?`<span class="sw-soon">vs ${esc(i.next.opp||"TBD")} · ${esc(when(i.next.when))}</span>`
     :`<span class="sw-soon">awaiting the draw</span>`;
