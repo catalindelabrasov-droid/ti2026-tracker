@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T13:50:52.960676+00:00",
+    "lastUpdated": "2026-08-14T14:00:53.376771+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2969561,
-    "note": "$1,600,000 base plus $1,369,561 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 2970569,
+    "note": "$1,600,000 base plus $1,370,569 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1262033,
+        "amount": 1262461,
         "team": null
       },
       {
         "place": "2",
-        "amount": 386088,
+        "amount": 386219,
         "team": null
       },
       {
         "place": "3",
-        "amount": 267217,
+        "amount": 267308,
         "team": null
       },
       {
         "place": "4",
-        "amount": 178185,
+        "amount": 178245,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 148467,
+        "amount": 148518,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 118750,
+        "amount": 118790,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53395,
+        "amount": 53413,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 29718,
+        "amount": 29728,
         "team": null
       },
       {
         "place": "16",
-        "amount": 14859,
+        "amount": 14864,
         "team": null
       }
     ]
@@ -2252,11 +2252,11 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Iron Wing",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Team Liquid",
               "score": null
             }
           },
@@ -2266,11 +2266,11 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "BoomBoys",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Aurora Gaming",
               "score": null
             }
           },
@@ -2280,11 +2280,11 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T13:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Nigma Galaxy",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Vici Gaming",
               "score": null
             }
           },
@@ -2294,11 +2294,11 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "LGD Gaming",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Xtreme Gaming",
               "score": null
             }
           },
@@ -2308,11 +2308,11 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Falcons",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "GamerLegion",
               "score": null
             }
           },
@@ -2322,11 +2322,11 @@
             "status": "upcoming",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Resilience",
               "score": null
             },
             "teamB": {
-              "name": "TBD",
+              "name": "Team Yandex",
               "score": null
             }
           },
