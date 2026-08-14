@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-14T04:15:13.503724+00:00",
+    "lastUpdated": "2026-08-14T04:45:12.767575+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1802,13 +1802,13 @@
         "losses": 0
       },
       {
-        "team": "TEAM VISION",
+        "team": "Team Spirit",
         "wins": 2,
         "losses": 0
       },
       {
-        "team": "Aurora Gaming",
-        "wins": 1,
+        "team": "TEAM VISION",
+        "wins": 2,
         "losses": 0
       },
       {
@@ -1817,14 +1817,14 @@
         "losses": 0
       },
       {
-        "team": "Team Spirit",
+        "team": "Team Yandex",
         "wins": 1,
         "losses": 0
       },
       {
-        "team": "Team Yandex",
+        "team": "Aurora Gaming",
         "wins": 1,
-        "losses": 0
+        "losses": 1
       },
       {
         "team": "GamerLegion",
@@ -2051,7 +2051,7 @@
             },
             "teamB": {
               "name": "Team Liquid",
-              "score": 0
+              "score": 1
             }
           },
           {
@@ -2107,7 +2107,7 @@
             },
             "teamB": {
               "name": "Vici Gaming",
-              "score": 0
+              "score": 1
             }
           }
         ]
@@ -2119,7 +2119,7 @@
             "id": "gs-r3-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-14T13:00:00+08:00",
+            "scheduled": "2026-08-14T12:30:00+08:00",
             "teamA": {
               "name": "BoomBoys",
               "score": null
@@ -2135,7 +2135,7 @@
             "status": "upcoming",
             "scheduled": "2026-08-14T16:00:00+08:00",
             "teamA": {
-              "name": "TBD",
+              "name": "Team Spirit",
               "score": null
             },
             "teamB": {
