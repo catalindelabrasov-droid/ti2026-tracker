@@ -58,6 +58,24 @@
   <a class="back" href="/">&larr; Back to the tracker</a>
   <h1>Delete your account</h1>
 
+  <!-- Self-service is switched off until the hand-over runs in one transaction
+       with the delete. Sending someone through two steps only to fail at the
+       end would be worse than saying so here. Flip MAINTENANCE in the script
+       below at the same time as ENABLED in the edge function. -->
+  <div id="maint" style="display:none">
+    <div class="card danger">
+      <p style="margin-top:0"><b>Deleting your account here is switched off for the moment.</b></p>
+      <p>We found that removing an account could also have removed a league you run —
+         along with the predictions of everyone else in it. Rather than risk that, this
+         button is off until the fix is in.</p>
+      <p style="margin-bottom:0">Your right to have your account deleted is unaffected.
+         <b>Email <a href="mailto:support@dota2tileague.com">support@dota2tileague.com</a>
+         from the address you signed up with</b> and we will remove it, along with your
+         profile, predictions, league memberships and notification subscription.</p>
+    </div>
+    <p class="dim">Everything we hold and why: <a href="legal.html#privacy">privacy</a>.</p>
+  </div>
+
   <!-- Step 1: ask for the email, send the confirmation link. -->
   <div id="step1">
     <div class="steps">Step 1 of 2 — confirm it's you</div>
@@ -134,11 +152,17 @@ try{
   });
 }catch(e){}
 
+/* Keep in step with ENABLED in supabase/functions/delete-account/index.ts.
+   The function is the real gate — this only decides what the page offers. */
+const MAINTENANCE = true;
+
 function show(which){
+  if(MAINTENANCE) which="maint";
+  $("#maint").style.display = which==="maint"?"":"none";
   $("#step1").style.display = which==="step1"?"":"none";
   $("#step2").style.display = which==="step2"?"":"none";
   $("#done").style.display  = which==="done" ?"":"none";
-  $("#footNote").style.display = which==="done"?"none":"";
+  $("#footNote").style.display = (which==="done"||which==="maint")?"none":"";
 }
 
 /* Did they arrive by clicking the emailed link? supabase-js reads the token out
@@ -226,7 +250,9 @@ $("#del").addEventListener("click",async()=>{
   }catch(e){
     const why=String(e.message||e);
     m.className="msg err";
-    if(why==="owns_shared_content"){
+    if(why==="temporarily_unavailable"){
+      m.innerHTML="<b>Self-service deletion is switched off right now</b> while we fix how it handles leagues you run — deleting an account could have taken other members' predictions with it. Nothing has been deleted. Email <a href=\"mailto:support@dota2tileague.com\">support@dota2tileague.com</a> from this address and we'll delete your account by hand; your right to have it removed is unaffected.";
+    }else if(why==="owns_shared_content"){
       /* Refusing here is the point: your account is yours to delete, the league
          your friends joined is not yours to delete for them. */
       m.innerHTML="<b>We can't delete this account yet.</b> You run a league, tournament or ladder team that other people are in, and deleting your account right now would take their predictions with it. Hand it over to someone else first — or email <a href=\"mailto:support@dota2tileague.com\">support@dota2tileague.com</a> and we'll move it for you. Nothing has been deleted.";

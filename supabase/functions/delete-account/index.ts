@@ -129,9 +129,31 @@ async function ownedThings(uid: string) {
   };
 }
 
+/* DISABLED ON PURPOSE — do not remove this without reading the note.
+
+   Deleting an account cascades far wider than the account: leagues.admin_id,
+   tournaments.organiser_id, tournament_teams.captain_id and
+   ladder_teams.captain_id are all ON DELETE CASCADE from auth.users, and
+   leagues cascade onward into league_members, predictions and
+   outcome_predictions. Twice in testing, deleting one owner destroyed a whole
+   league and every member's picks with it.
+
+   A guard that reads the tables first and then deletes is not good enough: the
+   read and the delete are separate calls, and the version of that guard tested
+   here did not stop it. The hand-over and the delete have to happen in ONE
+   transaction — a SECURITY DEFINER function in the database — which is the fix
+   being built. Until that lands this endpoint refuses everything, because a
+   deletion route that quietly takes other people's data is worse than no
+   deletion route at all.
+
+   The page tells the user to email instead, so the right to erasure is still
+   honoured; it is just not self-service for the moment. */
+const ENABLED = false;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  if (!ENABLED) return json({ error: "temporarily_unavailable" }, 503);
 
   const auth = req.headers.get("Authorization") || "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
