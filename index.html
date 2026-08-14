@@ -1533,7 +1533,23 @@ let SB = null;
 try { if (window.supabase) SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){ console.warn("Supabase init failed", e); }
 const SB_READY = () => !!SB;
 
+// Where the page was scrolled before a full-page panel opened over it.
+let _pageReturnY=0;
 const LS_DATA="ti2026_data_override",LS_NOTIF="ti2026_notif_ids",LS_SEEN="ti2026_seen_scores";
+
+/* One-off: clear a Page-mode preference nobody chose.
+   Following a shared #region= link used to write "page" into the saved
+   preference permanently, so people were left with full-page team panels they
+   never asked for — and in that mode Back returns you to the top of the page,
+   losing wherever you had scrolled to. Reset once so everyone lands back on the
+   popup default; the toggle is still there for anyone who genuinely prefers
+   Page, and their choice from here on is respected. */
+try{
+  if(!localStorage.getItem("ti2026_view_reset_v1")){
+    localStorage.removeItem("ti2026_region_view");
+    localStorage.setItem("ti2026_view_reset_v1","1");
+  }
+}catch(e){}
 let DATA=null;
 let notifIds=new Set(JSON.parse(localStorage.getItem(LS_NOTIF)||"[]"));
 let activeFilter="all",searchTerm="";
@@ -3619,6 +3635,8 @@ function openRegion(d,region){
   const html=regionDetailHTML(d,region);
   if(mode==="page"){
     $("#regionPageBody").innerHTML=html;
+    // Only on the way IN, so a live re-render cannot overwrite it with 0.
+    if(!document.body.classList.contains("region-open")) _pageReturnY=window.scrollY;
     document.body.classList.add("region-open");
     window.scrollTo(0,0);
     location.hash="region="+encodeURIComponent(region);
@@ -3628,9 +3646,18 @@ function openRegion(d,region){
   }
   _openView={type:"region",name:region,mode};
 }
+/* Opening a full-page panel scrolls to the top, so closing it has to put you
+   back. Without this, Back from a team you tapped halfway down the Swiss board
+   dropped you at the very top and you had to find your place again. */
+function restorePageScroll(){
+  const y=_pageReturnY; _pageReturnY=0;
+  // After the class comes off, so the page is its full height again.
+  requestAnimationFrame(()=>window.scrollTo(0,y));
+}
 function closeRegionPage(){
   document.body.classList.remove("region-open");_openView=null;
   if(location.hash.startsWith("#region=")) history.replaceState(null,"",location.pathname+location.search);
+  restorePageScroll();
 }
 function wireQualifiers(d){
   document.querySelectorAll(".qual-card").forEach(c=>{
@@ -3650,11 +3677,16 @@ function wireQualifiers(d){
     rm.querySelectorAll("[data-close]").forEach(x=>x.onclick=()=>rm.classList.remove("show"));
     rm.addEventListener("click",e=>{if(e.target===rm)rm.classList.remove("show");});
   }
-  // deep-link: if URL has #region=..., open the page view
+  /* Deep link: #region=... opens the full-page view, because a shared link
+     should land on a whole screen rather than a popup over a page you never
+     asked for.
+     It must NOT write that to the saved preference. It used to, so following
+     one shared link switched you to Page mode permanently — for every team and
+     region panel from then on, on every visit, without ever being asked. Almost
+     nobody on Page mode had chosen it. */
   if(location.hash.startsWith("#region=")){
     const reg=decodeURIComponent(location.hash.slice(8));
     if((d.qualifiers||[]).some(q=>q.region===reg)){
-      localStorage.setItem("ti2026_region_view","page");
       $("#regionPageBody").innerHTML=regionDetailHTML(d,reg);
       document.body.classList.add("region-open");
     }
@@ -3935,6 +3967,9 @@ function openTeam(d,name){
   const html=teamDetailHTML(d,name);
   if(mode==="page"){
     $("#teamPageBody").innerHTML=html;
+    // Only remember it on the way IN — re-rendering an already-open panel
+    // (the live refresh does) must not overwrite it with 0.
+    if(!document.body.classList.contains("team-open")) _pageReturnY=window.scrollY;
     document.body.classList.add("team-open");
     window.scrollTo(0,0);
   }else{
@@ -4012,7 +4047,7 @@ function wireTeams(d){
     el.addEventListener("click",go);
     if(el.tagName==="TR"){el.setAttribute("tabindex","0");el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();openTeam(d,name);}});}
   });
-  const tb=$("#teamBack"); if(tb) tb.onclick=()=>{document.body.classList.remove("team-open");_openView=null;};
+  const tb=$("#teamBack"); if(tb) tb.onclick=()=>{document.body.classList.remove("team-open");_openView=null;restorePageScroll();};
   const tm=$("#teamModal");
   if(tm){
     tm.querySelectorAll("[data-close]").forEach(x=>x.onclick=()=>{tm.classList.remove("show");_openView=null;});
