@@ -242,3 +242,67 @@ ok(errs.length === 0, "no console errors", errs.slice(0, 2).join(" | "));
 
 console.log(fail ? `\n${fail} FAILURE(S)` : "\nall good");
 process.exit(fail ? 1 : 0);
+
+/* ---------- 6. the Swiss board must describe the SWISS ------------------
+   infoFor keeps elimination results out of `pips` but `last` had no such
+   guard, and lineFor is shared by the bucket rows and the elimination rows.
+   So the moment the elimination round was played, a 3-2 bucket row whose five
+   marks ended in a LOSS announced "beat BoomBoys 2-0" — a result from a
+   different stage. The record, the marks and the sentence all disagreed on one
+   row. This is reachable on 16 Aug. */
+console.log("\nthe Swiss rows describe the Swiss, even after the elimination round");
+{
+  const played = JSON.parse(JSON.stringify(data));
+  (played.groupStage.eliminationMatches || []).forEach((m) => {
+    if (!m.teamA || m.teamA.name === "TBD") return;
+    m.status = "completed"; m.teamA.score = 2; m.teamB.score = 0;
+  });
+  const decided = (played.groupStage.eliminationMatches || []).filter((m) => m.status === "completed");
+  ok(decided.length > 0, "built a played-out elimination round", `${decided.length} matches`);
+
+  const host = render(w, played);
+  /* Every bucket row's line must name an opponent it actually met in the SWISS. */
+  const swissOpp = {};
+  (played.groupStage.rounds || []).forEach((r) => (r.matches || []).forEach((m) => {
+    const a = (m.teamA || {}).name, b = (m.teamB || {}).name;
+    if (!a || !b || a === "TBD") return;
+    (swissOpp[a] = swissOpp[a] || []).push(b);
+    (swissOpp[b] = swissOpp[b] || []).push(a);
+  }));
+  const wrong = [];
+  [...host.querySelectorAll(".sw-bucket .sw-team")].forEach((row) => {
+    const team = row.querySelector(".sw-tname").textContent.trim();
+    const line = row.querySelector(".sw-tline").textContent.replace(/\s+/g, " ").trim();
+    const m = /(?:beat|lost to)\s+(.+?)\s+\d+[–-]\d+/.exec(line);
+    if (!m) return;
+    if (!(swissOpp[team] || []).includes(m[1])) wrong.push(`${team}: "${line}"`);
+  });
+  ok(wrong.length === 0,
+     "no bucket row reports a result against a team it never met in the Swiss",
+     wrong.slice(0, 3).join(" | "));
+
+  /* And the last mark must agree with the sentence — a row ending in a loss
+     cannot say "beat". That is the self-contradiction, stated directly. */
+  const contradictory = [];
+  [...host.querySelectorAll(".sw-bucket .sw-team")].forEach((row) => {
+    const team = row.querySelector(".sw-tname").textContent.trim();
+    const marks = [...row.querySelectorAll(".sw-tpips i")].map((i) => i.className.trim()).filter(Boolean);
+    const line = row.querySelector(".sw-tline").textContent.replace(/\s+/g, " ").trim();
+    if (!marks.length || !/beat|lost to/.test(line)) return;
+    const lastMark = marks[marks.length - 1];
+    const saysWon = /\bbeat\b/.test(line);
+    if ((lastMark === "w") !== saysWon) contradictory.push(`${team}: marks end "${lastMark}" but line says "${line}"`);
+  });
+  ok(contradictory.length === 0,
+     "the last mark on a row agrees with the result printed beside it",
+     contradictory.slice(0, 3).join(" | "));
+
+  /* The elimination rows, by contrast, SHOULD show the elimination result —
+     that is their whole purpose, and this keeps the fix from being "hide it". */
+  const elimLines = [...host.querySelectorAll(".sw-elimteams .sw-team")]
+    .map((r) => r.querySelector(".sw-tline").textContent.replace(/\s+/g, " ").trim());
+  const elimTeams = decided.flatMap((m) => [m.teamA.name, m.teamB.name]);
+  const shown = elimLines.filter((l) => elimTeams.some((t) => l.includes(t))).length;
+  ok(shown > 0, "the elimination rows DO report the elimination result", `${shown} of ${elimLines.length}`);
+  host.remove();
+}

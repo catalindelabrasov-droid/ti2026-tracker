@@ -23,7 +23,7 @@
   #
   # update.yml at the root is a stale duplicate of .github/workflows/update.yml
   # (dot-directories are already excluded) and still carries the old schedule.
-  command = "rm -f test_no_login.html && rm -rf i18n tools email-templates supabase && rm -f ru/build-pages.js update.yml *.py *.md"
+  command = "rm -f test_no_login.html preview_standalone.html data.demo.json && rm -rf i18n tools email-templates supabase && rm -f ru/build-pages.js update.yml *.py *.md"
 
 # Russian lives at /ru/ and is the SAME document, localised in the browser —
 # not a second copy of index.html that would drift out of sync within a week.
@@ -107,6 +107,24 @@
 [[redirects]]
   from = "/ru/watch.html"
   to = "/watch.html"
+  status = 200
+
+# ...and the same page without the extension. Netlify's pretty-URL resolver
+# turns "/ru/guide" into ru/guide.html because that FILE exists; there is no
+# ru/watch.html, so "/ru/watch" fell through to a 404 while "/watch" and
+# "/en/watch" both answered. In-app links were safe because P() always appends
+# ".html" — this only bit a hand-typed, shared or externally-written link, which
+# is exactly the kind nobody tests.
+[[redirects]]
+  from = "/ru/watch"
+  to = "/watch.html"
+  status = 200
+
+# Same shape: /app is a real directory, so "/app" and "/app/" resolve, but
+# "/ru/app" had nothing behind it.
+[[redirects]]
+  from = "/ru/app"
+  to = "/app/index.html"
   status = 200
 
 # The service worker must never be served from cache. If it is, a stale worker

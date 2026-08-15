@@ -226,6 +226,13 @@
   .cd-tick{animation:cdtick .5s ease}
   @keyframes cdtick{0%{transform:translateY(-2px);opacity:.5}100%{transform:none;opacity:1}}
   .countdown.live-now .cd-units{display:none}
+  /* …and the label with them. .live-now hid the digits but left "Group Stage
+     begins" on screen, so from the moment the tournament started the header read
+     "GROUP STAGE BEGINS" with nothing after it — still there today, with the
+     stage finished. Russian was worse: "ГРУППОВОЙ ЭТАП НАЧИНАЕТСЯ ЧЕРЕЗ" ends on
+     a preposition whose object this rule had deleted. The live banner
+     underneath already says everything true at that point. */
+  .countdown.live-now .cd-target{display:none}
   .cd-livebanner{display:none;font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:22px;letter-spacing:.05em;color:var(--live);align-items:center;gap:10px}
   .cd-livebanner .pulse{width:9px;height:9px;border-radius:50%;background:var(--live);animation:pulse 1.2s infinite}
   .countdown.live-now .cd-livebanner{display:flex}
@@ -2013,7 +2020,12 @@ async function openMyLeaguesModal(){
 function statusBadge(s){
   if(s==="live"||s==="ongoing")return`<span class="badge live"><span class="pulse"></span>Live</span>`;
   if(s==="upcoming"||s==="scheduled")return`<span class="badge upcoming">Upcoming</span>`;
-  if(s==="completed"||s==="done")return`<span class="badge completed">Final</span>`;
+  /* "Finished", not "Final". The dictionary maps Final -> Финал, which reads as
+     "this is the Final" rather than "final score" — wrong on 85 completed
+     matches today, and on every elimination match from tomorrow. The key is
+     shared with the Bo-length label, where Финал IS correct, so the value
+     cannot simply be changed. "Finished" is already in the dictionary. */
+  if(s==="completed"||s==="done")return`<span class="badge completed">Finished</span>`;
   return"";
 }
 let LIVE_FEED={liveMatches:[],events:[]};
@@ -2167,6 +2179,36 @@ function chooseFixture(list,idxs,opts){
   let c=idxs;
   if(opts.claimed&&opts.claimed.size) c=c.filter(j=>!opts.claimed.has(j));
   if(!c.length) return -1;
+
+  /* A RESULT CANNOT BELONG TO A FIXTURE THAT HAD NOT STARTED YET.
+     Without this, preferring an undecided fixture (below) does the opposite of
+     what it intends the moment a pairing meets twice. Aurora Gaming beat
+     BoomBoys 2-0 in round 4 on the morning of 15 Aug; that evening the same two
+     were drawn against each other again in the elimination round, scheduled for
+     02:00 on the 16th. The feed replayed the round-4 series, found both
+     fixtures, skipped the group one PRECISELY BECAUSE it was already correctly
+     settled, and wrote 2-0 onto tomorrow's match — which then rendered as
+     played, with a filled sixth bubble and a duplicate row in the team panel,
+     while the match itself had not been played and was still open to predict.
+
+     Series start times are Unix SECONDS. A series starts at or after its
+     fixture's scheduled time — delays push it later, never earlier — so a
+     fixture scheduled well AFTER the series began cannot be the one it belongs
+     to. The three-hour grace absorbs an early start and a slightly wrong
+     published time without letting a whole day through.
+
+     If nothing survives the filter, fall back rather than refuse: a missing or
+     unparseable schedule must not make a result vanish. */
+  if(opts.start){
+    const startMs=opts.start>1e12?opts.start:opts.start*1000;
+    const GRACE=3*3600*1000;
+    const fits=c.filter(j=>{
+      const t=Date.parse((list[j]||{}).scheduled||"");
+      return !Number.isFinite(t) || t<=startMs+GRACE;
+    });
+    if(fits.length) c=fits;
+  }
+
   const open=c.filter(j=>!fxDecided(list[j]));
   if(opts.requireOpen) return open.length?open[0]:-1;
   return open.length?open[0]:c[0];
@@ -2209,7 +2251,7 @@ function tiMergedMatches(d){
   const tiSeries=((LIVE_FEED&&LIVE_FEED.tiSeries)||[]).slice()
     .sort((x,y)=>(x.start||0)-(y.start||0));
   tiSeries.forEach(s=>{
-    const hit=findFixture(out,s.a,s.b,{claimed:seriesClaimed});
+    const hit=findFixture(out,s.a,s.b,{claimed:seriesClaimed,start:s.start});
     if(!hit) return;
     seriesClaimed.add(hit.i);
     const f=out[hit.i], flipped=hit.flipped;
@@ -4485,7 +4527,7 @@ function renderGroups(d){
   const infoFor=(name)=>{
     const list=(byTeam[tkey(name)||tnorm(name)]||[]).slice()
       .sort((x,y)=>{const a=seq(x.m),b=seq(y.m);return a[0]-b[0]||a[1]-b[1]||a[2]-b[2];});
-    const pips=[]; let live=null,last=null,next=null,elimPip=null,elimLive=false;
+    const pips=[]; let live=null,last=null,next=null,elimPip=null,elimLive=false,lastSwiss=null,liveSwiss=null;
     list.forEach(({m,home})=>{
       const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
       const os=(us||{}).score, ts=(them||{}).score;
@@ -4503,14 +4545,23 @@ function renderGroups(d){
            the front, which is the bug the comment above is warning about. */
         if(ELIM_ID.test(m.id||"")) elimPip=os>ts?"w":"l";
         last={opp:(them||{}).name,os,ts,won:os>ts,when:m.scheduled};
+        /* Kept apart for the same reason the pips are. The bucket rows describe
+           the SWISS run — their record, their five marks — so their status line
+           has to come from the Swiss too. Sharing `last` meant that the moment
+           the elimination round was played, a 3-2 row whose pips ended in a loss
+           announced "beat BoomBoys 2-0" from a different stage: the record, the
+           marks and the sentence all disagreeing on one row. */
+        if(SWISS_ID.test(m.id||"")) lastSwiss={opp:(them||{}).name,os,ts,won:os>ts,when:m.scheduled};
       }
       else if(m.status==="live"){
         live={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute};
         if(ELIM_ID.test(m.id||"")) elimLive=true;
+        // …and a live ELIMINATION match must not paint a live line on the Swiss board.
+        if(SWISS_ID.test(m.id||"")) liveSwiss={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute};
       }
       else if(!next&&m.scheduled){ next={opp:(them||{}).name,when:m.scheduled}; }
     });
-    return {pips,live,last,next,elimPip,elimLive};
+    return {pips,live,last,next,elimPip,elimLive,lastSwiss,liveSwiss};
   };
   const when=t=>{try{return new Date(t).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"});}catch(e){return"";}};
   /* A finished result is a button: it opens the series game by game.
@@ -4601,7 +4652,7 @@ function renderGroups(d){
         <span class="sw-tlogo">${teamLogo(r.team,20)}</span>
         <span class="sw-tname">${esc(r.team)}</span>
         <span class="sw-tpips" title="One mark per round">${pips}</span>
-        <span class="sw-tline">${lineFor(i,r.team)}</span>
+        <span class="sw-tline">${lineFor({...i,last:i.lastSwiss,live:i.liveSwiss},r.team)}</span>
       </div>`;
     }).join("");
     return `<div class="sw-bucket ${qual?"is-adv":""} ${out?"is-out":""}">
