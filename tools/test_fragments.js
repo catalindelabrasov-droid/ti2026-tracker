@@ -70,7 +70,69 @@ for (const k of keys) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   SECOND FAILURE MODE: a translated head beside an untranslated tail.
+
+   `<b>Eliminated</b> · ${note}` is two text nodes. "Eliminated" is a key, the
+   tail is not, so /ru/ rendered "Вылетели · out of the tournament" — half
+   Russian, half English, in one line. The check above cannot see it: its
+   heuristic needs the key to sit BETWEEN two inline elements, and here the key
+   IS the inline element.
+
+   So: for every key that fills an inline element, look at the text immediately
+   after the closing tag. If that text is English prose and is not itself a key,
+   the pair renders mixed. */
+const mixed = [];
+const INLINE_TAGS = "b|strong|em|i|span|a|u|small|mark|code";
+/* The tail must be what a TEXT NODE could hold. index.html builds markup inside
+   template literals, so the characters after a closing tag are often JavaScript
+   — backticks, ${…}, quotes, semicolons. Excluding them is the difference
+   between three real findings and seventeen, fourteen of which were source code
+   the browser never renders as text. */
+const CODEY = /[`${}='"; ]\s*$|[`${}=;]|\bconst\b|\blet\b|\breturn\b|\/\*|\*\//;
+/* The tail is captured up to the NEXT tag, not to an arbitrary length. A capped
+   {2,90} truncated long tails, so the dictionary lookup below compared a prefix
+   against a full key and reported an already-translated tail as missing. */
+/* Respect data-noloc exactly as localize() does — it skips anything inside
+   closest("[data-noloc]"), so a checker that ignores it reports a mix on markup
+   the runtime never touches. The span is the element itself: from its opening
+   tag to the matching close, not a guess based on distance. */
+const NOLOC = [];
+for (const m of src.matchAll(/<([a-z0-9]+)[^>]*\bdata-noloc\b[^>]*>/gi)) {
+  const tag = m[1];
+  const end = src.indexOf(`</${tag}>`, m.index);
+  NOLOC.push([m.index, end < 0 ? m.index + m[0].length : end]);
+}
+const inNoloc = (i) => NOLOC.some(([a, b]) => i >= a && i <= b);
+
+for (const m of src.matchAll(new RegExp(`<(${INLINE_TAGS})[^>]*>([^<>{}\`]{2,60})</\\1>([^<>\`]{2,400})(?=<)`, "g"))) {
+  if (inNoloc(m.index)) continue;                  // localize() never sees it
+  const head = decode(m[2]).replace(/\s+/g, " ").trim();
+  const tailRaw = decode(m[3]).replace(/\s+/g, " ").trim();
+  if (!dict[head]) continue;                       // head not translated: no mix
+  if (CODEY.test(tailRaw)) continue;               // JS, not a rendered node
+  /* Look up the node EXACTLY as the DOM holds it, separator and all. Stripping
+     the leading "— " before the lookup compared a trimmed string against a key
+     that still carried it, and reported already-translated tails as missing. */
+  if (dict[tailRaw]) continue;                     // both halves translated
+  /* The stripped form is only used to judge "is this prose", never as a key. */
+  const words = tailRaw.replace(/^[·•\-–—:,.|]+\s*/, "").trim();
+  if (!words) continue;                            // separator only
+  if (!/[A-Za-z]{3,}\s+[A-Za-z]{2,}/.test(words)) continue;  // not prose
+  mixed.push({ head, tail: tailRaw, ctx: m[0].replace(/\s+/g, " ").slice(0, 100) });
+}
+
 console.log(`${keys.length} dictionary keys checked against index.html\n`);
+
+if (mixed.length) {
+  console.log("MIXED LANGUAGE — a translated head with an untranslated tail.\nAdd the tail as its own key, or leave the head untranslated:\n");
+  for (const x of mixed) {
+    console.log(`  <b>${x.head}</b> -> ${JSON.stringify(dict[x.head])}`);
+    console.log(`      tail NOT translated: ${JSON.stringify(x.tail)}`);
+    console.log(`      ${x.ctx}\n`);
+    fail++;
+  }
+}
 if (bad.length) {
   console.log("SENTENCE FRAGMENTS — remove these, or restructure the source so the\nlabel becomes its own text node:\n");
   for (const b of bad) console.log(`  ${JSON.stringify(b.k)} -> ${JSON.stringify(dict[b.k])}\n      ${b.ctx}\n`);

@@ -1342,7 +1342,12 @@
     <div class="editor-panel">
       <div class="editor-head"><h3>Edit results</h3><button class="x" id="editorClose" aria-label="Close editor">&times;</button></div>
       <div class="editor-body">
-        <div class="editor-tip">Edit the tournament data below as JSON, then <b>Apply</b> to preview instantly. Changes save in this browser only. Use <b>Download data.json</b> to export and commit it to your repo so everyone sees it. <b>Reset</b> reloads the original file.</div>
+        <!-- data-noloc: this sentence names buttons inline with <b>, so half of
+             it is dictionary keys and half is prose. Translating only the keys
+             produced "Применить to preview instantly". It is a hidden dev panel,
+             so the honest answer is to leave the whole tip in English rather
+             than ship a half-translated sentence. -->
+        <div class="editor-tip" data-noloc>Edit the tournament data below as JSON, then <b>Apply</b> to preview instantly. Changes save in this browser only. Use <b>Download data.json</b> to export and commit it to your repo so everyone sees it. <b>Reset</b> reloads the original file.</div>
         <textarea id="editorText" spellcheck="false"></textarea>
       </div>
       <div class="editor-foot">
