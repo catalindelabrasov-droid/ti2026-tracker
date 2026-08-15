@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Both language versions of every page, paired with xhtml:link alternates.
+
+  hreflang has to be BIDIRECTIONAL to count: a page declaring an alternate that
+  does not declare it back is ignored. Until now only the Russian pages carried
+  the tags — the English originals had none at all — so the pairing was
+  one-directional and search engines were entitled to disregard it entirely.
+  The English pages now carry their own, and this file states the pairs a third
+  time, which is the form Yandex reads most reliably.
+
+  /en/ is deliberately absent: it duplicates "/" and is disallowed in robots.txt.
+  watch.html has no Russian alternate — /ru/watch.html rewrites to this same
+  English page, so claiming a "ru" version would point at English content.
+  /app/ is an install helper, not a page anyone should reach from a search.
+
+  No <lastmod>: it would be a hardcoded date going quietly stale, which is worse
+  than omitting an optional field. <changefreq> and <priority> are omitted for
+  the same reason — both are hints crawlers now largely ignore.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <url>
+    <loc>https://dota2tileague.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/"/>
+  </url>
+  <url>
+    <loc>https://dota2tileague.com/ru/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/"/>
+  </url>
+
+  <url>
+    <loc>https://dota2tileague.com/guide.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/guide.html"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/guide.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/guide.html"/>
+  </url>
+  <url>
+    <loc>https://dota2tileague.com/ru/guide.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/guide.html"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/guide.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/guide.html"/>
+  </url>
+
+  <url>
+    <loc>https://dota2tileague.com/legal.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/legal.html"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/legal.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/legal.html"/>
+  </url>
+  <url>
+    <loc>https://dota2tileague.com/ru/legal.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/legal.html"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/legal.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/legal.html"/>
+  </url>
+
+  <url>
+    <loc>https://dota2tileague.com/delete-account.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/delete-account.html"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/delete-account.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/delete-account.html"/>
+  </url>
+  <url>
+    <loc>https://dota2tileague.com/ru/delete-account.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dota2tileague.com/delete-account.html"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/delete-account.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/delete-account.html"/>
+  </url>
+
+  <url>
+    <loc>https://dota2tileague.com/watch.html</loc>
+  </url>
+
+</urlset>

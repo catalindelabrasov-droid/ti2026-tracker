@@ -1,0 +1,34 @@
+# dota2tileague.com — everything here is public and meant to be found.
+#
+# Yandex matters as much as Google for this site: /ru/ exists for readers in
+# Russian-speaking countries, and Yandex is the search engine most of them use.
+# There was no robots.txt at all before. That is not a blocker — a missing file
+# means "crawl everything" — but it also meant no sitemap was ever advertised,
+# and Yandex leans on sitemaps more heavily than Google does.
+#
+# One group only. A second "User-agent: *" block is handled inconsistently
+# between crawlers, so both rules live together and the longest match wins:
+# /en/guide.html matches Disallow: /en/ (more specific) rather than Allow: /.
+
+User-agent: *
+Allow: /
+Disallow: /en/
+
+# Why /en/ is the exception: it is the English escape hatch from the geo
+# redirect — the page a reader in a Russian-speaking country lands on after
+# clicking "English". It serves a byte-identical copy of what is already at
+# "/", so it is pure duplication with nothing unique to rank.
+#
+# The sub-pages under it resolve fine on their own: /en/guide.html serves
+# guide.html, which carries a static canonical pointing at /guide.html. But
+# /en/ ITSELF cannot, because one index.html file serves "/", "/en/" and
+# "/ru/" — its canonical has to be written by JavaScript at runtime, and a
+# crawler that does not run JS never sees it. Yandex's renderer is markedly
+# less reliable than Google's, which is precisely the case this guards.
+# Disallow is the one signal that does not depend on JavaScript.
+#
+# It costs nothing: nothing links into /en/ except the language switch, and
+# human readers are unaffected — robots.txt binds crawlers, not browsers.
+# Delete the Disallow line to reverse it.
+
+Sitemap: https://dota2tileague.com/sitemap.xml

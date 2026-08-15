@@ -71,6 +71,27 @@ const get = async (url, opts = {}) => {
        good ? "" : (r.status !== 200 ? `HTTP ${r.status}` : "200, but served a different page"));
   }
 
+  /* ---- 1b. what a crawler asks for first ---------------------------------
+     Yandex matters as much as Google here — /ru/ exists for readers in
+     Russian-speaking countries. A sitemap advertised in robots.txt but missing
+     from the deploy is worse than never advertising one. */
+  console.log("\ncrawlers can find their way in");
+  const rb = await get(SITE + "/robots.txt");
+  ok(rb.status === 200, "robots.txt is served", rb.status === 200 ? "" : `HTTP ${rb.status}`);
+  ok(/Sitemap:\s*\S+sitemap\.xml/i.test(rb.text), "robots.txt advertises the sitemap");
+  const smr = await get(SITE + "/sitemap.xml");
+  ok(smr.status === 200 && smr.text.startsWith("<?xml"), "sitemap.xml is served and is XML",
+     smr.status === 200 ? "" : `HTTP ${smr.status}`);
+  /* Every URL it lists must actually answer. A sitemap of 404s trains a
+     crawler to distrust the whole file. */
+  const locs = [...smr.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  ok(locs.length > 0, "sitemap lists URLs", `${locs.length}`);
+  for (const l of locs) {
+    const r = await get(l, { method: "HEAD" });
+    ok(r.status === 200, `sitemap URL answers: ${l.replace(SITE, "") || "/"}`,
+       r.status === 200 ? "" : `HTTP ${r.status}`);
+  }
+
   /* ---- 2. the assets an installed app depends on ------------------------- */
   console.log("\nthe installed app still has what it needs");
   for (const [path, test, what] of [

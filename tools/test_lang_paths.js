@@ -178,5 +178,59 @@ ok(rules[enExact] && rules[enExact].to === "/index.html",
    "/en/ serves index.html directly, never '/' (which carries the forced geo redirect)",
    rules[enExact] ? rules[enExact].to : "?");
 
+/* ---------- hreflang has to point BOTH ways ------------------------------
+   A page that declares an alternate which does not declare it back is ignored
+   outright — the pairing is the signal, not the tag. Until 15 Aug 2026 only the
+   Russian pages carried canonical + hreflang; the English originals had none at
+   all, so every declaration on the site was one-directional and search engines
+   were entitled to disregard the lot. That matters most for Yandex, which is
+   the search engine the /ru/ version exists to reach. */
+console.log("\nhreflang pairs point both ways");
+const PAIRS = [["guide.html", "ru/guide.html"],
+               ["legal.html", "ru/legal.html"],
+               ["delete-account.html", "ru/delete-account.html"]];
+const read = (f) => { try { return fs.readFileSync(path.join(ROOT, f), "utf8"); } catch (e) { return ""; } };
+const canonOf = (s) => (/<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i.exec(s) || [])[1];
+const altsOf = (s) => Object.fromEntries(
+  [...s.matchAll(/<link[^>]+rel="alternate"[^>]+hreflang="([^"]+)"[^>]+href="([^"]+)"/gi)]
+    .map((m) => [m[1], m[2]]));
+
+for (const [en, ru] of PAIRS) {
+  const E = read(en), R = read(ru);
+  const eA = altsOf(E), rA = altsOf(ru ? R : "");
+  ok(canonOf(E) === `https://dota2tileague.com/${en}`, `${en} self-canonicals`, canonOf(E) || "absent");
+  ok(canonOf(R) === `https://dota2tileague.com/${ru}`, `${ru} self-canonicals`, canonOf(R) || "absent");
+  /* Exactly one canonical. Two pointing at different URLs is worse than none,
+     and it is invisible in a browser — the RU pages are generated from the EN
+     ones, so adding tags to the source can silently duplicate them. */
+  ok((E.match(/rel="canonical"/gi) || []).length === 1, `${en} has exactly one canonical`);
+  ok((R.match(/rel="canonical"/gi) || []).length === 1, `${ru} has exactly one canonical`);
+  ok(eA.ru === `https://dota2tileague.com/${ru}`, `${en} points at its Russian twin`, eA.ru || "absent");
+  ok(rA.en === `https://dota2tileague.com/${en}`, `${ru} points back at its English twin`, rA.en || "absent");
+  ok(eA.en === rA.en && eA.ru === rA.ru, `${en} and ${ru} agree on the pair`);
+}
+/* watch.html deliberately has NO Russian alternate: /ru/watch.html rewrites to
+   this same English page, so declaring one would point at English content. */
+const W = read("watch.html");
+ok(canonOf(W) === "https://dota2tileague.com/watch.html", "watch.html self-canonicals", canonOf(W) || "absent");
+ok(!altsOf(W).ru, "watch.html claims no Russian version (there isn't one)");
+
+console.log("\nrobots and sitemap");
+const robots = read("robots.txt"), sm = read("sitemap.xml");
+ok(/^\s*Sitemap:\s*https:\/\/dota2tileague\.com\/sitemap\.xml\s*$/m.test(robots), "robots.txt advertises the sitemap");
+ok((robots.match(/^\s*User-agent:/gim) || []).length === 1, "robots.txt has a single user-agent group",
+   "a second identical group is handled inconsistently between crawlers");
+ok(/^\s*Disallow:\s*\/en\/\s*$/m.test(robots), "/en/ is disallowed (it duplicates / and cannot self-canonical)");
+ok(sm.startsWith("<?xml"), "sitemap.xml is XML");
+const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+ok(locs.length >= 8, "sitemap lists both language versions", `${locs.length} urls`);
+ok(!locs.some((l) => l.includes("/en/")), "sitemap does not list /en/ (it is disallowed)");
+/* Every sitemap URL must resolve — a sitemap full of 404s is worse than none. */
+for (const l of locs) {
+  const p = l.replace("https://dota2tileague.com", "");
+  const r = serve(p, 0);
+  ok(r.okFile, `sitemap: ${p}`, r.okFile ? "" : r.why);
+}
+
 console.log(fail ? `\n${fail} FAILURE(S)` : "\nevery internal link resolves from every prefix");
 process.exit(fail ? 1 : 0);

@@ -392,12 +392,26 @@ for (const [file, page] of Object.entries(PAGES)) {
     /<\/style>/,
     `${CYRILLIC}</style>`
   );
+  /* The English source now carries its own canonical and hreflang pair, so the
+     Russian page must DROP them before adding its own — otherwise every page
+     ships two canonicals pointing at different URLs, which search engines
+     resolve by ignoring both. Strip first, inject second. */
+  head = head.replace(/[ \t]*<link[^>]+rel="canonical"[^>]*>\s*\n?/gi, "");
+  head = head.replace(/[ \t]*<link[^>]+rel="alternate"[^>]+hreflang[^>]*>\s*\n?/gi, "");
+
   head = head.replace(
     /<style>/,
     `<link rel="canonical" href="${page.canon}">\n` +
       `<link rel="alternate" hreflang="en" href="${page.alt}">\n` +
-      `<link rel="alternate" hreflang="ru" href="${page.canon}">\n<style>`
+      `<link rel="alternate" hreflang="ru" href="${page.canon}">\n` +
+      `<link rel="alternate" hreflang="x-default" href="${page.alt}">\n<style>`
   );
+
+  /* Exactly one canonical, and it must be the Russian one. A stray second tag
+     is invisible in a browser and fatal to indexing, so assert rather than hope. */
+  const canons = head.match(/<link[^>]+rel="canonical"[^>]*>/gi) || [];
+  if (canons.length !== 1) throw new Error(`${file}: ${canons.length} canonical tags, expected 1`);
+  if (!canons[0].includes(page.canon)) throw new Error(`${file}: canonical is not ${page.canon}`);
 
   if (!/lang="ru"/.test(head)) throw new Error(`${file}: lang not switched`);
   if (!/inter-cyrillic/.test(head)) throw new Error(`${file}: Cyrillic faces missing`);
