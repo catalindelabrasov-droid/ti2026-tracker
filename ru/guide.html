@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Как это работает — dota2tileague.com</title>
+<meta name="description" content="Что есть на dota2tileague.com и как этим пользоваться: живые результаты The International, лиги прогнозов с друзьями, любительские турниры и лестница.">
+<!-- Deliberately loads none of the tracker's code. A fault here cannot take the
+     live site down, and this page keeps working if the backend is unreachable. -->
+<link rel="canonical" href="https://dota2tileague.com/ru/guide.html">
+<link rel="alternate" hreflang="en" href="https://dota2tileague.com/guide.html">
+<link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/guide.html">
+<style>
+/* Self-hosted: no visitor's IP goes to Google just to read the page.
+     Exactly the families, weights and unicode-ranges Google was serving.
+     These are VARIABLE fonts, so every weight of one family+subset is the SAME
+     file — pointing each weight at its own copy would have downloaded the same
+     bytes three times. Named by content hash so a future re-subset cannot reuse
+     a filename while the one-year immutable header is still in force. */
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+
+  :root{
+    --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
+    --line:#28303f;--line-soft:#1f2632;--ink:#e9eef5;--ink-dim:#8e99ac;--ink-faint:#5b6478;
+    --aegis:#d9a441;--win:#4ec98f;--live:#ef5350;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;padding:16px 12px 60px;line-height:1.65}
+  .wrap{max-width:760px;margin:0 auto}
+  a{color:var(--aegis)}
+  .back{display:inline-block;margin-bottom:14px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);text-decoration:none}
+  .back:hover{color:var(--aegis)}
+  h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.02em;line-height:1.2}
+  .lede{color:var(--ink-dim);font-size:15px;margin:10px 0 26px}
+  h2{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;margin:34px 0 4px;
+    scroll-margin-top:14px;padding-top:20px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:0;padding-top:0}
+  h3{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;margin:20px 0 4px;color:var(--ink)}
+  p{margin:8px 0;font-size:14.5px}
+  p.dim{color:var(--ink-dim);font-size:13.5px}
+  ul,ol{margin:8px 0 8px 20px;font-size:14.5px}
+  li{margin:5px 0}
+  b{color:var(--ink)}
+  code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--ink)}
+  /* Contents list — the site map itself. */
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 8px}
+  .toc-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+  .toc ol{margin:0 0 0 18px;font-size:14px}
+  .toc a{text-decoration:none} .toc a:hover{text-decoration:underline}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0}
+  .card.warn{border-color:var(--aegis);background:linear-gradient(150deg,rgba(217,164,65,.10),rgba(217,164,65,.02))}
+  .card-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--aegis);margin-bottom:6px}
+  /* Scoring table. Scrolls inside itself so the page never scrolls sideways. */
+  .tw{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:8px}
+  table{border-collapse:collapse;width:100%;min-width:440px;font-size:13.5px}
+  th{background:var(--panel-2);text-align:left;padding:9px 12px;font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-dim);white-space:nowrap}
+  td{padding:9px 12px;border-top:1px solid var(--line-soft);vertical-align:top}
+  td.pts{font-family:'JetBrains Mono',monospace;color:var(--aegis);white-space:nowrap;text-align:right}
+  td.off{color:var(--ink-faint)}
+  .tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.09em;
+    text-transform:uppercase;padding:1px 6px;border-radius:20px;border:1px solid var(--line);color:var(--ink-faint)}
+  .tag.on{color:var(--win);border-color:rgba(78,201,143,.4)}
+  /* FAQ */
+  details{border-top:1px solid var(--line-soft);padding:11px 0}
+  details:first-of-type{border-top:0}
+  summary{cursor:pointer;font-weight:600;font-size:14.5px;list-style:none;display:flex;gap:8px;align-items:flex-start}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"+";color:var(--aegis);font-family:'JetBrains Mono',monospace;flex:none;line-height:1.5}
+  details[open] summary::before{content:"–"}
+  details p{color:var(--ink-dim);font-size:13.5px;margin:7px 0 0 18px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink-faint);line-height:1.9}
+  footer a{color:var(--ink-dim)}
+  @media(max-width:560px){ h1{font-size:22px} .lede{font-size:14px} }
+
+/* Cyrillic. Latin pages never fetch these — unicode-range says so. */
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/jetbrains-mono-cyrillic-e17cfd15.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/jetbrains-mono-cyrillic-e17cfd15.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/ru/">&larr; Назад к трекеру</a>
+  <h1>Как это работает</h1>
+  <div class="upd">Обзор сайта — что где находится и зачем нужно</div>
+
+  <nav class="toc">
+    <a href="#tracker">Трекер</a>
+    <a href="#watch">Просмотр матчей</a>
+    <a href="#leagues">Лиги прогнозов</a>
+    <a href="#scoring">Начисление очков</a>
+    <a href="#tournaments">Свои турниры</a>
+    <a href="#ladder">Лестница</a>
+    <a href="#account">Аккаунт</a>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-lbl">Если коротко</div>
+    <p>Сайт делает три вещи: показывает, что происходит на The International прямо сейчас;
+      позволяет спорить с друзьями на прогнозы (на очки, не на деньги); и даёт провести
+      собственный любительский турнир с настоящей сеткой. Всё бесплатно, регистрация нужна
+      только для лиг и турниров.</p>
+  </div>
+
+  <h2 id="tracker">Трекер</h2>
+  <p>Главная страница — это сам турнир. Данные обновляются автоматически: расписание и составы
+    приходят из Liquipedia, живые счета — из OpenDota и Steam.</p>
+
+  <h3>Текущие и ближайшие</h3>
+  <p>Матчи, которые идут прямо сейчас, и те, что начнутся следующими. У идущего матча видно
+    счёт по серии; нажмите на строку матча, чтобы раскрыть все игры серии по отдельности —
+    с длительностью, счётом по убийствам и разницей по золоту.</p>
+
+  <h3>Групповой этап</h3>
+  <p>Швейцарская система: три победы выводят в плей-офф, три поражения означают вылет.
+    Команды сгруппированы по текущему счёту, и рядом с каждой видно, кого она обыграла
+    и кому проиграла.</p>
+
+  <h3>Плей-офф</h3>
+  <p>Двойное выбывание: верхняя и нижняя сетка. Поражение в верхней сетке — это ещё не конец,
+    команда падает в нижнюю. Поражение в нижней — вылет.</p>
+
+  <h3>Команды и игроки</h3>
+  <p>Профессиональные команды с мировым рейтингом, составы и статистика игроков.
+    Нажмите на команду, чтобы увидеть её состав и последние результаты.</p>
+
+  <h3>Герои</h3>
+  <p>Что сейчас реально берут и банят в про-играх: самые оспариваемые герои, процент побед,
+    способности и грани.</p>
+
+  <h2 id="watch">Просмотр матчей</h2>
+  <p>Кнопка «Смотреть матчи» открывает страницу, где все идущие игры собраны в одном месте:
+    драфт обеих команд, живой счёт, разница по золоту и список трансляций на разных языках.
+    Не нужно держать открытыми пять вкладок.</p>
+
+  <h2 id="leagues">Лиги прогнозов</h2>
+  <p>Лига — это приватная группа друзей. Один человек создаёт её и получает код входа,
+    остальные заходят по коду. Всё бесплатно: <b>нет взносов, ставок и призов</b> — играют
+    на очки и на право хвастаться.</p>
+
+  <h3>Как начать</h3>
+  <p>Нажмите «Создать лигу», задайте название и правила — или «Войти в лигу», если у вас
+    есть код от друга. Дальше делайте прогнозы на матчи: выбираете победителя и, если хотите,
+    точный счёт серии.</p>
+
+  <h3>Когда закрываются прогнозы</h3>
+  <p>Прогноз на матч закрывается с началом матча — после этого изменить его нельзя, и чужие
+    прогнозы становятся видны всем. До этого момента никто не видит, что выбрали остальные.</p>
+
+  <h3>Прогнозы на весь турнир</h3>
+  <p>Помимо матчей можно заранее назвать чемпиона, финалистов и топ-4. Такие прогнозы
+    закрываются до начала турнира и приносят больше очков — потому что делаются вслепую.</p>
+
+  <h2 id="scoring">Начисление очков</h2>
+  <p>Правила задаёт создатель лиги, поэтому в разных лигах они разные. Обычно это выглядит так:</p>
+  <table>
+    <tr><td><b>Угаданный победитель</b></td><td>основные очки за матч</td></tr>
+    <tr><td><b>Точный счёт серии</b></td><td>бонус сверху, если угадали и 2–0 против 2–1</td></tr>
+    <tr><td><b>Серия подряд</b></td><td>надбавка за несколько верных прогнозов подряд</td></tr>
+    <tr><td><b>Итоги турнира</b></td><td>крупные очки за чемпиона, финалистов и топ-4</td></tr>
+  </table>
+  <p>Очки начисляются автоматически, когда результат матча подтверждён. Если результат пришёл
+    с ошибкой и был исправлен, очки пересчитываются — таблица лидеров всегда отражает
+    последние подтверждённые данные.</p>
+  <p class="dim">В таблице лидеров столбец «Подряд» — это количество верных прогнозов подряд.
+    Слово «серия» в нём не используется намеренно: серией здесь называется сам матч Bo3.</p>
+
+  <h2 id="tournaments">Свои турниры</h2>
+  <p>Можно провести собственный любительский турнир: настоящая сетка, автоматические пары
+    по раундам и результаты, которые проверяются по ID матчей Dota, а не на честном слове.</p>
+  <p>Создайте турнир, выберите формат — одиночное или двойное выбывание, группы или швейцарка —
+    и разошлите приглашения. Капитаны команд регистрируются сами, договариваются о времени между
+    собой и после игры отправляют результат. Совпадающие ID матчей подтверждают его автоматически.</p>
+
+  <h2 id="ladder">Лестница</h2>
+  <p>Постоянный рейтинг для любительских команд, без расписания. Поставьте команду в лестницу,
+    вызывайте другие команды, играйте когда удобно — рейтинг двигается сам. Подходит тем,
+    кто не хочет быть привязанным к дате турнира.</p>
+
+  <h2 id="account">Аккаунт</h2>
+  <p>Результаты турнира и страница просмотра открыты всем без регистрации. Аккаунт нужен только
+    чтобы делать прогнозы, состоять в лиге, проводить турнир или стоять в лестнице.</p>
+  <p>Для регистрации нужен email и никнейм — он и будет виден остальным. Настоящее имя и
+    платёжные данные не запрашиваются никогда. Что именно хранится, описано в разделе
+    <a href="/ru/legal.html#privacy">конфиденциальности</a>; удалить аккаунт можно
+    <a href="/ru/delete-account.html">здесь</a>.</p>
+
+  <h3>Установить на телефон</h3>
+  <p>Сайт можно поставить на домашний экран как обычное приложение — оно открывается
+    без адресной строки и работает быстрее при повторных заходах. В браузере телефона
+    выберите «Добавить на главный экран».</p>
+
+  <footer>
+    Фанатский трекер. Не связан с Valve Corporation, не одобрен и не спонсируется ею.<br>
+    Данные: <a href="https://liquipedia.net/dota2/The_International/2026" rel="noopener">Liquipedia</a>
+    (<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license noopener">CC BY-SA 3.0</a>),
+    OpenDota и Steam Web API.<br>
+    <a href="/ru/">Трекер</a> · <a href="/ru/legal.html">Условия и конфиденциальность</a> · <a href="/ru/delete-account.html">Удалить аккаунт</a> ·
+    <a href="/" hreflang="en">English</a>
+  </footer>
+</div>
+</body>
+</html>

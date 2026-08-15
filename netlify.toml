@@ -4,7 +4,45 @@
 # for local testing only (see docs 06/07).
 [build]
   publish = "."
-  command = "rm -f test_no_login.html"
+  # publish = "." serves the ENTIRE repo root, so anything committed is a public
+  # URL unless it is stripped here. test_no_login.html bypasses the login screen
+  # and is for local testing only (see docs 06/07).
+  #
+  # The rest are build-time and test-time files with no business being served:
+  # i18n/ holds the extraction notes and traffic figures, tools/ holds the test
+  # suites, and ru/build-pages.js generates the Russian prose pages. The Russian
+  # pages themselves and ru/strings.json are runtime files and stay.
+  command = "rm -f test_no_login.html && rm -rf i18n tools && rm -f ru/build-pages.js"
+
+# Russian lives at /ru/ and is the SAME document, localised in the browser —
+# not a second copy of index.html that would drift out of sync within a week.
+# Real files under ru/ (guide, legal, delete-account, strings.json) are served
+# directly: Netlify prefers an existing file over a non-forced rewrite, so the
+# rules below only catch the paths that have no file behind them.
+#
+# ONE rule, deliberately. Netlify's matcher ignores the trailing slash, so
+# `from = "/ru/"` already answers both /ru and /ru/ — and an extra
+# `from = "/ru" -> "/ru/"` 301 would match /ru/ as well and redirect it to
+# itself forever, which is exactly what a first draft of this file did.
+#
+# Because both spellings are served, the page cannot rely on relative links
+# resolving inside /ru/; the Russian build emits absolute /ru/… paths instead.
+[[redirects]]
+  from = "/ru/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/ru/index.html"
+  to = "/index.html"
+  status = 200
+
+# Not translated yet — the watch page is almost entirely team names, scores and
+# embedded streams. Serving the English one keeps the link working.
+[[redirects]]
+  from = "/ru/watch.html"
+  to = "/watch.html"
+  status = 200
 
 # The service worker must never be served from cache. If it is, a stale worker
 # keeps serving a stale app and no deploy can dislodge it.

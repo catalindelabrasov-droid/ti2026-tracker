@@ -1,0 +1,372 @@
+<title>TI Tracker in Russian</title>
+<style>
+/* The tracker's own tokens, not a new identity. The point of this page is to
+   show the real product in Russian, so every colour and face is the one the
+   live site already uses. Committed dark design, painted explicitly. */
+:root{
+  --bg:#0b0e13; --panel:#151b26; --panel-2:#1b2230; --panel-3:#222b3b;
+  --line:#28303f; --line-soft:#1f2632;
+  --ink:#e9eef5; --ink-dim:#8e99ac; --ink-faint:#5b6478;
+  --aegis:#d9a441; --win:#4ec98f; --live:#ef5350;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;padding:30px 16px 70px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+section{display:flex;flex-direction:column;gap:13px}
+
+h1{font-family:'Oswald',sans-serif;font-size:31px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.02em;line-height:1.14;text-wrap:balance}
+.lede{color:var(--ink-dim);font-size:15px;max-width:64ch}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--aegis)}
+h2{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;letter-spacing:.01em;
+  padding-top:23px;border-top:1px solid var(--line);text-wrap:balance}
+.note{color:var(--ink-faint);font-size:13px;max-width:72ch}
+.note b{color:var(--ink-dim);font-weight:600}
+
+/* EN | RU comparison — the reason this page exists */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:15px;align-items:start}
+@media(max-width:760px){ .cmp{grid-template-columns:1fr} }
+.col-lab{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
+.col-lab.ru{color:var(--aegis)}
+
+/* faithful reproductions of the real components */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.lcard{padding:12px 13px;display:flex;flex-direction:column;gap:7px}
+.lc-top{display:flex;align-items:center;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.badge{border:1px solid rgba(239,83,80,.45);border-radius:20px;padding:1px 8px;color:var(--live)}
+.lc-team{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600}
+.lc-team .sc{margin-left:auto;font-family:'Oswald',sans-serif;font-size:19px;font-weight:600}
+.lc-team.win .sc{color:var(--win)}
+.dot{width:19px;height:19px;border-radius:4px;background:var(--panel-3);flex:none}
+.lc-foot{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line-soft);
+  padding-top:8px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-faint)}
+.gbtn{margin-left:auto;border:1px solid var(--line);border-radius:20px;padding:3px 9px;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-dim);background:none}
+
+/* nav */
+.nav{display:flex;gap:6px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:8px}
+.nav span{font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;letter-spacing:.02em;
+  text-transform:uppercase;color:var(--ink-dim);padding:5px 10px;border-radius:5px;white-space:nowrap}
+.nav span.on{background:var(--panel-3);color:var(--aegis)}
+
+/* the watch banner, as restyled today */
+.watch-all{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:7px;padding:19px 16px;border-radius:8px;
+  background:linear-gradient(150deg,rgba(239,83,80,.13),rgba(239,83,80,.03));
+  border:1px solid rgba(239,83,80,.42)}
+.wa-title{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;
+  font-size:21px;font-weight:600;line-height:1.15;text-wrap:balance}
+.wa-title::before{content:"";flex:none;width:0;height:0;border-style:solid;
+  border-width:8px 0 8px 14px;border-color:transparent transparent transparent var(--live)}
+.wa-sub{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-dim)}
+
+/* swiss bucket */
+.sw{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.sw-head{display:flex;align-items:center;gap:10px;background:var(--panel-2);
+  padding:8px 12px;border-bottom:1px solid var(--line)}
+.sw-rec{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;color:var(--win)}
+.sw-note{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-dim)}
+.sw-note b{color:var(--win)}
+.sw-team{display:flex;align-items:center;gap:9px;padding:9px 12px;border-top:1px solid var(--line-soft)}
+.sw-team:first-of-type{border-top:0}
+.sw-name{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500}
+.sw-line{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--win)}
+.sw-line.lost{color:var(--ink-faint)}
+
+/* prediction card */
+.pred{padding:13px}
+.pred-head{display:flex;justify-content:space-between;gap:10px;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+.pred-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pred-team{border:1px solid var(--line);border-radius:6px;padding:9px;text-align:center;
+  font-size:13px;font-weight:600}
+.pred-team.sel{border-color:var(--aegis);color:var(--aegis);background:rgba(217,164,65,.08)}
+.pred-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-faint);margin:11px 0 6px}
+.chips{display:flex;gap:6px}
+.chip{border:1px solid var(--line);border-radius:20px;padding:4px 11px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim)}
+.chip.sel{border-color:var(--aegis);color:var(--aegis)}
+.lock{margin-top:11px;width:100%;border:1px solid var(--aegis);background:rgba(217,164,65,.12);
+  color:var(--aegis);border-radius:6px;padding:9px;font-size:13px;font-weight:600;
+  font-family:'Inter',sans-serif}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th{background:var(--panel-2);text-align:left;padding:8px 11px;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-dim);white-space:nowrap}
+th.r,td.n{text-align:right}
+td{padding:8px 11px;border-top:1px solid var(--line-soft)}
+td.n{font-family:'JetBrains Mono',monospace}
+td.pts{color:var(--aegis);font-weight:600}
+.term td:first-child{color:var(--ink-dim);width:46%}
+.term td:last-child{font-weight:500}
+
+.callout{border:1px solid var(--line);border-left:2px solid var(--aegis);
+  background:var(--panel);border-radius:6px;padding:15px 17px;display:flex;
+  flex-direction:column;gap:7px}
+.callout b.k{color:var(--aegis);font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase}
+.callout p{font-size:13.5px;color:var(--ink-dim);max-width:74ch}
+.callout code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);
+  background:var(--panel-3);border-radius:4px;padding:1px 5px}
+.plural{display:flex;gap:9px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:12px}
+.plural span{border:1px solid var(--line);border-radius:6px;padding:5px 10px;color:var(--ink-dim)}
+.plural b{color:var(--win);font-weight:600}
+footer{border-top:1px solid var(--line);padding-top:17px;color:var(--ink-faint);
+  font-size:12px;line-height:1.95}
+</style>
+
+<div class="wrap">
+
+  <header style="display:flex;flex-direction:column;gap:9px">
+    <div class="eyebrow">Предпросмотр · ничего не опубликовано</div>
+    <h1>Трекер TI 2026 на русском</h1>
+    <p class="lede">Настоящие компоненты сайта, настоящая типографика, русский текст рядом
+      с английским — чтобы проверить смысл до того, как что-то попадёт на живой сайт.</p>
+  </header>
+
+  <section>
+    <h2>Навигация</h2>
+    <div class="cmp">
+      <div>
+        <div class="col-lab">Сейчас (EN)</div>
+        <div class="nav"><span class="on">Live &amp; Upcoming</span><span>Group Stage</span>
+          <span>Playoffs</span><span>Teams</span><span>League</span><span>Watch</span></div>
+      </div>
+      <div>
+        <div class="col-lab ru">Русская версия</div>
+        <div class="nav"><span class="on">Текущие и ближайшие</span><span>Групповой этап</span>
+          <span>Плей-офф</span><span>Команды</span><span>Лига</span><span>Трансляции</span></div>
+      </div>
+    </div>
+    <p class="note">Русские слова длиннее английских примерно на четверть — это главная причина,
+      по которой перевод нельзя просто подставить в готовую вёрстку. На телефоне эта строка
+      переносится, и её нужно проверять отдельно.</p>
+  </section>
+
+  <section>
+    <h2>Текущие и ближайшие</h2>
+    <div class="cmp">
+      <div>
+        <div class="col-lab">Сейчас (EN)</div>
+        <div class="card lcard">
+          <div class="lc-top"><span>ROUND 4</span><span class="badge">● LIVE</span></div>
+          <div class="lc-team win"><span class="dot"></span>LGD Gaming<span class="sc">1</span></div>
+          <div class="lc-team"><span class="dot"></span>Xtreme Gaming<span class="sc">0</span></div>
+          <div class="lc-foot">● live · Bo3<button class="gbtn">1 game</button></div>
+        </div>
+      </div>
+      <div>
+        <div class="col-lab ru">Русская версия</div>
+        <div class="card lcard">
+          <div class="lc-top"><span>РАУНД 4</span><span class="badge">● ИДЁТ</span></div>
+          <div class="lc-team win"><span class="dot"></span>LGD Gaming<span class="sc">1</span></div>
+          <div class="lc-team"><span class="dot"></span>Xtreme Gaming<span class="sc">0</span></div>
+          <div class="lc-foot">● идёт · Bo3<button class="gbtn">1 игра</button></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">Названия команд не переводятся ни на одном языке. «Bo3» тоже остаётся —
+      в русскоязычной сцене говорят именно так.</p>
+  </section>
+
+  <section>
+    <h2>Баннер трансляций</h2>
+    <div class="cmp">
+      <div>
+        <div class="col-lab">Сейчас (EN)</div>
+        <div class="watch-all">
+          <span class="wa-title">Watch every live game on one page</span>
+          <span class="wa-sub">draft · live score · gold swing · every language stream</span>
+        </div>
+      </div>
+      <div>
+        <div class="col-lab ru">Русская версия</div>
+        <div class="watch-all">
+          <span class="wa-title">Все матчи — на одной странице</span>
+          <span class="wa-sub">драфт · счёт · разница по золоту · трансляции на всех языках</span>
+        </div>
+      </div>
+    </div>
+    <p class="note">Русский заголовок здесь намеренно короче. Дословное «Смотрите каждую игру
+      на одной странице» на телефоне уходит в три строки и теряет силу.</p>
+  </section>
+
+  <section>
+    <h2>Групповой этап</h2>
+    <div class="cmp">
+      <div>
+        <div class="col-lab">Сейчас (EN)</div>
+        <div class="sw">
+          <div class="sw-head"><span class="sw-rec">3–0</span>
+            <span class="sw-note"><b>Qualified</b> · through to the playoffs</span></div>
+          <div class="sw-team"><span class="dot"></span><span class="sw-name">BoomBoys</span>
+            <span class="sw-line">beat OG 2–0</span></div>
+          <div class="sw-team"><span class="dot"></span><span class="sw-name">Team Spirit</span>
+            <span class="sw-line lost">lost to Iron Wing 1–2</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="col-lab ru">Русская версия</div>
+        <div class="sw">
+          <div class="sw-head"><span class="sw-rec">3–0</span>
+            <span class="sw-note"><b>Прошли</b> · выход в плей-офф</span></div>
+          <div class="sw-team"><span class="dot"></span><span class="sw-name">BoomBoys</span>
+            <span class="sw-line">обыграли OG 2–0</span></div>
+          <div class="sw-team"><span class="dot"></span><span class="sw-name">Team Spirit</span>
+            <span class="sw-line lost">проиграли Iron Wing 1–2</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">«обыграли / проиграли» — во множественном числе, потому что по-русски команда
+      мыслится как люди. Английское <b>beat</b> не меняется вообще; русский глагол пришлось бы
+      менять, если бы речь шла об игроке, а не о команде.</p>
+  </section>
+
+  <section>
+    <h2>Прогнозы</h2>
+    <div class="cmp">
+      <div>
+        <div class="col-lab">Сейчас (EN)</div>
+        <div class="card pred">
+          <div class="pred-head"><span>Round 4 · Bo3</span><span>Locks at kick-off</span></div>
+          <div class="pred-pick"><div class="pred-team sel">Team Falcons</div><div class="pred-team">GamerLegion</div></div>
+          <div class="pred-lbl">Series score</div>
+          <div class="chips"><span class="chip sel">2–0</span><span class="chip">2–1</span></div>
+          <button class="lock">🔒 Lock prediction</button>
+        </div>
+      </div>
+      <div>
+        <div class="col-lab ru">Русская версия</div>
+        <div class="card pred">
+          <div class="pred-head"><span>Раунд 4 · Bo3</span><span>Закроется в начале матча</span></div>
+          <div class="pred-pick"><div class="pred-team sel">Team Falcons</div><div class="pred-team">GamerLegion</div></div>
+          <div class="pred-lbl">Счёт серии</div>
+          <div class="chips"><span class="chip sel">2–0</span><span class="chip">2–1</span></div>
+          <button class="lock">🔒 Зафиксировать прогноз</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Таблица лидеров</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Игрок</th><th class="r">Очки</th><th class="r">Угадано</th>
+          <th class="r">Точный счёт</th><th class="r">Подряд</th></tr></thead>
+        <tbody>
+          <tr><td>gandaCelul</td><td class="n pts">377</td><td class="n">14</td><td class="n">7</td><td class="n">8</td></tr>
+          <tr><td>Costel</td><td class="n pts">332</td><td class="n">12</td><td class="n">6</td><td class="n">4</td></tr>
+          <tr><td>swixsixsix</td><td class="n pts">276</td><td class="n">11</td><td class="n">4</td><td class="n">6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Столбец <b>Streak</b> пришлось назвать «Подряд», а не «Серия»: по-русски «серия»
+      уже занято — так называется сама серия Bo3. В английском такого столкновения нет.
+      Ники игроков не трогаем.</p>
+  </section>
+
+  <section>
+    <h2>Словарь терминов</h2>
+    <p class="note">Здесь важнее всего не ошибиться: у русскоязычной сцены Dota есть устоявшиеся
+      слова, и калька сразу выдаёт машинный перевод.</p>
+    <div class="tw">
+      <table class="term">
+        <thead><tr><th>English</th><th>Русский</th></tr></thead>
+        <tbody>
+          <tr><td>Group Stage</td><td>Групповой этап</td></tr>
+          <tr><td>Playoffs</td><td>Плей-офф</td></tr>
+          <tr><td>Upper / Lower Bracket</td><td>Верхняя / нижняя сетка</td></tr>
+          <tr><td>Grand Final</td><td>Гранд-финал</td></tr>
+          <tr><td>Qualified / Eliminated</td><td>Прошли / вылетели</td></tr>
+          <tr><td>Clean sweep</td><td>Всухую</td></tr>
+          <tr><td>Upset</td><td>Апсет</td></tr>
+          <tr><td>Prize pool</td><td>Призовой фонд</td></tr>
+          <tr><td>Champion / the Aegis</td><td>Чемпион / Эгида</td></tr>
+          <tr><td>Draft</td><td>Драфт</td></tr>
+          <tr><td>Net worth</td><td>Нетворс</td></tr>
+          <tr><td>Last hits / denies</td><td>Добивания / денаи</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">«Эгида» — а не «Аегис»: в русской версии Dota 2 трофей называется именно так,
+      и любой болельщик это заметит.</p>
+  </section>
+
+  <section>
+    <h2>То, что не переводится строкой</h2>
+
+    <div class="callout">
+      <b class="k">Множественное число</b>
+      <p>В русском три формы вместо английских двух, и выбор зависит от двух последних цифр.
+        Каждое место, где сайт что-то считает, требует функции, а не шаблона:</p>
+      <div class="plural">
+        <span><b>1</b> игра</span><span><b>2</b> игры</span><span><b>5</b> игр</span>
+        <span><b>21</b> игра</span><span><b>11</b> игр</span>
+      </div>
+      <p>Обратите внимание на 11 и 21: по последней цифре обе «похожи на 1», но ведут себя
+        по-разному. Английское «s» такого не требует и не прощает.</p>
+    </div>
+
+    <div class="callout">
+      <b class="k">Шрифты</b>
+      <p>Сайт раздаёт только латинские подмножества шрифтов — кириллицы в них нет. Русский текст
+        откатился бы на системный шрифт и выглядел бы чужим на собственном сайте. Нужны три
+        дополнительных файла — Oswald, Inter и JetBrains Mono в кириллице, всего 38 КБ.
+        Английские страницы их не скачивают: <code>unicode-range</code> говорит браузеру,
+        что эти файлы нужны только для кириллицы. Эта страница уже показывает их — то,
+        что вы читаете, набрано правильными шрифтами.</p>
+    </div>
+
+    <div class="callout">
+      <b class="k">Чужие строки</b>
+      <p>«Upper Bracket Quarterfinals», «Southeast Asia» и номера раундов приходят из Liquipedia
+        внутри <code>data.json</code> — это не наши строки. Нужна таблица соответствий, устойчивая
+        к тому, что Liquipedia их переименует: ровно такой дрейф 14 августа сломал начисление очков.</p>
+    </div>
+
+    <div class="callout">
+      <b class="k">Письма и уведомления</b>
+      <p>Supabase Auth разрешает <b>один</b> шаблон письма на тип, поэтому подтверждение регистрации,
+        сброс пароля и ссылка на удаление аккаунта не могут быть на разных языках без своего
+        отправщика. Push-уведомления собираются на сервере, где язык читателя неизвестен —
+        его пришлось бы хранить в подписке.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Как это выходит в свет</h2>
+    <div class="callout">
+      <b class="k">Алиас + /ru/</b>
+      <p>Русская версия живёт по адресу <code>dota2tileague.com/ru/</code>. Домен-алиас в Netlify
+        подключается к тому же сайту и переписывается на этот путь: оба адреса показывают одно
+        и то же, а поисковая репутация не делится между двумя доменами. По умолчанию Netlify
+        отвечает <code>301</code> на основной домен — для алиаса это надо отключить, иначе он
+        просто перебросит читателя на английскую версию.</p>
+      <p>Английский сайт при этом не меняется ни одной строкой: <code>/ru/</code> — отдельные файлы.
+        Пока их нет, ветка <code>ru-i18n</code> не может попасть в продакшн: Netlify собирает
+        только <code>main</code>.</p>
+    </div>
+  </section>
+
+  <footer>
+    Фанатский трекер. Не связан с Valve Corporation, не одобрен и не спонсируется ею.<br>
+    Бесплатно. Без взносов, ставок и призов — это не азартная игра.<br>
+    <span style="opacity:.75">Предпросмотр, ветка ru-i18n. На живом сайте ничего не изменено.</span>
+  </footer>
+</div>

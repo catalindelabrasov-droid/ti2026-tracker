@@ -1,0 +1,92 @@
+extracted 1138 distinct strings from 6 pages
+
+  index.html                757
+  watch.html                 48
+  guide.html                176
+  legal.html                109
+  delete-account.html        52
+  app/index.html             50
+
+STRINGS USED IN MORE THAN ONE PLACE (one translation serves all —
+split by hand if the Russian must differ):
+  "Apply"
+      #editorClose .editor-tip  |  #editorApply .btn
+  "Download data.json"
+      #editorClose .editor-tip  |  #editorDownload .btn
+  "Sign in"
+      #signinModal .modal-head  |  #signinSubmit .btn  |  #signupSubmit .modal-alt  |  #signinBtn .tbtn
+  "Password"
+      #si_id_err .field  |  #su_user_err .field
+  "Nickname"
+      #nickOk .field  |  —
+  "Save nickname"
+      #nickSubmit .btn  |  — @js
+  "Create account"
+      #signupModal .modal-head  |  #signupSubmit .btn  |  #lgGoSignup .lg-btn-ghost
+  "Email"
+      #su_name_err .field  |  —
+  "Join a league"
+      #lgModalTitle .modal-head  |  #lgCreateBtn .lg-card  |  fn:lgOpenJoinModal @js  |  —
+  "&larr; Back to tracker"
+      #leagueBack .rp-back  |  #tourneyBack .rp-back
+  "Predictions"
+      #lgTabs .lg-tab  |  .dim
+  "My Picks"
+      #lgTabs .lg-tab  |  —
+  "Leaderboard"
+      .lg-tab  |  —
+  "Tournaments"
+      #tourneyBack .eyebrow  |  .ht-ico  |  .linklike  |  fn:renderTournaments .trn-head
+  "teams"
+      .subline  |  .pz-hero-meta  |  .tr-meta
+  "Group Stage"
+      .subline  |  #groups .sec-num  |  —
+  "All"
+      #searchInput .tbtn  |  #heroFilters .hf-btn  |  #trnLive .tbtn
+  "Live"
+      .tbtn  |  #signupBtn .active  |  #liveStrip .pulse  |  fn:statusBadge .pulse
+  "Upcoming"
+      .tbtn  |  fn:statusBadge .badge
+  "🏆 Create League"
+      #leagueBtn .tbtn  |  #leagues
+  "⚔️ Create Tournament"
+      #tourneyBtn .tbtn  |  #tournaments
+  "Prize"
+      #signupBtn .active  |  .pz-h-amt
+  "Teams"
+      #signupBtn .active  |  .ht-ico  |  #view-teams .trn-head  |  #teams .sec-num
+  "Groups"
+      #signupBtn .active  |  #trGroupOpts .lg-field
+  "Playoffs"
+      .active  |  —
+  "Heroes"
+      .ht-ico  |  #view-heroes .trn-head
+  "No pro matches live right now"
+      #liveStripScroll .ls-empty  |  fn:renderLiveStrip .ls-empty
+  "Source data via"
+      .foot-app  |  —
+  "Liquipedia"
+      .foot-app  |  —
+  "How it works"
+      —  |  .lg-card
+  "Privacy"
+      —  |  .toc  |  #privacy
+  "Delete your account"
+      —  |  .back
+  "support@dota2tileague.com"
+      —  |  #contact
+  "Final"
+      .badge  |  #trBo .lg-field
+  "`; } return `"
+      .linklike  |  .lg-btn  |  #${esc(m.id)} .pred-lock  |  —
+  "Live &amp; Upcoming"
+      #live .sec-num  |  #watch
+  "Game"
+      .lc-nowlbl  |  .mtab${i===games.length-1?
+  "Loading tournaments…"
+      #trnGrid .loading  |  .loading
+  "${h.img?`"
+      .mhero  |  .hc-art  |  .hd-hero
+  "`).join("")}"
+      .mh-wr  |  .ply-role  |  .tr-desc  |  .lb-acc
+  … 106 shared strings in total
