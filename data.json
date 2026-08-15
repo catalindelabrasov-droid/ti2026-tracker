@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T08:50:55.390510+00:00",
+    "lastUpdated": "2026-08-15T09:00:52.296893+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1802,6 +1802,11 @@
         "losses": 0
       },
       {
+        "team": "Aurora Gaming",
+        "wins": 3,
+        "losses": 1
+      },
+      {
         "team": "Nigma Galaxy",
         "wins": 3,
         "losses": 1
@@ -1809,16 +1814,6 @@
       {
         "team": "Team Spirit",
         "wins": 3,
-        "losses": 1
-      },
-      {
-        "team": "Aurora Gaming",
-        "wins": 2,
-        "losses": 1
-      },
-      {
-        "team": "BoomBoys",
-        "wins": 2,
         "losses": 1
       },
       {
@@ -1830,6 +1825,11 @@
         "team": "Team Liquid",
         "wins": 2,
         "losses": 1
+      },
+      {
+        "team": "BoomBoys",
+        "wins": 2,
+        "losses": 2
       },
       {
         "team": "LGD Gaming",
@@ -2381,7 +2381,7 @@
             "id": "gs-r5-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T17:00:00+08:00",
+            "scheduled": "2026-08-15T17:15:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2395,7 +2395,7 @@
             "id": "gs-r5-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T17:00:00+08:00",
+            "scheduled": "2026-08-15T17:15:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2423,7 +2423,7 @@
             "id": "gs-r5-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T17:00:00+08:00",
+            "scheduled": "2026-08-15T17:15:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
