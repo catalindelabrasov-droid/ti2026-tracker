@@ -162,6 +162,14 @@ self.addEventListener('fetch', event => {
     event.respondWith(networkFirst(request, RUNTIME));
     return;
   }
+  // The Russian dictionary is content, not a static asset. Under the
+  // cache-first rule below it would freeze on an installed device the first
+  // time it was fetched, and a corrected translation could never reach anyone
+  // — the filename never changes, so there is nothing to bust.
+  if (url.pathname === '/ru/strings.json') {
+    event.respondWith(networkFirst(request, RUNTIME));
+    return;
+  }
   event.respondWith(cacheFirst(request, RUNTIME));
 });
 
