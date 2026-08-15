@@ -28,18 +28,58 @@ const SITE = process.env.SITE_URL || "https://dota2tileague.com";
 const FN = "https://hqpynfzatnmwvlxdfhsw.functions.supabase.co";
 
 let fail = 0, checked = 0;
+const failures = [];
 const ok = (c, m, x) => {
   checked++;
-  if (!c) fail++;
+  if (!c) { fail++; failures.push(m + (x ? " — " + x : "")); }
   if (!c || !QUIET) console.log((c ? "  ok   " : "  FAIL ") + m + (x ? "   " + x : ""));
 };
 
-const get = async (url, opts = {}) => {
+/* Retry before crying wolf.
+ *
+ * This runs every 15 minutes off the updater. With ~47 network calls a run,
+ * that is thousands of requests a day, and at that volume a transient blip is
+ * not a possibility — it is a certainty. The first version failed the build on
+ * any single non-200, which produced a red build and an email for a fault that
+ * had already healed by the time anyone looked. update.yml says exactly why
+ * that is worse than useless: "a red build nobody trusts is how a real failure
+ * gets missed."
+ *
+ * So: a request is only a failure if it fails REPEATEDLY. Retries cover network
+ * errors, timeouts, 5xx and 429 — the transient shapes. A 404 is NOT retried:
+ * that is a real answer, and the whole point of this file is to catch it. */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const TRIES = 3, TIMEOUT_MS = 15000;
+
+const attempt = async (url, opts) => {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), TIMEOUT_MS);
   try {
-    const r = await fetch(url, { redirect: "follow", headers: { "cache-control": "no-cache" }, ...opts });
+    const r = await fetch(url, {
+      redirect: "follow", signal: ac.signal,
+      headers: { "cache-control": "no-cache" }, ...opts,
+    });
     return { status: r.status, ok: r.ok, text: opts.method === "HEAD" ? "" : await r.text(),
              type: r.headers.get("content-type") || "" };
-  } catch (e) { return { status: 0, ok: false, text: "", type: "", err: e.message }; }
+  } catch (e) {
+    return { status: 0, ok: false, text: "", type: "", err: e.name === "AbortError" ? `timed out after ${TIMEOUT_MS}ms` : e.message };
+  } finally { clearTimeout(timer); }
+};
+
+const transient = (r, expect) =>
+  r.status === 0 || r.status >= 500 || r.status === 429 ||
+  /* An expected-401 probe that came back 200 could be a real hole OR a cold
+     start answering oddly; re-ask before reporting it. */
+  (expect === 401 && r.status !== 401);
+
+const get = async (url, opts = {}) => {
+  let r;
+  for (let i = 1; i <= TRIES; i++) {
+    r = await attempt(url, opts);
+    if (!transient(r, opts.expect)) return i > 1 ? { ...r, retried: i } : r;
+    if (i < TRIES) await sleep(400 * i);
+  }
+  return { ...r, retried: TRIES, exhausted: true };
 };
 
 (async () => {
@@ -185,13 +225,21 @@ const get = async (url, opts = {}) => {
      here means the secret has gone missing. `?dry=1` is parsed after the auth
      check, so this probe cannot cause a send either way. */
   for (const fn of ["push-tick", "updater-watchdog"]) {
-    const r = await get(`${FN}/${fn}?dry=1`, { method: "POST" });
+    const r = await get(`${FN}/${fn}?dry=1`, { method: "POST", expect: 401 });
     ok(r.status === 401, `${fn} refuses an unauthenticated call`,
        r.status === 401 ? "" : `HTTP ${r.status} — the tick secret may be unset, which opens it`);
   }
 
-  console.log(fail
-    ? `\n${fail} of ${checked} PRODUCTION CHECKS FAILED`
-    : `\nproduction is healthy (${checked} checks)`);
+  /* Name every failure again at the end. GitHub shows the last lines of a failed
+     step as the annotation in the notification email, so what fails has to be
+     legible there without opening the run — otherwise the alert says only that
+     something broke, which is how a real one gets skimmed past. */
+  if (fail) {
+    console.log(`\n${fail} of ${checked} PRODUCTION CHECKS FAILED`);
+    console.log(`(each request was retried ${TRIES}x before being called a failure, so these persisted)`);
+    failures.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
+  } else {
+    console.log(`\nproduction is healthy (${checked} checks)`);
+  }
   process.exit(fail ? 1 : 0);
 })();
