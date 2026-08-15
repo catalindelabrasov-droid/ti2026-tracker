@@ -545,10 +545,142 @@ function shapeLive(g: any) {
   };
 }
 
+/* ------------------------------------------------------------ response cache
+   This endpoint fans out to OpenDota, whose league-matches call answers in
+   ~5.6s and whose /leagues list is a one-megabyte download — measured 8 to 19
+   SECONDS end to end. The page no longer waits for it, but every visitor still
+   triggers that fan-out, and playoff traffic multiplies the callers.
+
+   KEYED ON THE FULL QUERY STRING, deliberately. One function serves at least
+   five different shapes — the default feed plus ?hero=, ?heroes=1, ?roster=
+   and ?league=. A single global key would hand a Heroes-tab request the
+   live-match payload, which is a far worse bug than the slowness it fixes.
+
+   Cache-busting params are stripped from the key: the page appends ?cb=... to
+   defeat the BROWSER cache, and honouring that here would mean never hitting
+   this one at all. ?fresh=1 is the deliberate way past it. */
+type Cached = { at: number; body: string };
+const _resp = new Map<string, Cached>();
+const RESP_MAX = 200;
+
+/* The key is derived from the SHAPE, in the same order the handler dispatches
+   them — never from the raw query string.
+   Two reasons. A raw key lets any unrecognised parameter mint a new entry that
+   still holds a ~100KB copy of the same default payload, so ?z=1 ... ?z=2400 is
+   an unauthenticated way to exhaust the isolate's memory on an endpoint with no
+   JWT. And deriving the TTL separately from the dispatch let ?roster=9&hero=5
+   return a roster while storing it for an hour. One function, one order. */
+function shapeOf(u: URL): { key: string; ttl: number } {
+  const p = (k: string) => `${k}=${encodeURIComponent(u.searchParams.get(k) || "")}`;
+  if (u.searchParams.get("roster")) return { key: p("roster"), ttl: 300_000 };
+  if (u.searchParams.get("hero")) return { key: p("hero"), ttl: 3_600_000 };
+  if (u.searchParams.get("heroes")) return { key: "heroes", ttl: 3_600_000 };
+  if (u.searchParams.get("league")) return { key: p("league"), ttl: 120_000 };
+  return { key: "(default)", ttl: 30_000 };
+}
+
+/* The shared layer. The in-memory Map above is kept because it is free when an
+   isolate does happen to be reused, but it cannot be relied on: measured 10
+   requests out of 10 as misses, four of them in parallel, because Supabase
+   hands out a fresh isolate almost every time. Postgres is the only place all
+   of them can see. One round trip (~100ms) instead of an 8-19 second fan-out. */
+const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const SHARED_OK = !!SB_URL && !!SVC_KEY;
+const svcH = { apikey: SVC_KEY, Authorization: `Bearer ${SVC_KEY}`, "Content-Type": "application/json" };
+
+async function sharedGet(key: string, ttl: number): Promise<string | null> {
+  if (!SHARED_OK) return null;
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 3000);   // never let the cache be the slow part
+    const r = await fetch(
+      `${SB_URL}/rest/v1/edge_cache?select=body,updated_at&key=eq.${encodeURIComponent(key)}`,
+      { headers: svcH, signal: ctl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const rows = await r.json();
+    if (!Array.isArray(rows) || !rows.length) return null;
+    if (Date.now() - Date.parse(rows[0].updated_at) >= ttl) return null;
+    return String(rows[0].body);
+  } catch (_e) { return null; }
+}
+
+// Fire and forget: a write failure must never slow down or fail a response.
+function sharedPut(key: string, body: string) {
+  if (!SHARED_OK) return;
+  fetch(`${SB_URL}/rest/v1/edge_cache?on_conflict=key`, {
+    method: "POST",
+    headers: { ...svcH, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ key, body, updated_at: new Date().toISOString() }),
+  }).catch(() => {});
+}
+
+function evict() {
+  if (_resp.size < RESP_MAX) return;
+  const now = Date.now();
+  for (const [k, v] of _resp) if (now - v.at > 3_600_000) _resp.delete(k);
+  while (_resp.size >= RESP_MAX) {
+    let oldestKey: string | null = null, oldestAt = Infinity;
+    for (const [k, v] of _resp) if (v.at < oldestAt) { oldestAt = v.at; oldestKey = k; }
+    if (oldestKey === null) break;
+    _resp.delete(oldestKey);
+  }
+}
+
+/* `ok` says the payload is COMPLETE. Storing a degraded one is the worst thing
+   this cache could do: jurl() never throws, so a failed upstream comes back as
+   a 200 with an empty list, and pinning that under the hero key would leave
+   every visitor looking at "Couldn't load heroes" for a full hour — with the
+   retry button fetching the same cached emptiness. Before this cache existed
+   that self-healed on the very next request. It still must. */
+function served(u: URL, body: string, ok = true): Response {
+  const { key, ttl } = shapeOf(u);
+  if (ok) { evict(); _resp.set(key, { at: Date.now(), body }); sharedPut(key, body); }
+  return new Response(body, {
+    headers: {
+      ...CORS,
+      "Content-Type": "application/json",
+      "Cache-Control": ok ? `public, max-age=${Math.round(ttl / 1000)}` : "no-store",
+      "X-Cache": ok ? "miss" : "bypass",
+    },
+  });
+}
+
+// A hit advertises only the time LEFT, so an intermediary cannot hold a
+// 29-second-old body for another 30.
+function servedFromCache(u: URL, hit: Cached): Response {
+  const { ttl } = shapeOf(u);
+  const remain = Math.max(0, Math.round((ttl - (Date.now() - hit.at)) / 1000));
+  return new Response(hit.body, {
+    headers: {
+      ...CORS,
+      "Content-Type": "application/json",
+      "Cache-Control": `public, max-age=${remain}`,
+      "X-Cache": "hit",
+    },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const url = new URL(req.url);
+
+    if (url.searchParams.get("fresh") !== "1") {
+      const { key, ttl } = shapeOf(url);
+      const local = _resp.get(key);
+      if (local && Date.now() - local.at < ttl) return servedFromCache(url, local);
+      // Nothing warm here — ask the shared one before doing the slow work.
+      const shared = await sharedGet(key, ttl);
+      if (shared) {
+        _resp.set(key, { at: Date.now(), body: shared });   // warm this isolate too
+        return new Response(shared, {
+          headers: { ...CORS, "Content-Type": "application/json",
+                     "Cache-Control": `public, max-age=${Math.round(ttl / 1000)}`,
+                     "X-Cache": "shared" },
+        });
+      }
+    }
     // On-demand roster lookup: /live-matches?roster=TEAM_ID
     const rosterId = url.searchParams.get("roster");
     if (rosterId) {
@@ -557,29 +689,31 @@ Deno.serve(async (req) => {
         fetchRoster(Number(rosterId)),
         fetchTeamForm(Number(rosterId)),
       ]);
-      return new Response(JSON.stringify({ teamId: Number(rosterId), players, ...form }),
-        { headers: { ...CORS, "Content-Type": "application/json" } });
+      return served(url, JSON.stringify({ teamId: Number(rosterId), players, ...form }),
+        Array.isArray(players) && players.length > 0);
     }
     // One hero's abilities: /live-matches?hero=HERO_ID
     const heroId = url.searchParams.get("hero");
     if (heroId) {
       const detail = await fetchHeroDetail(Number(heroId));
-      return new Response(JSON.stringify(detail),
-        { headers: { ...CORS, "Content-Type": "application/json" } });
+      // {abilities:[],talents:[],facets:[]} is exactly what it returns when the
+      // constants fetch failed — never pin that for an hour.
+      return served(url, JSON.stringify(detail),
+        !!detail && (((detail as any).abilities || []).length > 0 ||
+                     ((detail as any).talents || []).length > 0));
     }
     // Full hero list: /live-matches?heroes=1
     if (url.searchParams.get("heroes")) {
       const heroes = await fetchHeroes();
-      return new Response(JSON.stringify({ heroes }),
-        { headers: { ...CORS, "Content-Type": "application/json" } });
+      return served(url, JSON.stringify({ heroes }), Array.isArray(heroes) && heroes.length > 0);
     }
     // On-demand event detail: /live-matches?league=LEAGUE_ID
     const leagueId = url.searchParams.get("league");
     if (leagueId) {
       await loadLookups();                     // for the league name
       const detail = await fetchLeagueDetail(Number(leagueId));
-      return new Response(JSON.stringify(detail),
-        { headers: { ...CORS, "Content-Type": "application/json" } });
+      return served(url, JSON.stringify(detail),
+        !!detail && (((detail as any).series || []).length > 0 || !!(detail as any).name));
     }
 
     await Promise.all([loadLookups(), loadMeta(), loadLadder()]);
@@ -712,7 +846,7 @@ Deno.serve(async (req) => {
     }
     const tournaments = (_tournaments || []).map((t) => ({ ...t, live: liveLeagueIds.has(t.id) }));
 
-    return new Response(JSON.stringify({
+    return served(url, JSON.stringify({
       liveMatches, tournaments, tiPrize: _tiPrize,
       tiLeagueId: _tiLeagueId, tiSeries,
       meta: _meta || [],
@@ -722,11 +856,25 @@ Deno.serve(async (req) => {
       ratingSource: (_dd && Object.keys(_dd).length)
         ? (_dd[Object.keys(_dd)[0] as any]?.src || "datdota") : "opendota",
       updatedAt: new Date().toISOString(),
-    }), { headers: { ...CORS, "Content-Type": "application/json" } });
+      // Only cache a payload whose loaders actually succeeded. A cold isolate
+      // can answer 200 with a third of the content while ratings are still
+      // backing off, and pinning that would serve everyone the thin version.
+      //
+      // tiSeries is in this list because it is LOAD-BEARING, not cosmetic: it
+      // carries the roll-up that stops a finished series rendering as live. Its
+      // build has its own try/catch, so it fails quietly to an empty array —
+      // and the first version of this gate did not check it, so a payload with
+      // tiSeries=[] was cached and served for thirty seconds while ?fresh=1
+      // returned 24. If we know TI exists, its series must be there.
+    }), !!_leagues && !!_teams &&
+        Array.isArray(_topTeams) && _topTeams.length > 0 &&
+        (!_tiLeagueId || (Array.isArray(tiSeries) && tiSeries.length > 0)));
   } catch (e) {
+    // Deliberately NOT cached: an upstream blip must not be pinned in front of
+    // every visitor for the next thirty seconds.
     return new Response(JSON.stringify({
       error: String(e), liveMatches: [], tournaments: [], meta: [],
       topTeams: [], topPlayers: [], ladder: null,
-    }), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
+    }), { status: 200, headers: { ...CORS, "Content-Type": "application/json", "X-Cache": "bypass" } });
   }
 });
