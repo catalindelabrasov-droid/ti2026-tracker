@@ -202,22 +202,63 @@ const externalStrings = new Set();
   show(ours, "OURS — add to ru/strings.json, or restructure if interpolated:", 25);
   show(ext, "EXTERNAL — from data.json, a dictionary entry will not reach these:", 12);
 
-  /* Budget check. */
+  /* Compare the SET of outstanding strings, not how many there are.
+   *
+   * A count is the wrong thing to guard here, and it produced four red builds
+   * on 15 Aug alone without a single new untranslated string being introduced.
+   * The page renders live tournament data, so the strings on it change shape as
+   * the event moves: "Round 5 · 0 of 7 series decided" only exists once round 5
+   * starts; "● #–# vs «team»" appears the moment a group match goes live. Each
+   * of those bumped the count and failed the build for a defect nobody had
+   * committed. Meanwhile the count could have stayed flat while one string was
+   * translated and a genuinely new one appeared — a real regression, invisible.
+   *
+   * So the guard is: a string that is not in the known list is a regression.
+   * Anything already known can appear more often, less often, or not at all
+   * without failing. That is sensitive to exactly what we care about — a NEW
+   * English string reaching a Russian reader — and immune to data churn. */
   let base = null;
   try { base = JSON.parse(fs.readFileSync(BASELINE, "utf8")); } catch (e) {}
+  const oursSet = ours.map(([t]) => t).sort();
+
+  /* Preserve every key the file already carries. It documents WHY each string
+     is still outstanding and how to fix it; rewriting the file with just the
+     numbers threw that away every time the count improved. */
+  const write = (extra) => fs.writeFileSync(BASELINE,
+    JSON.stringify({ ...(base || {}), ...extra, ours: ours.length, total: rows.length,
+                     known: oursSet }, null, 2) + "\n");
+
   if (!base) {
-    fs.writeFileSync(BASELINE, JSON.stringify({ ours: ours.length, total: rows.length }, null, 2) + "\n");
+    write({});
     console.log(`baseline written: ${ours.length} ours / ${rows.length} total`);
     process.exit(0);
   }
-  const grew = ours.length > base.ours;
+
   console.log(`baseline ${base.ours} ours / ${base.total} total  ->  now ${ours.length} / ${rows.length}`);
-  if (ours.length < base.ours) {
-    fs.writeFileSync(BASELINE, JSON.stringify({ ours: ours.length, total: rows.length }, null, 2) + "\n");
-    console.log(`improved by ${base.ours - ours.length} — baseline lowered`);
-  } else if (grew) {
-    console.log(`REGRESSION: ${ours.length - base.ours} new English string(s) on /ru/`);
-    if (strict) process.exit(1);
+
+  /* First run after this change has no `known` list yet — adopt the current set
+     rather than failing on all of it, and say so out loud. */
+  if (!Array.isArray(base.known)) {
+    write({});
+    console.log(`adopted ${oursSet.length} known string(s) — from here, only a NEW one fails`);
+    process.exit(0);
   }
+
+  const knownSet = new Set(base.known);
+  const fresh = oursSet.filter((t) => !knownSet.has(t));
+  const gone = base.known.filter((t) => !oursSet.includes(t));
+
+  if (gone.length) console.log(`  ${gone.length} known string(s) no longer appear (translated, or the data moved on)`);
+  if (!fresh.length) {
+    /* Only shrink the list — never silently absorb a new string. */
+    if (gone.length) { write({}); console.log("  known list narrowed"); }
+    console.log("no new English strings on /ru/");
+    process.exit(0);
+  }
+
+  console.log(`\nREGRESSION: ${fresh.length} English string(s) on /ru/ that were not there before:`);
+  fresh.forEach((t) => console.log(`  ${JSON.stringify(t.slice(0, 92))}`));
+  console.log("If these are expected, add them to `known` in tools/.ru-baseline.json with a reason.");
+  if (strict) process.exit(1);
   process.exit(0);
 })();

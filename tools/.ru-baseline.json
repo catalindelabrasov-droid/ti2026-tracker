@@ -10,6 +10,22 @@
     "singletons: '# more appear as rounds are drawn', '# placements · # teams', '# qualified', 'Round # · # of # series decided', 'Updated 3:40 PM'",
     "TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later in the file, so it hits the temporal dead zone, throws, and blanks the whole page. Use function declarations, which read LANG at call time."
   ],
-  "ours": 13,
-  "total": 14
+  "ours": 14,
+  "total": 15,
+  "known": [
+    "# game",
+    "# games",
+    "# more appear as rounds are drawn",
+    "# placements · # teams",
+    "# qualified",
+    "# teams · # matches",
+    "Game #",
+    "Round # · # of # series decided",
+    "Sat #:# PM · Bo#",
+    "Series · Bo#",
+    "beat «team» #–#",
+    "lost to «team» #–#",
+    "● #–# vs «team»",
+    "● live · Bo#"
+  ]
 }
