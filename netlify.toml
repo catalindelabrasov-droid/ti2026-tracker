@@ -56,6 +56,23 @@
   to = "/index.html"
   status = 200
 
+# ...and every other page under /en/, which had no rule at all. P() returned a
+# RELATIVE path for English, so the footer links on /en/ resolved against the
+# directory: "watch.html" became /en/watch.html, and /en/watch.html, /en/guide.html,
+# /en/legal.html and /en/delete-account.html were all 404s in production. The
+# Russian side never had this because ru/ holds real files and the two rules
+# below cover the rest. P() now emits absolute paths, which stops new bad links
+# being made; this rule fixes the ones already shared or bookmarked.
+#
+# It must come AFTER the exact "/en/" rule above. This pattern also matches
+# "/en/" with an empty splat, which would rewrite to "/" — and "/" carries the
+# forced geo redirect, so a Russian-speaking reader who asked for English would
+# be bounced straight back to /ru/. First match wins, so the exact rule shields it.
+[[redirects]]
+  from = "/en/*"
+  to = "/:splat"
+  status = 200
+
 # Send visitors from Russian-speaking countries to /ru/.
 #
 # force = true is REQUIRED and is the one place this file uses it: index.html is

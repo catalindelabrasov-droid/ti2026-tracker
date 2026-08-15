@@ -1749,7 +1749,7 @@ function watchButton(m,mini){
      watch page only covers this league. */
   const a=(m.teamA||{}).name, b=(m.teamB||{}).name;
   if(m.status==="live" && isTIMatch(m) && a && b && a!=="TBD" && b!=="TBD"){
-    const href=`watch.html?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
+    const href=`${P("watch.html")}?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
     return `<a class="watch ${mini?'mini':''}" href="${esc(href)}" title="Watch this match on our live page">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${label}</a>`;
   }
@@ -2504,7 +2504,7 @@ function renderLiveStrip(){
        the tournament uses, and cannot bridge a pair like BetBoom Team /
        BoomBoys on its own. */
     const ti=isTIMatch(m)&&a.name&&b.name;
-    const href=ti?`watch.html?a=${encodeURIComponent(canonTeam(a.name))}&b=${encodeURIComponent(canonTeam(b.name))}`
+    const href=ti?`${P("watch.html")}?a=${encodeURIComponent(canonTeam(a.name))}&b=${encodeURIComponent(canonTeam(b.name))}`
                  :(m.watch||'#');
     const ext=ti?'':' target="_blank" rel="noopener"';
     const tip=ti?'Watch this match on our live page':(m.event||'');
@@ -3647,7 +3647,7 @@ async function openEvent(leagueId,name,tier){
         // Open THIS event and it may well be TI — in which case it belongs on
         // our watch page like every other live link, not off to Twitch.
         const ti=isTIMatch(m)&&m.teamA&&m.teamB&&m.teamA.name&&m.teamB.name;
-        const href=ti?`watch.html?a=${encodeURIComponent(canonTeam(m.teamA.name))}&b=${encodeURIComponent(canonTeam(m.teamB.name))}`
+        const href=ti?`${P("watch.html")}?a=${encodeURIComponent(canonTeam(m.teamA.name))}&b=${encodeURIComponent(canonTeam(m.teamB.name))}`
                      :(m.watch||'#');
         return `<a class="ev-match ev-live" href="${esc(href)}"${ti?'':' target="_blank" rel="noopener"'}>
         <span class="ev-team">${teamLogo(m.teamA.name,20,m.teamA.logo)}${esc(m.teamA.name)}</span>
@@ -6550,7 +6550,12 @@ async function loadLang(){
    matcher ignores the trailing slash — so a relative "guide.html" resolves to
    /guide.html for one of them and /ru/guide.html for the other. Absolute
    paths remove the ambiguity entirely. */
-function P(page){ return LANG==="ru" ? "/ru/"+page : page; }
+/* Absolute, both ways. A relative "watch.html" resolves against the CURRENT
+   directory, which is "/" on the main site but "/en/" for a reader who took the
+   English escape hatch off a Russian page — so every footer link there pointed
+   at /en/watch.html, /en/guide.html, /en/legal.html and /en/delete-account.html,
+   none of which exist. The Russian branch was already absolute and was fine. */
+function P(page){ return LANG==="ru" ? "/ru/"+page : "/"+page; }
 
 /* Offer the other language rather than deciding for the reader.
    Deliberately not an automatic redirect: Googlebot crawls from the US and
