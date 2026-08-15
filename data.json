@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T07:00:53.458012+00:00",
+    "lastUpdated": "2026-08-15T07:50:56.326973+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3003677,
-    "note": "$1,600,000 base plus $1,403,677 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3005644,
+    "note": "$1,600,000 base plus $1,405,644 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1276532,
+        "amount": 1277368,
         "team": null
       },
       {
         "place": "2",
-        "amount": 390523,
+        "amount": 390779,
         "team": null
       },
       {
         "place": "3",
-        "amount": 270287,
+        "amount": 270464,
         "team": null
       },
       {
         "place": "4",
-        "amount": 180232,
+        "amount": 180350,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 150173,
+        "amount": 150271,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 120114,
+        "amount": 120193,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 54009,
+        "amount": 54044,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 30059,
+        "amount": 30079,
         "team": null
       },
       {
         "place": "16",
-        "amount": 15030,
+        "amount": 15039,
         "team": null
       }
     ]
@@ -2235,43 +2235,43 @@
           {
             "id": "gs-r4-m1",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T14:20:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Team Spirit",
-              "score": null
+              "score": 0
             }
           },
           {
             "id": "gs-r4-m2",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T14:00:00+08:00",
             "teamA": {
               "name": "Iron Wing",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Team Liquid",
-              "score": null
+              "score": 0
             }
           },
           {
             "id": "gs-r4-m3",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T14:10:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "Aurora Gaming",
-              "score": null
+              "score": 1
             }
           },
           {
@@ -2381,7 +2381,7 @@
             "id": "gs-r5-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:30:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2423,7 +2423,7 @@
             "id": "gs-r5-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:45:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2437,7 +2437,7 @@
             "id": "gs-r5-m7",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:30:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
