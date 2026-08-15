@@ -4298,9 +4298,14 @@ function renderGroups(d){
 
   // Index every group-stage match by team once, rather than re-merging per team.
   const merged=tiMergedMatches(d);
-  // Swiss only: the pip strip is ROUNDS long and the bucket lines describe
-  // the Swiss run. Elimination matches render in their own section below.
-  const isGroup=m=>SWISS_ID.test(m.id||"");
+  /* BOTH stages here, deliberately — only the RECORD is Swiss-only.
+     isGroup feeds infoFor(), which produces the live highlight and the "beat X
+     2-1" line on every row. Narrowing it to Swiss made the whole board go dead
+     during the elimination round: ten of sixteen rows would have shown a stale
+     round-5 result with no live marker, on the one evening they are playing.
+     The record filter lives in computeGroupStandings, and that is the only
+     place that needed to change. */
+  const isGroup=m=>GROUP_ID.test(m.id||"");
   const decidedIn=m=>{
     const a=(m.teamA||{}).score, b=(m.teamB||{}).score;
     return typeof a==="number"&&typeof b==="number"&&
@@ -4373,11 +4378,14 @@ function renderGroups(d){
     else if(capped) parts.push("top three out of reach");
     if(safe) parts.push("elimination round at worst");
     else if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} and you're out`);
+    /* parts is never empty. `capped` is exactly "nw > left", so the if/else
+       above always pushes one clause for any bucket that is neither qualified
+       nor out. A fourth fallback branch here was unreachable — brute-forced
+       over every (w,l) with w+l <= ROUNDS, it fired zero times. */
     const note=qual?"straight to the playoffs"
       :out?"out of the tournament"
       :left===0?"to the elimination round"
-      :parts.length?parts.join(" · ")
-      :`${left} ${left===1?"match":"matches"} left`;
+      :parts.join(" · ");
     const teams=arr.map(r=>{
       const i=infoFor(r.team);
       const pips=Array.from({length:ROUNDS},(_,n)=>`<i class="${i.pips[n]||""}"></i>`).join("");
@@ -4417,26 +4425,32 @@ function renderGroups(d){
      Swiss results — folding them into the record produced impossible standings
      like 4-2, and a 3-3 bucket holding both advancing and eliminated teams.
      Rendered only once it exists, so nothing appears mid-Swiss. */
-  const elim=(g.eliminationMatches||[]).map(m=>merged.find(x=>x.id===m.id)||m);
+  const elim=merged.filter(m=>ELIM_ID.test(m.id||""));
   const elimNamed=elim.filter(m=>((m.teamA||{}).name||"TBD")!=="TBD");
+  /* data.json has carried five TBD placeholders since before the Swiss began,
+     so "render only when fixtures exist" was never the guard it claimed to be —
+     it put five identical "TBD vs TBD" cards on the live board, each with a
+     working notification bell. Until the pairings are actually drawn, show the
+     heading and say so; no empty cards. */
   const elimSection=!elim.length?"":`
     <div class="sw-elim">
       <div class="sw-elimhead">
         <h3>Elimination Round</h3>
         <span class="sw-elimnote">${elimNamed.length
           ?"Winners take the last five playoff slots. Losers are out."
-          :"Pairings are drawn once the Swiss rounds finish."}</span>
+          :"Drawn once the Swiss rounds finish · "+elim.length+" matches for five slots"}</span>
       </div>
-      <div class="bracket-round">${elim.map(m=>bracketMatch(m)).join("")}</div>
+      ${elimNamed.length?`<div class="bracket-round">${elimNamed.map(m=>bracketMatch(m)).join("")}</div>`:""}
     </div>`;
 
   /* One sentence, not three fragments around <b> tags. The old wording was
      both wrong ("first to 3 wins goes through") and untranslatable — an inline
      <b> split it into separate text nodes, which is how a Russian word ended
      up spliced into an English sentence. */
-  const rule=`Teams are grouped by record. ${WIN_TARGET} wins takes you straight to the playoffs, `+
-    `${LOSS_LIMIT} losses puts you out, and everyone in between plays the elimination round `+
-    `below for the last five slots. Tap a team for its matches and roster.`;
+  /* groupStage.note already states all three outcomes. Restating them here put
+     the same three facts in two adjacent paragraphs, in different words —
+     splitting the <p> is what made the duplication visible. */
+  const rule=`Teams are grouped by their record. Tap a team for its matches and roster.`;
 
   return`<section id="groups"><div class="sec-head"><span class="sec-num">04</span><h2>Group Stage</h2></div>
     <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")}</p>
@@ -4493,6 +4507,14 @@ function applySearchFilter(){
       if(activeFilter==="upcoming"&&status!=="upcoming")show=false;
     }
     el.classList.toggle("hidden",!show);
+  });
+  /* A section whose every card is filtered out must go too, or its heading
+     floats above nothing. The elimination round is the visible case: its cards
+     are TBD until the Swiss ends, so ANY search — and the Live filter — hid all
+     five and left "Elimination Round" stranded over an empty grid. */
+  document.querySelectorAll(".sw-elim").forEach(sec=>{
+    const cards=[...sec.querySelectorAll("[data-teams]")];
+    sec.classList.toggle("hidden",cards.length>0&&cards.every(c=>c.classList.contains("hidden")));
   });
 }
 async function toggleNotif(id){

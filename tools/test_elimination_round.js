@@ -179,5 +179,35 @@ noElim.groupStage.eliminationMatches = [];
 ok(!/Elimination Round/.test(w.renderGroups(noElim)),
    "no empty section when there are no elimination fixtures");
 
+/* ---- 5. THE STATE THAT ACTUALLY SHIPS ----
+   The first version of this file tested eliminationMatches = [] and the fully
+   played case, and never once rendered unmodified data.json — which is the only
+   state that was live. data.json has carried five TBD placeholders all along, so
+   the "no fixtures" guard was never the guard it claimed to be: it put five
+   identical "TBD vs TBD" cards, each with a working notification bell, on the
+   board during the Swiss. */
+const today = w.renderGroups(data);
+ok(/Elimination Round/.test(today), "the heading shows during the Swiss (fixtures exist)");
+const tbdCards = (today.match(/data-teams="TBD TBD"/g) || []).length;
+ok(tbdCards === 0, "no empty TBD-vs-TBD cards are rendered before the draw", `${tbdCards} found`);
+const bells = (today.match(/data-notif="el-/g) || []).length;
+ok(bells === 0, "no notification bells on undrawn fixtures", `${bells} found`);
+ok(/Drawn once the Swiss rounds finish/.test(today), "it says the pairings are not drawn yet");
+
+/* ---- 6. the live indicator must survive the elimination round ----
+   Narrowing isGroup to Swiss-only killed this: ten of sixteen rows would have
+   shown a stale round-5 result with no live marker, on the evening the
+   elimination round is actually being played. */
+const live = JSON.parse(JSON.stringify(clone));
+const lm = (live.groupStage.eliminationMatches || [])[0];
+lm.status = "live";
+lm.teamA = { name: winners[0], score: 1 };
+lm.teamB = { name: losers[0], score: 0 };
+const liveOut = w.renderGroups(live);
+const row = new RegExp(`<div class="sw-team[^"]*"[^>]*data-team="${winners[0]}"`).exec(liveOut);
+ok(!!row, `${winners[0]} still has a row on the board`);
+ok(/sw-team is-live/.test(liveOut), "a team playing its elimination match is marked live on the board");
+ok(liveOut.includes(losers[0]), "its live opponent is named");
+
 console.log(fail ? `\n${fail} CHECK(S) FAILED` : "\nall checks pass");
 process.exit(fail ? 1 : 0);
