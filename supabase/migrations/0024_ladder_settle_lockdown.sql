@@ -1,5 +1,33 @@
 -- Close ladder_settle to end users.
 --
+-- APPLIED to production 2026-08-15 via `supabase db query --linked`.
+--
+-- The live ACLs were WORSE than this file first assumed. The migration only
+-- ever ADDED `authenticated` on top of Postgres's default PUBLIC execute grant,
+-- and nothing revoked the default — so the leading `=X/` (empty grantee =
+-- PUBLIC) meant anyone holding the public anon key could call it. No account
+-- required.
+--
+--   before  ladder_settle     =X/postgres | postgres=X/postgres | authenticated=X/postgres | service_role=X/postgres
+--           ladder_report     =X/postgres | postgres=X/postgres | authenticated=X/postgres
+--           ladder_respond    =X/postgres | postgres=X/postgres | authenticated=X/postgres
+--           ladder_challenge  =X/postgres | postgres=X/postgres | authenticated=X/postgres
+--
+--   after   ladder_settle     postgres=X/postgres | service_role=X/postgres
+--           ladder_report     postgres=X/postgres | authenticated=X/postgres
+--           ladder_respond    postgres=X/postgres | authenticated=X/postgres
+--           ladder_challenge  postgres=X/postgres | authenticated=X/postgres
+--
+--   tournament_confirm        postgres=X/postgres | service_role=X/postgres   (unchanged, for comparison)
+--
+-- Verified after: anon RPC calls to ladder_settle / ladder_report /
+-- ladder_respond all return 42501 permission denied, and the public reads
+-- (ladder_standings, ladder_teams, ladder_matches) still return 200.
+--
+-- The three report/respond/challenge functions keep `authenticated` — captains
+-- genuinely call them, and they check auth.uid() internally. They only lost the
+-- anonymous path.
+--
 -- This is the same hole 0010_stages.sql closed for tournament_confirm, on the
 -- function the ladder uses. 0009_ladder.sql:303 granted it to `authenticated`
 -- and nothing ever revoked it, so if the live ACL still matches the repo, any
@@ -40,8 +68,13 @@
 -- AFTER: confirm the ladder still works end to end — captain A reports a score,
 -- captain B confirms the same score, both ratings move.
 
-revoke execute on function public.ladder_settle(uuid) from public, authenticated, anon;
+revoke execute on function public.ladder_settle(uuid) from public, anon, authenticated;
 grant  execute on function public.ladder_settle(uuid) to service_role;
+
+-- The other three keep authenticated; they only lose the anonymous path.
+revoke execute on function public.ladder_report(uuid, integer, integer, jsonb) from public, anon;
+revoke execute on function public.ladder_respond(uuid, boolean) from public, anon;
+revoke execute on function public.ladder_challenge(uuid, integer, text, timestamptz) from public, anon;
 
 -- KNOWN, NOT FIXED HERE: ladder_settle has no `if not found` guard. For an id
 -- that does not exist, `select * into m` leaves every field NULL and
