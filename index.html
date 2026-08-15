@@ -4319,16 +4319,33 @@ function renderGroups(d){
       (byTeam[k]=byTeam[k]||[]).push({m,home});
     });
   });
+  /* Order by STAGE then round, not by date.
+     Every gs- match carries a real `scheduled`; every el- match has
+     scheduled:null, and `null||0` is the epoch — so sorting by date put the
+     elimination round BEFORE round 1. That shifted the Swiss run right, round 5
+     fell off the ROUNDS-long pip strip, and rows rendered a pip sequence that
+     contradicted the record printed beside them (a 3-2 header above four wins).
+     It also left the status line stale, because `last` was then overwritten by
+     the earlier-sorted Swiss games. */
+  const stageRank=m=>SWISS_ID.test(m.id||"")?0:1;
+  const roundNo=m=>{const r=/-r(\d+)/.exec(m.id||"");return r?+r[1]:0;};
+  const seq=m=>[stageRank(m),roundNo(m),new Date(m.scheduled||0).getTime()||0];
   const infoFor=(name)=>{
     const list=(byTeam[tkey(name)||tnorm(name)]||[]).slice()
-      .sort((x,y)=>new Date(x.m.scheduled||0)-new Date(y.m.scheduled||0));
+      .sort((x,y)=>{const a=seq(x.m),b=seq(y.m);return a[0]-b[0]||a[1]-b[1]||a[2]-b[2];});
     const pips=[]; let live=null,last=null,next=null;
     list.forEach(({m,home})=>{
       const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
       const os=(us||{}).score, ts=(them||{}).score;
       // `when` carries the kick-off through to the history view, so it opens
       // THIS meeting rather than the most recent one these two ever played.
-      if(decidedIn(m)){ pips.push(os>ts?"w":"l"); last={opp:(them||{}).name,os,ts,won:os>ts,when:m.scheduled}; }
+      if(decidedIn(m)){
+        /* Pips are the SWISS run only — the strip is ROUNDS long, and a sixth
+           mark would silently push the first one off. The elimination result
+           still reaches `last`, so the status line shows it. */
+        if(SWISS_ID.test(m.id||"")) pips.push(os>ts?"w":"l");
+        last={opp:(them||{}).name,os,ts,won:os>ts,when:m.scheduled};
+      }
       else if(m.status==="live"){ live={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute}; }
       else if(!next&&m.scheduled){ next={opp:(them||{}).name,when:m.scheduled}; }
     });
@@ -4374,10 +4391,16 @@ function renderGroups(d){
     const safe=(l+left)<LOSS_LIMIT;      // cannot reach the loss limit any more
     const capped=(w+left)<WIN_TARGET;    // cannot reach a direct slot any more
     const parts=[];
-    if(!capped&&nw>0&&nw<=left) parts.push(`${nw} ${nw===1?"win":"wins"} for a playoff slot`);
-    else if(capped) parts.push("top three out of reach");
-    if(safe) parts.push("elimination round at worst");
-    else if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} and you're out`);
+    /* capped AND safe means the outcome is already settled — neither threshold
+       is reachable, so every remaining result ends in the elimination round.
+       "at worst" would imply something better is still available. */
+    if(capped&&safe) parts.push("the elimination round either way");
+    else{
+      if(!capped&&nw>0&&nw<=left) parts.push(`${nw} ${nw===1?"win":"wins"} for a playoff slot`);
+      else if(capped) parts.push("top three out of reach");
+      if(safe) parts.push("elimination round at worst");
+      else if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} and you're out`);
+    }
     /* parts is never empty. `capped` is exactly "nw > left", so the if/else
        above always pushes one clause for any bucket that is neither qualified
        nor out. A fourth fallback branch here was unreachable — brute-forced

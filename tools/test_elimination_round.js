@@ -194,6 +194,36 @@ const bells = (today.match(/data-notif="el-/g) || []).length;
 ok(bells === 0, "no notification bells on undrawn fixtures", `${bells} found`);
 ok(/Drawn once the Swiss rounds finish/.test(today), "it says the pairings are not drawn yet");
 
+/* ---- 5b. the pip strip must agree with the record beside it ----
+   Every gs- match carries a real `scheduled`; every el- match has
+   scheduled:null. Sorting the team's matches by date made `null||0` the epoch,
+   so the elimination round sorted BEFORE round 1, pushed the Swiss run right,
+   and round 5 fell off the ROUNDS-long strip. Rows then showed a pip sequence
+   that contradicted their own header — a 3-2 team above four wins. */
+const played = w.renderGroups(clone);
+let contradictions = 0;
+for (const r of after) {
+  const esc = r.team.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(`data-team="${esc}"[\\s\\S]{0,400}?sw-tpips[^>]*>([\\s\\S]*?)</span>`).exec(played);
+  if (!m) continue;
+  const pw = (m[1].match(/class="w"/g) || []).length;
+  const pl = (m[1].match(/class="l"/g) || []).length;
+  if (pw !== r.wins || pl !== r.losses) {
+    contradictions++;
+    console.log(`         ${r.team}: record ${r.wins}-${r.losses}, pips ${pw}W-${pl}L`);
+  }
+}
+ok(contradictions === 0, "every pip strip matches the record printed beside it",
+   contradictions ? `${contradictions} rows contradict themselves` : "");
+
+/* And the sixth game must not be a pip at all — the strip is the Swiss run. */
+const maxPips = Math.max(...after.map((r) => {
+  const esc = r.team.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(`data-team="${esc}"[\\s\\S]{0,400}?sw-tpips[^>]*>([\\s\\S]*?)</span>`).exec(played);
+  return m ? (m[1].match(/class="[wl]"/g) || []).length : 0;
+}));
+ok(maxPips <= ROUNDS, `no strip shows more than ${ROUNDS} marks`, `max ${maxPips}`);
+
 /* ---- 6. the live indicator must survive the elimination round ----
    Narrowing isGroup to Swiss-only killed this: ten of sixteen rows would have
    shown a stale round-5 result with no live marker, on the evening the
