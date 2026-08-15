@@ -1,0 +1,160 @@
+<!--
+  Supabase Auth -> Authentication -> Emails -> "Confirm signup"
+  Paste the whole of this file into the template body.
+
+  BILINGUAL BY NECESSITY, not by preference. Supabase Auth allows exactly ONE
+  template per email type, and no per-user language, so a Russian visitor who
+  signs up from /ru/ receives whatever this file says. English above, Russian
+  below, one link, two buttons pointing at the same URL.
+
+  Supabase uses Go template syntax. The variables below are the real ones:
+    {{ .ConfirmationURL }}  the action link  (NOT {{confirm_url}})
+    {{ .Data.name }}        from signUp options.data.name
+    {{ .Data.username }}    from signUp options.data.username
+    {{ .SiteURL }}          the project's Site URL
+
+  An older draft in the repo root used {{confirm_url}}, {{name}}, {{username}},
+  {{expiry_hours}} and {{support_email}} — none of which Supabase substitutes.
+  Pasted as-is that renders the placeholder text literally and produces a dead
+  link. Do not copy from that file.
+
+  No expiry is stated. Supabase does not expose the lifetime as a variable, and
+  a hard-coded number goes stale the moment the project setting changes.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<title>Confirm your account · Подтвердите аккаунт</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0b0e13;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+    Confirm your email to finish setting up your account · Подтвердите почту, чтобы завершить регистрацию
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0e13;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#151b26;border:1px solid #28303f;border-radius:8px;overflow:hidden;">
+
+          <tr>
+            <td style="padding:26px 32px 20px;border-bottom:1px solid #28303f;">
+              <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#d9a441;font-family:'Courier New',monospace;">
+                Dota 2 World Championship
+              </div>
+              <div style="font-size:26px;font-weight:bold;color:#e9eef5;text-transform:uppercase;letter-spacing:0.5px;margin-top:8px;line-height:1.1;">
+                The International <span style="color:#d9a441;">2026</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ENGLISH -->
+          <tr>
+            <td style="padding:30px 32px 8px;">
+              <h1 style="margin:0 0 14px;font-size:20px;color:#e9eef5;font-weight:bold;">
+                Confirm your email
+              </h1>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#c2cad6;">
+                Hi {{ .Data.name }}, thanks for signing up. Your username is
+                <strong style="color:#e9eef5;">{{ .Data.username }}</strong>.
+              </p>
+              <p style="margin:0 0 26px;font-size:15px;line-height:1.6;color:#c2cad6;">
+                Confirm your email address to activate your account. You'll be
+                taken back to the tracker to sign in.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 26px;">
+                <tr>
+                  <td align="center" bgcolor="#d9a441" style="border-radius:6px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:14px 34px;font-size:15px;font-weight:bold;color:#0b0e13;text-decoration:none;border-radius:6px;">
+                      Confirm my email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#8e99ac;">
+                Or paste this link into your browser:
+              </p>
+              <p style="margin:0 0 20px;font-size:13px;line-height:1.6;word-break:break-all;">
+                <a href="{{ .ConfirmationURL }}" style="color:#d9a441;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+              <p style="margin:0 0 4px;font-size:13px;line-height:1.6;color:#8e99ac;">
+                The link is single-use. If you didn't create this account, ignore
+                this email — nothing happens until the link is opened.
+              </p>
+            </td>
+          </tr>
+
+          <!-- divider -->
+          <tr>
+            <td style="padding:4px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top:1px solid #28303f;font-size:0;line-height:0;height:1px;">&nbsp;</td>
+                </tr>
+              </table>
+              <div style="text-align:center;margin-top:-9px;">
+                <span style="background-color:#151b26;padding:0 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#5b6478;font-family:'Courier New',monospace;">
+                  По-русски
+                </span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- РУССКИЙ -->
+          <tr>
+            <td style="padding:22px 32px 8px;">
+              <h1 style="margin:0 0 14px;font-size:20px;color:#e9eef5;font-weight:bold;">
+                Подтвердите почту
+              </h1>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#c2cad6;">
+                Здравствуйте, {{ .Data.name }}! Спасибо за регистрацию. Ваше имя
+                пользователя — <strong style="color:#e9eef5;">{{ .Data.username }}</strong>.
+              </p>
+              <p style="margin:0 0 26px;font-size:15px;line-height:1.6;color:#c2cad6;">
+                Подтвердите адрес почты, чтобы активировать аккаунт. После этого
+                вы вернётесь на сайт и сможете войти.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 26px;">
+                <tr>
+                  <td align="center" bgcolor="#d9a441" style="border-radius:6px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:14px 34px;font-size:15px;font-weight:bold;color:#0b0e13;text-decoration:none;border-radius:6px;">
+                      Подтвердить почту
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 22px;font-size:13px;line-height:1.6;color:#8e99ac;">
+                Ссылка одноразовая. Если вы не создавали этот аккаунт, просто
+                проигнорируйте письмо — без перехода по ссылке ничего не произойдёт.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:18px 32px 26px;border-top:1px solid #28303f;">
+              <p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:#5b6478;">
+                Need help? · Нужна помощь?
+                <a href="mailto:support@dota2tileague.com" style="color:#8e99ac;">support@dota2tileague.com</a>
+              </p>
+              <p style="margin:0;font-size:12px;line-height:1.6;color:#5b6478;">
+                Fan-made tracker, not affiliated with Valve. ·
+                Фанатский трекер, не связан с Valve.
+                <a href="{{ .SiteURL }}" style="color:#8e99ac;">{{ .SiteURL }}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -12,7 +12,7 @@
   # i18n/ holds the extraction notes and traffic figures, tools/ holds the test
   # suites, and ru/build-pages.js generates the Russian prose pages. The Russian
   # pages themselves and ru/strings.json are runtime files and stay.
-  command = "rm -f test_no_login.html && rm -rf i18n tools && rm -f ru/build-pages.js"
+  command = "rm -f test_no_login.html && rm -rf i18n tools email-templates && rm -f ru/build-pages.js"
 
 # Russian lives at /ru/ and is the SAME document, localised in the browser —
 # not a second copy of index.html that would drift out of sync within a week.

@@ -3,7 +3,7 @@
   "private": true,
   "description": "Dev tooling only. The site itself is static — nothing here is bundled or shipped, and netlify.toml strips tools/ from the deploy.",
   "scripts": {
-    "test": "node tools/test_swiss_thresholds.js && node tools/test_bucket_notes.js && node tools/test_elimination_round.js && node tools/test_redirects.js && node tools/test_fragments.js && node tools/test_i18n.js && node tools/test_find_fixture.js && node tools/test_split_series.js"
+    "test": "node tools/test_swiss_thresholds.js && node tools/test_bucket_notes.js && node tools/test_elimination_round.js && node tools/test_email_templates.js && node tools/test_redirects.js && node tools/test_fragments.js && node tools/test_i18n.js && node tools/test_find_fixture.js && node tools/test_split_series.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"
