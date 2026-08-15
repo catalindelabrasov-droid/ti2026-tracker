@@ -69,6 +69,30 @@ scoring on 14 Aug. Team names must never be translated.
   and the deletion link cannot be per-user language without moving to a custom
   mailer.
 
+**6. The site cannot currently render Russian at all.**
+Found while building the preview, not predicted. The three self-hosted faces —
+Oswald, Inter, JetBrains Mono — ship only the `latin` and `latin-ext` subsets.
+There is no Cyrillic in any of them, so Russian text would silently fall back to
+the system font and look foreign on our own domain. Six more woff2 files are
+required (three families × two weights), +77 KB, loaded only on `/ru/` via
+`unicode-range`. `preview/build.js` fetches exactly those.
+
+## How it ships — alias + `/ru/`
+
+Russian lives at `dota2tileague.com/ru/`, as its own files. The English site is
+not edited, which is the whole point: nothing that is serving TI right now gets
+touched.
+
+A Netlify **domain alias** on the same site, rewritten to that path, gives the
+second address without splitting search reputation across two domains. One trap:
+Netlify answers `301` to the primary domain for every non-primary alias by
+default. Left on, the alias just bounces readers to the English site — it has to
+be turned off for the rewrite to survive.
+
+On `Дота2Тилиг.ru` specifically: it becomes `xn--2-7sbkbwauu0bc.ru` in punycode
+everywhere it is not rendered as text, and *Тилиг* is not a Russian word — league
+is **лига**. Cyrillic domains also conventionally live under `.рф`, not `.ru`.
+
 ## Traffic, for the decision
 
 Netlify Analytics, last 30 days, 6,488 visits across 91 countries:
@@ -87,3 +111,10 @@ not a response to demonstrated demand.
 - `extract.js` — the extractor. Keeps working for the label set in step 2.
 - `strings.en.json` — 1,138 raw strings, kept as evidence for the numbers above.
 - `report.txt` — per-page counts and strings shared across contexts.
+- `labels.js` / `labels.en.json` — the 341 atomic labels that do translate.
+- `glossary.ru.md` — the terminology calls, each with its reason.
+- `preview/ru-preview.src.html` — the preview page itself.
+- `preview/build.js` — embeds the fonts; `node i18n/preview/build.js`.
+- `preview/ru-preview.html` — generated, ~390 KB, opens offline. Not committed.
+
+Nothing here is wired into any page. `index.html` is byte-identical to `main`.
