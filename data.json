@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T06:30:12.334230+00:00",
+    "lastUpdated": "2026-08-15T07:00:53.458012+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3002442,
-    "note": "$1,600,000 base plus $1,402,442 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3003677,
+    "note": "$1,600,000 base plus $1,403,677 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1276007,
+        "amount": 1276532,
         "team": null
       },
       {
         "place": "2",
-        "amount": 390363,
+        "amount": 390523,
         "team": null
       },
       {
         "place": "3",
-        "amount": 270176,
+        "amount": 270287,
         "team": null
       },
       {
         "place": "4",
-        "amount": 180158,
+        "amount": 180232,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 150111,
+        "amount": 150173,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 120065,
+        "amount": 120114,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53986,
+        "amount": 54009,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 30047,
+        "amount": 30059,
         "team": null
       },
       {
         "place": "16",
-        "amount": 15023,
+        "amount": 15030,
         "team": null
       }
     ]
@@ -2277,15 +2277,15 @@
           {
             "id": "gs-r4-m4",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T13:25:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Vici Gaming",
-              "score": null
+              "score": 0
             }
           },
           {
