@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T03:02:08.811621+00:00",
+    "lastUpdated": "2026-08-15T05:30:17.724519+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 2999652,
-    "note": "$1,600,000 base plus $1,399,652 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3001571,
+    "note": "$1,600,000 base plus $1,401,571 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1274821,
+        "amount": 1275637,
         "team": null
       },
       {
         "place": "2",
-        "amount": 390000,
+        "amount": 390249,
         "team": null
       },
       {
         "place": "3",
-        "amount": 269925,
+        "amount": 270098,
         "team": null
       },
       {
         "place": "4",
-        "amount": 179991,
+        "amount": 180106,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 149972,
+        "amount": 150068,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 119953,
+        "amount": 120030,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 53936,
+        "amount": 53971,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 30019,
+        "amount": 30038,
         "team": null
       },
       {
         "place": "16",
-        "amount": 15009,
+        "amount": 15019,
         "team": null
       }
     ]
@@ -1837,6 +1837,11 @@
         "losses": 1
       },
       {
+        "team": "Team Yandex",
+        "wins": 2,
+        "losses": 2
+      },
+      {
         "team": "GamerLegion",
         "wins": 1,
         "losses": 2
@@ -1852,19 +1857,14 @@
         "losses": 2
       },
       {
-        "team": "Team Resilience",
-        "wins": 1,
-        "losses": 2
-      },
-      {
-        "team": "Team Yandex",
-        "wins": 1,
-        "losses": 2
-      },
-      {
         "team": "Xtreme Gaming",
         "wins": 1,
         "losses": 2
+      },
+      {
+        "team": "Team Resilience",
+        "wins": 1,
+        "losses": 3
       },
       {
         "team": "HULIGANI",
@@ -2236,7 +2236,7 @@
             "id": "gs-r4-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T13:00:00+08:00",
+            "scheduled": "2026-08-15T14:00:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
               "score": null
@@ -2250,7 +2250,7 @@
             "id": "gs-r4-m2",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T13:00:00+08:00",
+            "scheduled": "2026-08-15T13:45:00+08:00",
             "teamA": {
               "name": "Iron Wing",
               "score": null
@@ -2264,7 +2264,7 @@
             "id": "gs-r4-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T13:00:00+08:00",
+            "scheduled": "2026-08-15T14:00:00+08:00",
             "teamA": {
               "name": "BoomBoys",
               "score": null
@@ -2278,7 +2278,7 @@
             "id": "gs-r4-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T13:00:00+08:00",
+            "scheduled": "2026-08-15T13:25:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
               "score": null
@@ -2291,57 +2291,57 @@
           {
             "id": "gs-r4-m5",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
               "name": "LGD Gaming",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Xtreme Gaming",
-              "score": null
+              "score": 1
             }
           },
           {
             "id": "gs-r4-m6",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
               "name": "Team Falcons",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "GamerLegion",
-              "score": null
+              "score": 1
             }
           },
           {
             "id": "gs-r4-m7",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "completed",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
               "name": "Team Resilience",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Team Yandex",
-              "score": null
+              "score": 2
             }
           },
           {
             "id": "gs-r4-m8",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
               "name": "OG",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "HULIGANI",
-              "score": null
+              "score": 1
             }
           }
         ]
