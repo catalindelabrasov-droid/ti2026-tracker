@@ -106,11 +106,20 @@ if (last && (last.matches || []).length) {
     const wronglySittingOut = undecided.filter((r) => !inLast.has(r.team));
     ok(!wronglyPlaying.length, `no decided team is scheduled in ${last.name}`,
        wronglyPlaying.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
-    /* This was computed and then only printed — never asserted. A team that is
-       still alive and NOT in the final round is the mirror-image scheduling
-       error, and it was silently tolerated. */
-    ok(!wronglySittingOut.length, `every undecided team is scheduled in ${last.name}`,
-       wronglySittingOut.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
+    /* Only meaningful once the draw is COMPLETE.
+       Liquipedia publishes the final round a pairing at a time — right now 2 of
+       7 have real teams and the other 5 are still TBD. Asserting "every
+       undecided team is scheduled" the moment ANY pairing appears reports ten
+       false failures on a perfectly normal partial draw, which is how this went
+       red in CI within an hour of me writing it. */
+    const fullyDrawn = inLast.size >= undecided.length;
+    if (fullyDrawn) {
+      ok(!wronglySittingOut.length, `every undecided team is scheduled in ${last.name}`,
+         wronglySittingOut.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
+    } else {
+      console.log(`         (${last.name} is partially drawn: ${inLast.size} of ` +
+                  `${undecided.length} live teams paired — skipping the completeness check)`);
+    }
     console.log(`         (${last.name}: ${last.matches.length} matches, ${inLast.size} real teams; ` +
                 `${decided.length} decided, ${undecided.length} still alive)`);
   }

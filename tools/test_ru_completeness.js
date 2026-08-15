@@ -95,7 +95,22 @@ const externalStrings = new Set();
   }
   console.log("positive control ok — the localizer is running\n");
 
-  const found = new Map();   // text -> {count, surfaces:Set, external:bool}
+  /* Collapse data-derived variation BEFORE counting.
+     "beat BoomBoys 2-0" and "lost to OG 1-2" are the same untranslated string
+     with different values in it, and data.json changes every 15 minutes — so a
+     raw count drifts on its own and the baseline reports a regression nobody
+     caused. That went red in CI within an hour. Normalising means the number
+     tracks translation work, not the tournament. */
+  const teamRe = teamNames.size
+    ? new RegExp([...teamNames].map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g")
+    : null;
+  const canonical = (t) => {
+    let c = t;
+    if (teamRe) c = c.replace(teamRe, "«team»");
+    return c.replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
+  };
+
+  const found = new Map();   // canonical text -> {count, surfaces:Set, external:bool}
   const note = (text, surface) => {
     const t = text.replace(/\s+/g, " ").trim();
     if (!t || t.length < 3) return;
@@ -103,9 +118,11 @@ const externalStrings = new Set();
     if (teamNames.has(t) || KEEP.has(t)) return;
     if (!/[A-Za-z]{3,}/.test(t)) return;              // numbers, scores, punctuation
     if (/^[\d\s:.,%+·–—-]+$/.test(t)) return;
-    const e = found.get(t) || { count: 0, surfaces: new Set(), external: externalStrings.has(t) };
+    const key = canonical(t);
+    if (!key || !/[A-Za-z]{3,}/.test(key)) return;
+    const e = found.get(key) || { count: 0, surfaces: new Set(), external: externalStrings.has(t), sample: t };
     e.count++; e.surfaces.add(surface);
-    found.set(t, e);
+    found.set(key, e);
   };
 
   const surfaces = {
