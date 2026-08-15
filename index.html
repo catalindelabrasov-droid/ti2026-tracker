@@ -4285,7 +4285,22 @@ function wireTeams(d){
     const name=el.getAttribute("data-team");
     const go=ev=>{ev.stopPropagation();openTeam(d,name);};
     el.addEventListener("click",go);
-    if(el.tagName==="TR"){el.setAttribute("tabindex","0");el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();openTeam(d,name);}});}
+    /* Keyboard, for anything that ANNOUNCES itself as a button. This was
+       bound only for TR, while 26 div[role="button"][tabindex="0"] rows carried
+       data-team — the group-stage rows, and since the elimination round landed,
+       its confirmed-team rows too. They took focus and told a screen reader they
+       were buttons, and then Enter and Space did nothing at all. Space is
+       included because a real button responds to it, and preventDefault stops
+       it scrolling the page instead. */
+    const keyable=el.tagName==="TR"||el.getAttribute("role")==="button"||el.hasAttribute("tabindex");
+    if(keyable){
+      if(!el.hasAttribute("tabindex")) el.setAttribute("tabindex","0");
+      el.addEventListener("keydown",e=>{
+        if(e.key!=="Enter"&&e.key!==" "&&e.key!=="Spacebar") return;
+        e.preventDefault();
+        openTeam(d,name);
+      });
+    }
   });
   const tb=$("#teamBack"); if(tb) tb.onclick=closeTeamPage;   // clears the #team= hash too
   const tm=$("#teamModal");
@@ -4755,6 +4770,15 @@ function applySearchFilter(){
   document.querySelectorAll(".sw-elim").forEach(sec=>{
     const cards=[...sec.querySelectorAll("[data-teams]")];
     sec.classList.toggle("hidden",cards.length>0&&cards.every(c=>c.classList.contains("hidden")));
+  });
+  /* Same rule for the group-stage buckets, which the guard above missed.
+     Searching "OG" left six of seven record blocks on screen with nothing in
+     them — a header reading "3–1 · 1 win for a playoff slot · 4" floating above
+     an empty box, still claiming four teams. The count is part of the heading,
+     so an empty bucket does not just look odd, it states something false. */
+  document.querySelectorAll(".sw-bucket").forEach(b=>{
+    const rows=[...b.querySelectorAll(".sw-team")];
+    b.classList.toggle("hidden",rows.length>0&&rows.every(r=>r.classList.contains("hidden")));
   });
 }
 async function toggleNotif(id){
