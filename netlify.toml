@@ -6,6 +6,37 @@
   publish = "."
   command = "rm -f test_no_login.html"
 
+# Russian lives at /ru/ and is the SAME document, localised in the browser —
+# not a second copy of index.html that would drift out of sync within a week.
+# Real files under ru/ (guide, legal, delete-account, strings.json) are served
+# directly: Netlify prefers an existing file over a non-forced rewrite, so the
+# rules below only catch the paths that have no file behind them.
+#
+# The bare /ru must redirect to /ru/ before anything else. Without the trailing
+# slash the footer's relative links resolve against the site root, so a reader
+# on /ru would get sent back to the English guide.
+[[redirects]]
+  from = "/ru"
+  to = "/ru/"
+  status = 301
+
+[[redirects]]
+  from = "/ru/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/ru/index.html"
+  to = "/index.html"
+  status = 200
+
+# Not translated yet — the watch page is almost entirely team names, scores and
+# embedded streams. Serving the English one keeps the link working.
+[[redirects]]
+  from = "/ru/watch.html"
+  to = "/watch.html"
+  status = 200
+
 # The service worker must never be served from cache. If it is, a stale worker
 # keeps serving a stale app and no deploy can dislodge it.
 [[headers]]

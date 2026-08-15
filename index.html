@@ -12,6 +12,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TI League">
+<!-- Both languages are the same document served at two paths, so the alternate
+     pair is identical on each and only the canonical differs (set in loadLang). -->
+<link rel="canonical" id="canonLink" href="https://dota2tileague.com/">
+<link rel="alternate" hreflang="en" href="https://dota2tileague.com/">
+<link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/">
+<link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/">
 <style>
 /* Self-hosted: no visitor's IP goes to Google just to read the page.
      Exactly the families, weights and unicode-ranges Google was serving.
@@ -20,71 +26,109 @@
      bytes three times. Named by content hash so a future re-subset cannot reuse
      a filename while the one-year immutable header is still in force. */
 @font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
-  src:url(fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
-  src:url(fonts/inter-latin-3100e775.woff2) format('woff2');
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;
-  src:url(fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;
-  src:url(fonts/inter-latin-3100e775.woff2) format('woff2');
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
-  src:url(fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
-  src:url(fonts/inter-latin-3100e775.woff2) format('woff2');
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
-  src:url(fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
+  src:url(/fonts/inter-latin-ext-34b9c504.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
-  src:url(fonts/inter-latin-3100e775.woff2) format('woff2');
+  src:url(/fonts/inter-latin-3100e775.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
-  src:url(fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
+  src:url(/fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
-  src:url(fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
+  src:url(/fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
-  src:url(fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
+  src:url(/fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
-  src:url(fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
+  src:url(/fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:600;font-display:swap;
-  src:url(fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
+  src:url(/fonts/jetbrains-mono-latin-ext-db5ff4db.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:600;font-display:swap;
-  src:url(fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
+  src:url(/fonts/jetbrains-mono-latin-83c005d4.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
-  src:url(fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
-  src:url(fonts/oswald-latin-571f3457.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
-  src:url(fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
-  src:url(fonts/oswald-latin-571f3457.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
-  src:url(fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
-  src:url(fonts/oswald-latin-571f3457.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;
-  src:url(fonts/oswald-latin-ext-99016932.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-ext-99016932.woff2) format('woff2');
   unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;
-  src:url(fonts/oswald-latin-571f3457.woff2) format('woff2');
+  src:url(/fonts/oswald-latin-571f3457.woff2) format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+
+/* Cyrillic, for /ru/. An English page never downloads these: the unicode-range
+   below tells the browser they contain nothing it needs, so the bytes are only
+   fetched once a Cyrillic character is actually on screen. Same variable-font
+   rule as above — one file per family covers every weight. */
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/inter-cyrillic-71d5ee93.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/jetbrains-mono-cyrillic-e17cfd15.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/jetbrains-mono-cyrillic-e17cfd15.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/jetbrains-mono-cyrillic-e17cfd15.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;
+  src:url(/fonts/oswald-cyrillic-95c3d8d1.woff2) format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116}
 
   :root{
     --bg:#0b0e13;--bg-2:#0f141c;--panel:#151b26;--panel-2:#1b2230;--panel-3:#222b3b;
@@ -102,6 +146,19 @@
   ::selection{background:rgba(217,164,65,.3)}
   .demo-banner{background:rgba(217,164,65,.12);border-bottom:1px solid rgba(217,164,65,.3);color:var(--aegis-bright);
     font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;text-align:center;padding:8px 16px;position:relative;z-index:2}
+  /* Language offer. Sits at the bottom so it never covers the live scores,
+     and clears the iOS home indicator. */
+  .lang-hint{position:fixed;left:12px;right:12px;bottom:12px;z-index:60;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:var(--panel-2,#1b2230);border:1px solid var(--line);
+    border-radius:8px;padding:11px 14px;font-size:13.5px;
+    box-shadow:0 8px 28px rgba(0,0,0,.45);
+    margin-bottom:env(safe-area-inset-bottom,0)}
+  .lang-hint a{color:var(--aegis);font-weight:600;white-space:nowrap}
+  .lang-hint button{margin-left:auto;background:none;border:0;color:var(--ink-dim,#8e99ac);
+    font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+  @media(min-width:640px){ .lang-hint{left:auto;right:16px;bottom:16px;max-width:420px} }
+
   header{padding:46px 0 26px;border-bottom:1px solid var(--line)}
   .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--aegis);margin-bottom:16px;display:flex;align-items:center;gap:12px}
   .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--aegis),transparent)}
@@ -1811,7 +1868,8 @@ function render(d){
         <a href="legal.html#privacy">Privacy</a> ·
         <a href="legal.html#disclaimer">Disclaimer</a> ·
         <a href="delete-account.html">Delete your account</a> ·
-        <a href="mailto:support@dota2tileague.com">support@dota2tileague.com</a><br>
+        <a href="mailto:support@dota2tileague.com">support@dota2tileague.com</a> ·
+        ${langSwitchHTML()}<br>
         <span style="opacity:.75">Free to play. No entry fee, no stake and no prizes — this is not gambling.</span></footer>
     </div>
     <div class="tabview" id="view-tournaments">${renderTournaments()}</div>
@@ -4577,7 +4635,8 @@ async function fetchLiveFeed(){
 }
 async function loadData(skipOverride){
   if(!skipOverride){const ov=localStorage.getItem(LS_DATA);if(ov){try{return JSON.parse(ov);}catch(e){}}}
-  try{const res=await fetch("data.json?_="+Date.now());if(res.ok)return await res.json();}catch(e){}
+  // Absolute: under /ru/ a relative path would ask for /ru/data.json and 404.
+  try{const res=await fetch("/data.json?_="+Date.now());if(res.ok)return await res.json();}catch(e){}
   return null;
 }
 /* ----------------------------- auth UI (front-end only; backend wired at deploy) ----------------------------- */
@@ -6193,7 +6252,148 @@ function wireLeague(){
   const trb=$("#tourneyBack"); if(trb) trb.onclick=closeTourneys;
 }
 
+/* ------------------------------- Russian (/ru/) -------------------------------
+   The whole layer is inert unless the path is /ru/. Every entry point returns
+   on its first line when LANG!=="ru", the dictionary is only fetched for /ru/,
+   and no existing call site was touched — so English cannot regress.
+
+   Why a DOM pass rather than t() at ~700 call sites: this file builds nearly
+   all its markup inside template literals, and rewriting those while it is
+   serving a live tournament is the riskiest edit available to us. A label this
+   layer misses shows English — visible, harmless, fixable in one JSON line. A
+   botched mechanical edit shows nothing at all. */
+const LANG = /^\/ru(\/|$)/.test(location.pathname) ? "ru" : "en";
+let RU_STRINGS = null;
+
+async function loadLang(){
+  if(LANG!=="ru") return;
+  document.documentElement.lang="ru";
+  document.title="The International 2026 — трекер результатов";
+  const md=document.querySelector('meta[name="description"]');
+  if(md) md.setAttribute("content",
+    "Турниры, любительская лестница и лиги прогнозов по Dota 2, плюс живые результаты The International.");
+  const cn=document.getElementById("canonLink");
+  if(cn) cn.href="https://dota2tileague.com/ru/";
+  try{
+    const r=await fetch("/ru/strings.json");
+    if(r.ok) RU_STRINGS=await r.json();
+  }catch(e){}
+}
+
+/* Offer the other language rather than deciding for the reader.
+   Deliberately not an automatic redirect: Googlebot crawls from the US and
+   would then only ever see English, and a Russian speaker who wants the
+   English page has no way back out of one. */
+function langSwitchHTML(){
+  return LANG==="ru"
+    ? `<a href="/" hreflang="en" data-noloc>English</a>`
+    : `<a href="/ru/" hreflang="ru" data-noloc>Русский</a>`;
+}
+
+/* A one-line offer, shown once, only to browsers that actually ask for
+   Russian. Dismissal is remembered so it never nags. */
+function langBanner(){
+  try{
+    if(LANG!=="en") return;
+    if(localStorage.getItem("ti2026_lang_hint")) return;
+    if(!(navigator.languages||[navigator.language||""]).some(l=>/^ru\b/i.test(l))) return;
+    const b=document.createElement("div");
+    b.className="lang-hint";
+    b.innerHTML=`<span data-noloc>Этот сайт доступен на русском.</span>`+
+      `<a href="/ru/" data-noloc>Перейти →</a>`+
+      `<button type="button" aria-label="Close" data-noloc>&times;</button>`;
+    b.querySelector("button").onclick=()=>{
+      b.remove();
+      try{localStorage.setItem("ti2026_lang_hint","1");}catch(e){}
+    };
+    b.querySelector("a").onclick=()=>{try{localStorage.setItem("ti2026_lang_hint","1");}catch(e){}};
+    document.body.appendChild(b);
+  }catch(e){}
+}
+
+/* Names that must never be translated even when they collide with a label —
+   built from the data itself, so a team called "Heroes" cannot be renamed by
+   the dictionary. Cached against DATA the same way tiFieldNames() is. */
+let _protCache={d:undefined,set:new Set()};
+function protectedText(){
+  if(_protCache.d===DATA) return _protCache.set;
+  const s=new Set();
+  ((DATA||{}).teams||[]).forEach(t=>{
+    if(t.name) s.add(t.name);
+    (t.players||[]).forEach(p=>{ if(p&&p.name) s.add(p.name); if(p&&p.nick) s.add(p.nick); });
+  });
+  _protCache={d:DATA,set:s};
+  return s;
+}
+
+/* Returns the translated string, or null when nothing should change. The
+   original leading/trailing whitespace is preserved: template literals put
+   meaningful spacing around these nodes. */
+function ruText(raw){
+  if(!RU_STRINGS||!raw) return null;
+  const k=raw.trim();
+  if(!k||protectedText().has(k)) return null;
+  const v=RU_STRINGS[k];
+  if(!v||v===k) return null;
+  return raw.replace(k,v);
+}
+
+const LOC_SKIP=new Set(["SCRIPT","STYLE","TEXTAREA","CODE","PRE"]);
+
+function localize(root){
+  if(LANG!=="ru"||!RU_STRINGS||!root) return;
+  if(root.nodeType===3){
+    const v=ruText(root.nodeValue);
+    if(v!==null) root.nodeValue=v;
+    return;
+  }
+  if(root.nodeType!==1) return;
+
+  const walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+    acceptNode(n){
+      if(!n.nodeValue||!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      const p=n.parentElement;
+      if(!p||LOC_SKIP.has(p.tagName)) return NodeFilter.FILTER_REJECT;
+      if(p.closest("[data-noloc]")) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  /* Collect first, write after: mutating during a walk invalidates it. */
+  const hits=[];
+  for(let n=walk.nextNode();n;n=walk.nextNode()){
+    const v=ruText(n.nodeValue);
+    if(v!==null) hits.push([n,v]);
+  }
+  for(const [n,v] of hits) n.nodeValue=v;
+
+  const attrs=["placeholder","title","aria-label"];
+  const scope=root.matches("[placeholder],[title],[aria-label]")?[root]:[];
+  for(const el of scope.concat([...root.querySelectorAll("[placeholder],[title],[aria-label]")])){
+    if(el.closest("[data-noloc]")) continue;
+    for(const a of attrs){
+      const cur=el.getAttribute(a);
+      if(!cur) continue;
+      const v=ruText(cur);
+      if(v!==null) el.setAttribute(a,v);
+    }
+  }
+}
+
+/* One hook covers every render path — render(), renderLeague(), the modals and
+   anything added later — without those functions knowing this exists. Only
+   childList is observed, so rewriting a text node cannot re-trigger the
+   observer and loop. */
+function watchLang(){
+  if(LANG!=="ru"||!RU_STRINGS) return;
+  localize(document.body);
+  new MutationObserver(muts=>{
+    for(const m of muts) for(const n of m.addedNodes) localize(n);
+  }).observe(document.body,{childList:true,subtree:true});
+}
+
 async function init(){
+  await loadLang();
+  watchLang();
   wireEditor();
   wireAuth();
   wireLeague();
@@ -6212,6 +6412,7 @@ async function init(){
      already contains, so render now, re-render when it lands. */
   render(data);
   setupAutoRefresh();
+  langBanner();
   fetchLiveFeed().then(feed=>{
     if(!feed) return;
     LIVE_FEED=feed;
