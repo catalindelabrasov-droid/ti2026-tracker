@@ -13,8 +13,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TI League">
 <!-- Both languages are the same document served at two paths, so the alternate
-     pair is identical on each and only the canonical differs (set in loadLang). -->
-<link rel="canonical" id="canonLink" href="https://dota2tileague.com/">
+     pair is identical on each. The canonical deliberately ships with NO href:
+     one static value cannot be right for both, and a hard-coded "/" on the
+     page served at /ru/ would tell Google to fold the Russian version into the
+     English one and drop it. An href-less canonical is ignored — the page is
+     treated as its own canonical — and the script sets the real one for both
+     languages before the renderer looks. -->
+<link rel="canonical" id="canonLink">
 <link rel="alternate" hreflang="en" href="https://dota2tileague.com/">
 <link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/">
 <link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/">
@@ -148,7 +153,15 @@
     font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;text-align:center;padding:8px 16px;position:relative;z-index:2}
   /* Language offer. Sits at the bottom so it never covers the live scores,
      and clears the iOS home indicator. */
-  .lang-hint{position:fixed;left:12px;right:12px;bottom:12px;z-index:60;
+  /* The one word of Cyrillic on an English page. In the footer's JetBrains Mono
+     it would pull down the Cyrillic woff2 on every English visit for a single
+     label, so it gets a system face instead. */
+  .lang-sw{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  /* Above .install-bar (400) and .toast-host (80): this is a one-time,
+     dismissible line, and the only thing that records the dismissal is its own
+     close button. Buried under the install bar it would be undismissable and
+     reappear on every load. */
+  .lang-hint{position:fixed;left:12px;right:12px;bottom:12px;z-index:500;
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     background:var(--panel-2,#1b2230);border:1px solid var(--line);
     border-radius:8px;padding:11px 14px;font-size:13.5px;
@@ -1854,8 +1867,8 @@ function render(d){
         <!-- Permanent way in. The prompt inside Live &amp; Upcoming only shows
              while a game is running, so without this the page is unreachable
              between rounds. -->
-        <a href="watch.html" class="foot-app">▶ Watch live games</a>
-        <a href="guide.html" class="foot-app">? How it works</a><br>
+        <a href="${P("watch.html")}" class="foot-app">▶ Watch live games</a>
+        <a href="${P("guide.html")}" class="foot-app">? How it works</a><br>
         ${m.demo?"Demo dataset for preview. ":""}Source data via
         <a href="https://liquipedia.net/dota2/The_International/2026" rel="noopener">Liquipedia</a>
         (<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license noopener">CC BY-SA 3.0</a>),
@@ -1863,11 +1876,11 @@ function render(d){
         Official tournament: <a href="${esc(m.officialUrl||'#')}">${esc(m.officialUrl||'')}</a><br>
         Fan-made tracker. Not affiliated with, endorsed by or sponsored by Valve Corporation.
         Dota 2 and The International are trademarks of Valve Corporation.<br>
-        <a href="guide.html">How it works</a> ·
-        <a href="legal.html#terms">Terms</a> ·
-        <a href="legal.html#privacy">Privacy</a> ·
-        <a href="legal.html#disclaimer">Disclaimer</a> ·
-        <a href="delete-account.html">Delete your account</a> ·
+        <a href="${P("guide.html")}">How it works</a> ·
+        <a href="${P("legal.html#terms")}">Terms</a> ·
+        <a href="${P("legal.html#privacy")}">Privacy</a> ·
+        <a href="${P("legal.html#disclaimer")}">Disclaimer</a> ·
+        <a href="${P("delete-account.html")}">Delete your account</a> ·
         <a href="mailto:support@dota2tileague.com">support@dota2tileague.com</a> ·
         ${langSwitchHTML()}<br>
         <span style="opacity:.75">Free to play. No entry fee, no stake and no prizes — this is not gambling.</span></footer>
@@ -2262,7 +2275,7 @@ function renderLive(d){
       <span class="live-status" id="liveStatus" title="This section refreshes automatically while you're online">
         <span class="ls-dot"></span><span class="ls-text">Auto-updating</span></span>
     </div>
-    ${anyLive?`<a class="watch-all" href="watch.html">
+    ${anyLive?`<a class="watch-all" href="${P("watch.html")}">
       <span class="wa-title">Watch every live game on one page</span>
       <span class="wa-sub">draft · live score · gold swing · every language stream</span></a>`:""}
     <div id="liveRail">${liveRailInner(d)}</div>
@@ -2831,7 +2844,7 @@ async function trRenderDetail(panel,seq){
 
   const roster=(teams||[]).map(x=>`<div class="tr-team">
       <span class="tr-seed">${x.seed?"#"+x.seed:"–"}</span>
-      <span class="tr-tname">${esc(x.name)}</span>
+      <span class="tr-tname" data-noloc>${esc(x.name)}</span>
       ${x.captain_id===uid?'<span class="tr-you">your team</span>':''}
     </div>`).join("")||`<div class="hint">No teams have registered yet.</div>`;
 
@@ -2938,7 +2951,7 @@ function trSwissHTML(standings,matches,t,myTeam){
       </tr></thead><tbody>${standings.map(r=>`
         <tr class="lb-row ${myTeam&&r.team_id===myTeam.id?'lb-you':''} ${r.state==='eliminated'?'tr-dim':''}">
           <td class="lb-rank"><span class="lb-place">${r.rank}</span></td>
-          <td><div class="lb-name">${esc(r.name)}${pill(r.state)}${r.byes?'<span class="tr-bye">bye</span>':''}</div></td>
+          <td><div class="lb-name"><span data-noloc>${esc(r.name)}</span>${pill(r.state)}${r.byes?'<span class="tr-bye">bye</span>':''}</div></td>
           <td class="lb-acc">${r.wins}–${r.losses}</td>
           <td class="lb-acc hide-sm">${pct(r.omw)}</td>
           <td class="lb-pts">${r.game_diff>0?"+":""}${r.game_diff}</td>
@@ -5398,14 +5411,14 @@ function lgHome(lg){
            ${!m.is_admin?`<button class="mem-btn make" data-makeadmin="${esc(m.user_id)}" data-name="${esc(m.username)}">Make admin</button>`:''}
            <button class="mem-btn kick" data-kick="${esc(m.user_id)}" data-name="${esc(m.username)}">Remove</button>
          </span>` : "";
-    return `<div class="lg-member"><span class="av" style="background:${avatarColor(m.username)}">${esc(m.username.charAt(0).toUpperCase())}</span>${esc(m.username)}${tags}${adminCtrls}</div>`;
+    return `<div class="lg-member"><span class="av" style="background:${avatarColor(m.username)}">${esc(m.username.charAt(0).toUpperCase())}</span><span data-noloc>${esc(m.username)}</span>${tags}${adminCtrls}</div>`;
   }).join("");
 
   // Every member can invite — a league that only the admin can grow stalls the
   // moment the admin is asleep.
   const codeCard = `
     <div class="lg-card">
-      <h3>${esc(lg.name)}</h3>
+      <h3 data-noloc>${esc(lg.name)}</h3>
       <div class="hint">${isAdmin?"You're the admin.":""} Share the code or send the invite link so friends can join.</div>
       <div class="lg-code">${esc(lg.code)}<button id="lgCopyCode">Copy</button></div>
       <button class="lg-btn" id="lgInviteBtn" style="margin-top:12px">📨 Invite friends</button>
@@ -5612,7 +5625,7 @@ function lgLeaderboard(lg){
   if(!board.length) return `<div class="lg-empty"><div class="big">🏆</div><h3>Leaderboard is empty</h3><div class="hint">Points appear here as matches finish and predictions are scored.</div></div>`;
   const rows=board.map((p,i)=>`<tr class="lb-row ${i===0?'top1':''} ${p.name===lg.me?'lb-you':''}">
     <td class="lb-rank"><span class="lb-place">${i+1}</span>${i===0?' 🥇':i===1?' 🥈':i===2?' 🥉':''}</td>
-    <td><div class="lb-name"><span class="av" style="background:${avatarColor(p.name)}">${esc(p.name.charAt(0).toUpperCase())}</span>${esc(p.name)}${p.name===lg.me?'<span class="lb-youtag">You</span>':''}${p.name===lg.admin?'<span class="lb-admintag">Admin</span>':''}</div></td>
+    <td><div class="lb-name"><span class="av" style="background:${avatarColor(p.name)}">${esc(p.name.charAt(0).toUpperCase())}</span><span data-noloc>${esc(p.name)}</span>${p.name===lg.me?'<span class="lb-youtag">You</span>':''}${p.name===lg.admin?'<span class="lb-admintag">Admin</span>':''}</div></td>
     <td class="lb-acc">${p.correct}/${p.scored} correct</td>
     <td class="lb-pts">${p.points}</td>
   </tr>`).join("");
@@ -6265,6 +6278,13 @@ function wireLeague(){
 const LANG = /^\/ru(\/|$)/.test(location.pathname) ? "ru" : "en";
 let RU_STRINGS = null;
 
+/* Self-referential canonical, set for BOTH languages — the tag ships without an
+   href precisely so this can be the only place it is decided. */
+try{
+  const _canon=document.getElementById("canonLink");
+  if(_canon) _canon.href="https://dota2tileague.com"+(LANG==="ru"?"/ru/":"/");
+}catch(e){}
+
 async function loadLang(){
   if(LANG!=="ru") return;
   document.documentElement.lang="ru";
@@ -6272,22 +6292,37 @@ async function loadLang(){
   const md=document.querySelector('meta[name="description"]');
   if(md) md.setAttribute("content",
     "Турниры, любительская лестница и лиги прогнозов по Dota 2, плюс живые результаты The International.");
-  const cn=document.getElementById("canonLink");
-  if(cn) cn.href="https://dota2tileague.com/ru/";
   try{
     const r=await fetch("/ru/strings.json");
-    if(r.ok) RU_STRINGS=await r.json();
+    if(!r.ok) return;
+    const d=await r.json();
+    /* Drop the bookkeeping keys. "_comment" is a real key to a TreeWalker, and
+       any text node reading exactly "_comment" would be replaced by the whole
+       explanation paragraph. */
+    for(const k of Object.keys(d)) if(k.charAt(0)==="_") delete d[k];
+    RU_STRINGS=d;
   }catch(e){}
 }
+
+/* Internal page links. Both /ru and /ru/ serve this document — Netlify's
+   matcher ignores the trailing slash — so a relative "guide.html" resolves to
+   /guide.html for one of them and /ru/guide.html for the other. Absolute
+   paths remove the ambiguity entirely. */
+function P(page){ return LANG==="ru" ? "/ru/"+page : page; }
 
 /* Offer the other language rather than deciding for the reader.
    Deliberately not an automatic redirect: Googlebot crawls from the US and
    would then only ever see English, and a Russian speaker who wants the
-   English page has no way back out of one. */
+   English page has no way back out of one.
+
+   The label is set in a system font on purpose. The footer is JetBrains Mono,
+   and "Русский" in that face would make every English page fetch the Cyrillic
+   woff2 for one word — which is precisely the cost this whole design was
+   supposed to avoid. */
 function langSwitchHTML(){
   return LANG==="ru"
     ? `<a href="/" hreflang="en" data-noloc>English</a>`
-    : `<a href="/ru/" hreflang="ru" data-noloc>Русский</a>`;
+    : `<a href="/ru/" hreflang="ru" class="lang-sw" data-noloc>Русский</a>`;
 }
 
 /* A one-line offer, shown once, only to browsers that actually ask for
@@ -6335,7 +6370,10 @@ function ruText(raw){
   if(!k||protectedText().has(k)) return null;
   const v=RU_STRINGS[k];
   if(!v||v===k) return null;
-  return raw.replace(k,v);
+  /* Function replacement, not a string: a "$" in a translation would otherwise
+     be read as $&, $` or $1 and splice surrounding text into the output. No
+     value contains one today; this makes it impossible for one to matter. */
+  return raw.replace(k,()=>v);
 }
 
 const LOC_SKIP=new Set(["SCRIPT","STYLE","TEXTAREA","CODE","PRE"]);
