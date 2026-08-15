@@ -12,7 +12,18 @@
   # i18n/ holds the extraction notes and traffic figures, tools/ holds the test
   # suites, and ru/build-pages.js generates the Russian prose pages. The Russian
   # pages themselves and ru/strings.json are runtime files and stay.
-  command = "rm -f test_no_login.html && rm -rf i18n tools email-templates && rm -f ru/build-pages.js"
+  # supabase/ is stripped because it is an attack map, not because it holds
+  # secrets — it holds none. But it publishes every RLS policy, every grant, and
+  # config.toml's list of which functions skip JWT verification. Worse,
+  # 0024_ladder_settle_lockdown.sql is a written description of a privilege hole
+  # with before/after ACLs, and push-tick/index.ts shows the header that gates it
+  # and that the gate fails open when the variable is empty. None of that is
+  # needed at runtime: edge functions are deployed separately, and update_data.py
+  # runs from a checkout in Actions, not from the deploy.
+  #
+  # update.yml at the root is a stale duplicate of .github/workflows/update.yml
+  # (dot-directories are already excluded) and still carries the old schedule.
+  command = "rm -f test_no_login.html && rm -rf i18n tools email-templates supabase && rm -f ru/build-pages.js update.yml *.py *.md"
 
 # Russian lives at /ru/ and is the SAME document, localised in the browser —
 # not a second copy of index.html that would drift out of sync within a week.

@@ -1,0 +1,43 @@
+-- Close league_leaderboard to unauthenticated callers.
+--
+-- APPLIED to production 2026-08-15 via `supabase db query --linked`.
+--
+--   before  league_leaderboard  (default = PUBLIC)
+--   after   league_leaderboard  postgres=X | authenticated=X | service_role=X
+--
+-- Verified after: anon POST /rest/v1/rpc/league_leaderboard returns
+-- 42501 permission denied.
+--
+-- THE HOLE
+--
+-- league_leaderboard is SECURITY DEFINER and its body contains no auth.uid()
+-- and no is_league_member() check. It was never revoked from the default PUBLIC
+-- execute grant, so anyone holding the public anon key could call it.
+--
+-- It returns username, points, correct, scored, exact_hits, outcome_points and
+-- best_streak — i.e. it reads `predictions` and member usernames. Those tables
+-- are correctly RLS-closed to anon (42501 on a direct select). The RPC was the
+-- only way in, and it was open.
+--
+-- Its sibling get_match_predictions (0019:74) carries
+-- `and is_league_member(p_league, auth.uid())` in its body. The pattern was
+-- known; this function simply never got it. Same shape as ladder_settle in 0024
+-- and tournament_confirm in 0010 — a default PUBLIC grant that nothing revoked.
+--
+-- WHY THIS IS SAFE
+--
+-- Both call sites are already authenticated: checkRankChange (index.html:4735)
+-- returns early unless `lg.me` is set, and the league view (index.html:5277)
+-- runs after fetching predictions filtered by the caller's own uid. Nothing
+-- signed-out reads the leaderboard.
+--
+-- STILL OPEN, deliberately not fixed here: any AUTHENTICATED user can still
+-- read any league's board if they learn its UUID, because the body has no
+-- membership check. Adding one means rewriting the function — and retyping this
+-- exact function is what produced the league_leaderboard streak bug once
+-- already. A grant change cannot alter any scoring maths; a body rewrite can.
+-- Do it after TI, with the before/after point comparison that caught it last
+-- time.
+
+revoke execute on function public.league_leaderboard(uuid) from public, anon;
+grant  execute on function public.league_leaderboard(uuid) to authenticated, service_role;

@@ -13,6 +13,13 @@
 # the site updating.
 name: tests
 
+# Least privilege, stated in the file rather than inherited.
+# update.yml declares `contents: write` because it pushes data.json; this job
+# only reads, and leaving the block out meant GITHUB_TOKEN took whatever the
+# repository default happened to be — a setting, not a decision.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main, "ru-i18n"]
@@ -36,8 +43,13 @@ jobs:
 
       # jsdom is a devDependency; without it several files exit 1 by design
       # rather than skipping, so this step is not optional.
+      #
+      # --ignore-scripts: run-all.js DISCOVERS tools/test_*.js and spawns each
+      # one, so any pull request is already code execution in CI. That is
+      # deliberate — it is how a new test gets run — but it means the dependency
+      # tree should not ALSO be allowed to run lifecycle scripts on top of it.
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --ignore-scripts
 
       # test_pick_series.py guards _pick_series in update_data.py — the code
       # that rewrites data.json in production. run-all.js reports SKIP loudly if
