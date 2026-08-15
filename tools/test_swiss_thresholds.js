@@ -1,0 +1,105 @@
+/* The group-stage qualify/eliminate labels must agree with the real schedule.
+ *
+ * Run: node tools/test_swiss_thresholds.js      (no dependencies)
+ *
+ * WHY THIS EXISTS
+ *
+ * WIN_TARGET and LOSS_LIMIT were hard-coded to 3/3 with the comment
+ * "16 teams, top 8 advance". They are 4/4. The board therefore told three teams
+ * sitting at 1-3 they were "ELIMINATED · OUT OF THE TOURNAMENT" while they were
+ * still scheduled to play round 5.
+ *
+ * The give-away was in data.json the whole time: HULIGANI is 0-4, which cannot
+ * happen if a third loss ends your tournament. A race to N wins also runs up to
+ * 2N-1 rounds, so "first to 3" cannot fit the 5 rounds this stage schedules.
+ *
+ * So this test does not check the constant. It reconstructs every record from
+ * the completed matches and asserts the labels against what the schedule
+ * actually did — the layer below the screen.
+ */
+const fs = require("fs");
+const path = require("path");
+
+const ROOT = path.join(__dirname, "..");
+const data = JSON.parse(fs.readFileSync(path.join(ROOT, "data.json"), "utf8"));
+const src = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+
+let fail = 0;
+const ok = (c, m, x) => { console.log((c ? "  ok   " : "  FAIL ") + m + (x ? "   " + x : "")); if (!c) fail++; };
+
+const g = data.groupStage || {};
+const rounds = g.rounds || [];
+const ROUNDS = Math.max(1, rounds.length || 5);
+
+/* The shipped derivation, lifted from index.html rather than re-typed. */
+const m = /function swissTarget\(rounds\)\{([^}]*)\}/.exec(src);
+if (!m) { console.error("swissTarget() not found in index.html"); process.exit(1); }
+const swissTarget = new Function("rounds", m[1]);
+const WIN_TARGET = swissTarget(ROUNDS);
+const LOSS_LIMIT = WIN_TARGET;
+
+console.log(`${ROUNDS} rounds -> WIN_TARGET ${WIN_TARGET}, LOSS_LIMIT ${LOSS_LIMIT}\n`);
+
+/* Records, rebuilt from completed matches. */
+const rec = {};
+for (const r of rounds) for (const mt of r.matches || []) {
+  if (mt.status !== "completed") continue;
+  const a = mt.teamA || {}, b = mt.teamB || {};
+  if (!a.name || !b.name) continue;
+  rec[a.name] = rec[a.name] || [0, 0];
+  rec[b.name] = rec[b.name] || [0, 0];
+  if (a.score > b.score) { rec[a.name][0]++; rec[b.name][1]++; }
+  else { rec[b.name][0]++; rec[a.name][1]++; }
+}
+const rows = Object.entries(rec).map(([team, [w, l]]) => ({ team, w, l }));
+ok(rows.length > 0, `rebuilt ${rows.length} records from completed matches`);
+
+/* 1. Nobody may exceed the thresholds. A team at 0-4 under a limit of 3 is the
+      original bug, stated as an invariant. */
+const over = rows.filter((r) => r.w > WIN_TARGET || r.l > LOSS_LIMIT);
+ok(!over.length, "no record exceeds the thresholds",
+   over.length ? over.map((r) => `${r.team} ${r.w}-${r.l}`).join(", ") : "");
+
+/* 2. Anyone who played more games than a threshold allows proves the threshold
+      wrong — this is the check that would have caught 3/3 on day one. */
+const played = rows.map((r) => r.w + r.l);
+const maxPlayed = Math.max(...played);
+ok(maxPlayed <= ROUNDS, `most games played (${maxPlayed}) fits in ${ROUNDS} rounds`);
+const survivedPastLimit = rows.filter((r) => r.l >= LOSS_LIMIT && r.w + r.l > LOSS_LIMIT);
+ok(!survivedPastLimit.length, "no team kept playing after hitting the loss limit",
+   survivedPastLimit.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
+
+/* 3. The specific labels the user caught. */
+const at = (w, l) => rows.filter((r) => r.w === w && r.l === l);
+for (const r of at(1, 3)) {
+  ok(r.l < LOSS_LIMIT, `${r.team} at 1-3 is NOT eliminated`, `${r.l} losses < ${LOSS_LIMIT}`);
+}
+for (const r of at(0, 4)) {
+  ok(r.l >= LOSS_LIMIT, `${r.team} at 0-4 IS eliminated`, `${r.l} losses >= ${LOSS_LIMIT}`);
+}
+for (const r of at(3, 0)) {
+  ok(r.w < WIN_TARGET, `${r.team} at 3-0 has NOT yet qualified`, `${r.w} wins < ${WIN_TARGET}`);
+}
+
+/* 4. Cross-check against the schedule: a team that is decided sits out the last
+      round; a team that is not must still appear in it. */
+const last = rounds[rounds.length - 1];
+if (last && (last.matches || []).length) {
+  const inLast = new Set();
+  for (const mt of last.matches) {
+    if ((mt.teamA || {}).name) inLast.add(mt.teamA.name);
+    if ((mt.teamB || {}).name) inLast.add(mt.teamB.name);
+  }
+  const decided = rows.filter((r) => r.w >= WIN_TARGET || r.l >= LOSS_LIMIT);
+  const undecided = rows.filter((r) => r.w < WIN_TARGET && r.l < LOSS_LIMIT);
+  const wronglySittingOut = undecided.filter((r) => !inLast.has(r.team));
+  const wronglyPlaying = decided.filter((r) => inLast.has(r.team));
+  ok(!wronglyPlaying.length, `no decided team is scheduled in ${last.name}`,
+     wronglyPlaying.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
+  console.log(`         (${last.name}: ${last.matches.length} matches, ${inLast.size} teams; ` +
+              `${decided.length} decided, ${undecided.length} still alive` +
+              (wronglySittingOut.length ? `, ${wronglySittingOut.length} not yet drawn` : "") + ")");
+}
+
+console.log(fail ? `\n${fail} CHECK(S) FAILED` : "\nall checks pass");
+process.exit(fail ? 1 : 0);

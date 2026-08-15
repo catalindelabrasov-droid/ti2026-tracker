@@ -44,17 +44,20 @@ const bad = [];
 
 for (const k of keys) {
   for (const n of nodes.filter((x) => x.text === k)) {
-    /* The sentence continues INTO this node if what precedes it closes an
-       inline emphasis or an interpolation — but NOT if it is a decorative
-       empty element such as <span class="rl-live"></span>, which is a status
-       dot rather than words. */
-    const decorative = /<(span|i)[^>]*>\s*<\/(span|i)>\s*$/.test(n.before);
-    const openLeft = !decorative && /(<\/b>|<\/strong>|<\/em>|\})\s*$/.test(n.before);
+    /* EVERY inline element that can carry words has to be listed here. The
+       first version checked only b/strong/em, so it missed <i>at least</i> —
+       which shipped and spliced "минимум" into an English sentence on the
+       Teams tab. That was this exact class getting through a second time. */
+    const INLINE = "b|strong|em|i|span|a|u|small|mark|code";
 
-    /* ...and continues OUT of it if what follows opens emphasis that itself
-       contains words, rather than a bare counter. */
-    const nextTag = /^<\s*(b|strong|em)[ >]/.test(n.after);
-    const openRight = nextTag;
+    /* An EMPTY inline element is decoration — a status dot, a pulse — not
+       words, so it cannot be continuing a sentence. */
+    const decorative = new RegExp(`<(${INLINE})[^>]*>\\s*</(${INLINE})>\\s*$`).test(n.before);
+
+    /* The sentence runs INTO this node if what precedes it closes an inline
+       element, and OUT of it if what follows opens one. */
+    const openLeft = !decorative && new RegExp(`(</(${INLINE})>|\\})\\s*$`).test(n.before);
+    const openRight = new RegExp(`^<\\s*(${INLINE})[ >]`).test(n.after);
 
     const commaEnd = /,$/.test(k);
     const lowerStart = /^[a-z]/.test(k) && !/^[a-z]+ [a-z]+ /.test(k);
