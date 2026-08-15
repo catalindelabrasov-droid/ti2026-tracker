@@ -167,6 +167,16 @@
     font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;
     color:var(--aegis);border-color:rgba(217,164,65,.45)}
   .tbtn-lang:hover{background:rgba(217,164,65,.12)}
+  /* Elimination round — a separate competition inside the group stage, so it
+     gets a visual break from the Swiss buckets rather than blending in. */
+  .sw-elim{margin-top:26px;border-top:1px solid var(--line);padding-top:20px}
+  .sw-elimhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .sw-elimhead h3{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;
+    letter-spacing:.02em;text-transform:uppercase}
+  .sw-elimnote{font-family:'JetBrains Mono',monospace;font-size:10.5px;
+    letter-spacing:.05em;color:var(--ink-dim)}
+  .sw-elim .bracket-round{display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .lang-hint{position:fixed;left:12px;right:12px;bottom:12px;z-index:500;
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     background:var(--panel-2,#1b2230);border:1px solid var(--line);
@@ -2009,6 +2019,15 @@ const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
    gs- and el-, while the pips and the "beat X 2–0" line beside them counted only
    gs-. Once the el- deciders are played a team's record would have included its
    decider while the marks next to it did not. */
+/* Three patterns, because the group stage is two different competitions.
+   gs- is the five-round Swiss; a record there cannot pass 4-1 or 1-4.
+   el- is the elimination round the 3-2 and 2-3 teams play afterwards for the
+   last five playoff slots — a SIXTH game, single elimination, not a Swiss round.
+   Counting el- into the Swiss record turned a 3-2 winner into "4-2" and put
+   advancing and eliminated teams together in a "3-3" bucket, indistinguishable.
+   GROUP_ID stays for the "is this the group stage at all" question. */
+const SWISS_ID=/^gs-/;
+const ELIM_ID=/^el-/;
 const GROUP_ID=/^(gs|el)-/;
 const ORGWORDS=/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g;
 const tkey=(s)=>tnorm(s).replace(/[.\-_'"]/g," ").replace(ORGWORDS," ").replace(/\s+/g," ").trim();
@@ -4185,7 +4204,9 @@ function computeGroupStandings(d){
        opponents each picked up a group-stage loss they never suffered. The
        board buckets teams by their W–L, so it would have split into buckets
        labelled with records that cannot exist. */
-    if(!GROUP_ID.test(m.id||"")) return;
+    // SWISS only. The elimination round is a sixth game and must not land in
+    // a five-round record; it gets its own section on the board.
+    if(!SWISS_ID.test(m.id||"")) return;
     const sa=a.score, sb=b.score;
     if(typeof sa!=="number"||typeof sb!=="number") return;
     const need=Math.floor((m.bestOf||3)/2)+1;
@@ -4200,7 +4221,7 @@ function computeGroupStandings(d){
   // from "the stage is over".
   const total=tiMergedMatches(d).filter(m=>{
     const a=(m.teamA||{}).name,b=(m.teamB||{}).name;
-    return a&&b&&a!=="TBD"&&b!=="TBD"&&GROUP_ID.test(m.id||"");
+    return a&&b&&a!=="TBD"&&b!=="TBD"&&SWISS_ID.test(m.id||"");
   }).length;
 
   // Nothing settled yet: keep the source's own list so the table still shows
@@ -4277,7 +4298,9 @@ function renderGroups(d){
 
   // Index every group-stage match by team once, rather than re-merging per team.
   const merged=tiMergedMatches(d);
-  const isGroup=m=>GROUP_ID.test(m.id||"");
+  // Swiss only: the pip strip is ROUNDS long and the bucket lines describe
+  // the Swiss run. Elimination matches render in their own section below.
+  const isGroup=m=>SWISS_ID.test(m.id||"");
   const decidedIn=m=>{
     const a=(m.teamA||{}).score, b=(m.teamB||{}).score;
     return typeof a==="number"&&typeof b==="number"&&
@@ -4336,17 +4359,25 @@ function renderGroups(d){
        needed "3 wins to qualify", and a 3-0 team with two matches remaining
        that it was "4 losses" from elimination. Both arithmetically impossible,
        and both were on screen. */
-    const left=Math.max(0,ROUNDS-(w+l));
+    /* A decided team stops playing: round 5 is seven matches, the 4-0 and 0-4
+       sit it out. So "matches left" is zero for them, not one. */
+    const left=(qual||out)?0:Math.max(0,ROUNDS-(w+l));
+    /* THREE outcomes, not two. Reaching WIN_TARGET is a direct playoff slot;
+       reaching LOSS_LIMIT is out; everyone else — ten of sixteen teams — plays
+       the elimination round. Saying "to qualify" for the middle group read as
+       "to survive", when what it actually buys is a top-three finish. */
+    const safe=(l+left)<LOSS_LIMIT;      // cannot reach the loss limit any more
+    const capped=(w+left)<WIN_TARGET;    // cannot reach a direct slot any more
     const parts=[];
-    if(nw>0&&nw<=left) parts.push(`${nw} ${nw===1?"win":"wins"} to qualify`);
-    if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} to elimination`);
-    const note=qual?"through to the playoffs"
+    if(!capped&&nw>0&&nw<=left) parts.push(`${nw} ${nw===1?"win":"wins"} for a playoff slot`);
+    else if(capped) parts.push("top three out of reach");
+    if(safe) parts.push("elimination round at worst");
+    else if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} and you're out`);
+    const note=qual?"straight to the playoffs"
       :out?"out of the tournament"
+      :left===0?"to the elimination round"
       :parts.length?parts.join(" · ")
-      /* Neither threshold is reachable in the games that remain — the record
-         itself decides. Say that rather than invent a number. */
-      :left>0?`${left} ${left===1?"match":"matches"} left · placing decided on record`
-      :"awaiting the final standings";
+      :`${left} ${left===1?"match":"matches"} left`;
     const teams=arr.map(r=>{
       const i=infoFor(r.team);
       const pips=Array.from({length:ROUNDS},(_,n)=>`<i class="${i.pips[n]||""}"></i>`).join("");
@@ -4381,12 +4412,38 @@ function renderGroups(d){
   const progress=cur?`<div class="sw-prog"><div class="sw-progbar"><i style="width:${pct}%"></i></div>
       <span class="sw-progtxt">${esc(cur.name)} · ${cur.done} of ${cur.total} series decided</span></div>`:"";
 
+  /* The elimination round: a SIXTH game for the teams that finish the Swiss
+     between the two thresholds. Its own section, because its results are not
+     Swiss results — folding them into the record produced impossible standings
+     like 4-2, and a 3-3 bucket holding both advancing and eliminated teams.
+     Rendered only once it exists, so nothing appears mid-Swiss. */
+  const elim=(g.eliminationMatches||[]).map(m=>merged.find(x=>x.id===m.id)||m);
+  const elimNamed=elim.filter(m=>((m.teamA||{}).name||"TBD")!=="TBD");
+  const elimSection=!elim.length?"":`
+    <div class="sw-elim">
+      <div class="sw-elimhead">
+        <h3>Elimination Round</h3>
+        <span class="sw-elimnote">${elimNamed.length
+          ?"Winners take the last five playoff slots. Losers are out."
+          :"Pairings are drawn once the Swiss rounds finish."}</span>
+      </div>
+      <div class="bracket-round">${elim.map(m=>bracketMatch(m)).join("")}</div>
+    </div>`;
+
+  /* One sentence, not three fragments around <b> tags. The old wording was
+     both wrong ("first to 3 wins goes through") and untranslatable — an inline
+     <b> split it into separate text nodes, which is how a Russian word ended
+     up spliced into an English sentence. */
+  const rule=`Teams are grouped by record. ${WIN_TARGET} wins takes you straight to the playoffs, `+
+    `${LOSS_LIMIT} losses puts you out, and everyone in between plays the elimination round `+
+    `below for the last five slots. Tap a team for its matches and roster.`;
+
   return`<section id="groups"><div class="sec-head"><span class="sec-num">04</span><h2>Group Stage</h2></div>
-    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")}
-      Teams are grouped by record — first to <b>${WIN_TARGET} wins</b> goes through,
-      <b>${LOSS_LIMIT} losses</b> knocks you out. Tap a team for its matches and roster.</p>
+    <p class="sec-note">${esc(g.format||"")} ${esc(g.note||"")}</p>
+    <p class="sec-note">${esc(rule)}</p>
     ${progress}
-    <div class="sw-board">${board}</div></section>`;
+    <div class="sw-board">${board}</div>
+    ${elimSection}</section>`;
 }
 function bracketMatch(m){
   if(!m)return"";const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);const on=notifIds.has(m.id);

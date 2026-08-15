@@ -1,0 +1,183 @@
+/* Play the elimination round and check the Swiss board survives it.
+ *
+ * Run: node tools/test_elimination_round.js        (needs jsdom)
+ *
+ * WHY THIS EXISTS
+ *
+ * allMatches() pushes groupStage.eliminationMatches (el-r1m1…m5) into the same
+ * pool as the Swiss rounds, and computeGroupStandings counted anything matching
+ * /^(gs|el)-/. All five are TBD today, so nothing looked wrong — the damage was
+ * dated, not present.
+ *
+ * The moment they are played, a 3-2 team that wins becomes 4-2: six games in a
+ * five-round Swiss. Worse, a 3-2 team that LOSES and a 2-3 team that WINS both
+ * land on 3-3, so one bucket would hold teams that advanced and teams that were
+ * knocked out, labelled identically and with no way to tell them apart.
+ *
+ * So this does not inspect the source. It loads the real page, fabricates
+ * finished elimination matches from the live standings, and re-runs the real
+ * computeGroupStandings over them.
+ */
+const fs = require("fs");
+const path = require("path");
+
+let JSDOM;
+try { ({ JSDOM } = require("jsdom")); }
+catch (e) {
+  console.error("test_elimination_round CANNOT RUN: jsdom is not installed.");
+  console.error("  npm install");
+  process.exit(1);
+}
+
+const ROOT = path.join(__dirname, "..");
+const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+const data = JSON.parse(fs.readFileSync(path.join(ROOT, "data.json"), "utf8"));
+
+let fail = 0;
+const ok = (c, m, x) => { console.log((c ? "  ok   " : "  FAIL ") + m + (x ? "   " + x : "")); if (!c) fail++; };
+
+/* Execute the page's inline script so we test the shipped functions, not a
+   re-typed copy. init() is stubbed out — it fetches and renders, neither of
+   which this needs. */
+const script = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/.exec(html)[1]
+  .replace(/\ninit\(\);?/, "\n/* init() suppressed for testing */");
+
+/* Inject as a real <script>, not w.eval(): eval runs in a context where
+   `window` and `localStorage` are not globals, and the page touches both at
+   load. A <script> element executes in the page context, which is what we are
+   trying to reproduce. */
+const dom = new JSDOM("<!doctype html><html><body><div id='app'></div></body></html>",
+  { url: "https://dota2tileague.com/", runScripts: "dangerously", pretendToBeVisual: true });
+const w = dom.window;
+w.fetch = () => Promise.resolve({ ok: false, json: async () => ({}), text: async () => "" });
+w.scrollTo = () => {};
+w.alert = () => {};
+/* The page logs a Supabase init failure with no network — expected, and noisy. */
+const realErr = w.console.error;
+w.console.error = (...a) => { if (!/Supabase/.test(String(a[0]))) realErr(...a); };
+
+const el = w.document.createElement("script");
+el.textContent = script;
+w.document.body.appendChild(el);
+
+if (typeof w.computeGroupStandings !== "function") {
+  console.error("the page script did not define computeGroupStandings — it threw during load");
+  process.exit(1);
+}
+
+ok(typeof w.computeGroupStandings === "function", "computeGroupStandings lifted from the page");
+ok(typeof w.SWISS_ID !== "undefined" || /SWISS_ID/.test(script), "SWISS_ID exists");
+
+const ROUNDS = (data.groupStage.rounds || []).length;
+
+/* ---- 1. today: nothing played in the elimination round ---- */
+const before = w.computeGroupStandings(data).rows || [];
+ok(before.length === 16, `16 teams before the elimination round`, `${before.length}`);
+const maxBefore = Math.max(...before.map((r) => r.wins + r.losses));
+ok(maxBefore <= ROUNDS, `nobody exceeds ${ROUNDS} games before`, `max ${maxBefore}`);
+
+/* ---- 2. fast-forward to the end of the Swiss ----
+   The elimination round only ever involves 3-2 and 2-3 teams, and neither
+   record exists until round 5 is played. A first version of this test skipped
+   that, found zero teams on 3-2, paired invented names, and passed without
+   touching the dangerous path at all. So play the Swiss out first. */
+const clone = JSON.parse(JSON.stringify(data));
+const rounds = clone.groupStage.rounds || [];
+for (const rd of rounds) {
+  for (const m of rd.matches || []) {
+    if (m.status === "completed") continue;
+    const a = (m.teamA || {}).name, b = (m.teamB || {}).name;
+    if (!a || !b || a === "TBD" || b === "TBD") continue;
+    m.teamA = { name: a, score: 2 };
+    m.teamB = { name: b, score: 0 };
+    m.status = "completed";
+  }
+}
+/* Round 5 fixtures are undrawn, so pair the survivors by record ourselves —
+   3-1 v 3-1, 2-2 v 2-2, 1-3 v 1-3, which is how Liquipedia draws it. */
+const mid = w.computeGroupStandings(clone).rows || [];
+const lastRound = rounds[rounds.length - 1];
+if (lastRound) {
+  const pool = [];
+  for (const rec of ["3-1", "2-2", "1-3"]) {
+    const [rw, rl] = rec.split("-").map(Number);
+    pool.push(...mid.filter((r) => r.wins === rw && r.losses === rl).map((r) => r.team));
+  }
+  lastRound.matches = [];
+  for (let i = 0; i + 1 < pool.length; i += 2) {
+    lastRound.matches.push({
+      id: `gs-r${rounds.length}-m${i / 2 + 1}`, bestOf: 3, status: "completed",
+      teamA: { name: pool[i], score: 2 }, teamB: { name: pool[i + 1], score: 0 },
+    });
+  }
+}
+const endOfSwiss = w.computeGroupStandings(clone).rows || [];
+const swissBuckets = [...new Set(endOfSwiss.map((r) => `${r.wins}-${r.losses}`))].sort();
+console.log(`         (end of Swiss: ${swissBuckets.join("  ")})`);
+ok(endOfSwiss.every((r) => r.wins + r.losses <= ROUNDS),
+   `every team has played at most ${ROUNDS} Swiss rounds`);
+
+const at = (w_, l_) => endOfSwiss.filter((r) => r.wins === w_ && r.losses === l_).map((r) => r.team);
+const winners = at(3, 2), losers = at(2, 3);
+ok(winners.length > 0 && losers.length > 0,
+   "the simulation actually produced 3-2 and 2-3 teams",
+   `${winners.length} on 3-2, ${losers.length} on 2-3`);
+console.log(`         (elimination round: ${winners.length} on 3-2 vs ${losers.length} on 2-3)`);
+
+const elim = clone.groupStage.eliminationMatches || [];
+ok(elim.length > 0, `${elim.length} elimination fixtures exist in data.json`);
+/* ALTERNATE the outcomes. If every 3-2 team wins, nobody lands on 3-3 and the
+   worst case never forms. The catastrophe needs both: a 3-2 team that loses and
+   a 2-3 team that wins, which under the old code both become 3-3 — one bucket
+   holding an eliminated team and an advancing one, labelled identically. */
+for (let i = 0; i < elim.length; i++) {
+  const a = winners[i] || `Winner ${i}`, b = losers[i] || `Loser ${i}`;
+  const upset = i % 2 === 1;                 // the 2-3 team wins this one
+  elim[i].teamA = { name: a, score: upset ? 0 : 2 };
+  elim[i].teamB = { name: b, score: upset ? 2 : 0 };
+  elim[i].status = "completed";
+  elim[i].bestOf = 3;
+}
+
+const after = w.computeGroupStandings(clone).rows || [];
+
+/* ---- 3. the assertions that would have caught it ---- */
+const over = after.filter((r) => (r.wins + r.losses) > ROUNDS);
+ok(!over.length, `no team exceeds ${ROUNDS} games after the elimination round`,
+   over.map((r) => `${r.team} ${r.wins}-${r.losses}`).join(", "));
+
+const buckets = [...new Set(after.map((r) => `${r.wins}-${r.losses}`))].sort();
+const impossible = buckets.filter((b) => {
+  const [x, y] = b.split("-").map(Number);
+  return x + y > ROUNDS || x > ROUNDS - 1 || y > ROUNDS - 1;
+});
+ok(!impossible.length, "no impossible bucket appears", impossible.join(", "));
+console.log(`         (buckets after: ${buckets.join("  ")})`);
+
+/* The specific catastrophe: one bucket holding both advancing and eliminated. */
+const mixed = buckets.find((b) => b === "3-3");
+ok(!mixed, "no 3-3 bucket mixing advancing and eliminated teams");
+
+/* And the records must be UNCHANGED — the elimination round is not a Swiss round. */
+const changed = after.filter((r) => {
+  const b = endOfSwiss.find((x) => x.team === r.team);
+  return b && (b.wins !== r.wins || b.losses !== r.losses);
+});
+ok(!changed.length, "Swiss records are untouched by elimination results",
+   changed.map((r) => r.team).join(", "));
+
+/* ---- 4. the section renders, and only once fixtures exist ---- */
+const rendered = w.renderGroups(clone);
+ok(/Elimination Round/.test(rendered), "the elimination section renders");
+ok(/sw-elim/.test(rendered), "it has its own container, separate from the Swiss buckets");
+for (const t of winners.slice(0, 2)) {
+  ok(rendered.includes(t), `${t} appears on the board`);
+}
+
+const noElim = JSON.parse(JSON.stringify(data));
+noElim.groupStage.eliminationMatches = [];
+ok(!/Elimination Round/.test(w.renderGroups(noElim)),
+   "no empty section when there are no elimination fixtures");
+
+console.log(fail ? `\n${fail} CHECK(S) FAILED` : "\nall checks pass");
+process.exit(fail ? 1 : 0);
