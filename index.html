@@ -1963,7 +1963,7 @@ function render(d){
   <div class="roster-back" id="rosterBack"><div class="roster-box" id="rosterBox"></div></div>`;
   $("#app").replaceWith(root);
   wireToolbar();wireNav();applySearchFilter();renderAuthArea();startCountdown(d);wireQualifiers(d);wireTeams(d);
-  wireHubTabs();renderLiveStrip();
+  wireHubTabs();wireOverlayNav();renderLiveStrip();
   const _lb=$("#leagueBtn"); if(_lb) _lb.onclick=openLeague;
   const _tb=$("#tourneyBtn"); if(_tb) _tb.onclick=openTourneys;
   wireMyLeaguesMenu();
@@ -3828,6 +3828,48 @@ function closeRegionPage(){
   if(location.hash.startsWith("#region=")) history.replaceState(null,"",location.pathname+location.search);
   restorePageScroll();
 }
+/* The team panel had no close function at all — only the in-panel "← Back"
+   button unwound it, by calling closeRegionPage's sibling logic inline. */
+function closeTeamPage(){
+  document.body.classList.remove("team-open");_openView=null;
+  if(location.hash.startsWith("#team=")) history.replaceState(null,"",location.pathname+location.search);
+  restorePageScroll();
+}
+
+/* THE BROWSER BACK BUTTON MUST CLOSE AN OPEN PANEL.
+   It did not. The only popstate/hashchange listeners on the page switch hub
+   tabs; nothing anywhere called closeRegionPage from history. So pressing Back
+   with a region page open left the panel up — and because
+   `body.region-open #app{display:none}` hides the tracker behind it, the site
+   appeared blank with no way to recover except a reload. On the Android wrapper,
+   where Back is the primary control, that is the whole app.
+
+   Team panels were worse in a different way: openTeam pushed no history entry
+   at all, so Back consumed the hub-tab entry instead — the panel stayed open AND
+   the tab silently changed underneath it.
+
+   Bound once, deliberately: this sits outside render(), which rebuilds the page
+   and would otherwise stack a new listener every time. */
+let _overlayNavBound=false;
+function wireOverlayNav(){
+  if(_overlayNavBound) return;
+  _overlayNavBound=true;
+  const onNav=()=>{
+    const h=location.hash||"";
+    /* Full-page panels are addressed by the hash, so "the hash no longer names
+       me" is the signal to close. Checked independently — team-open can sit on
+       top of region-open (body.team-open #regionPage{display:none}). */
+    if(document.body.classList.contains("team-open")&&!h.startsWith("#team=")) closeTeamPage();
+    if(document.body.classList.contains("region-open")&&!h.startsWith("#region=")) closeRegionPage();
+    /* Popup mode carries no hash of its own. Any history move should still
+       dismiss it, which is what Back means to a reader looking at an overlay. */
+    const rm=$("#regionModal"), tm=$("#teamModal");
+    if(rm&&rm.classList.contains("show")) rm.classList.remove("show");
+    if(tm&&tm.classList.contains("show")) tm.classList.remove("show");
+  };
+  window.addEventListener("popstate",onNav);
+  window.addEventListener("hashchange",onNav);
+}
 function wireQualifiers(d){
   document.querySelectorAll(".qual-card").forEach(c=>{
     const region=c.getAttribute("data-region");
@@ -4141,6 +4183,11 @@ function openTeam(d,name){
     if(!document.body.classList.contains("team-open")) _pageReturnY=window.scrollY;
     document.body.classList.add("team-open");
     window.scrollTo(0,0);
+    /* Give it a history entry, the way openRegion already did. Without one, Back
+       ate the hub-tab entry instead: the panel stayed open and the tab changed
+       underneath it. Set AFTER the class, so the hashchange this fires sees a
+       hash that names the panel and leaves it alone. */
+    location.hash="team="+encodeURIComponent(name);
   }else{
     $("#teamModalBody").innerHTML=html;
     $("#teamModal").classList.add("show");
@@ -4216,7 +4263,7 @@ function wireTeams(d){
     el.addEventListener("click",go);
     if(el.tagName==="TR"){el.setAttribute("tabindex","0");el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();openTeam(d,name);}});}
   });
-  const tb=$("#teamBack"); if(tb) tb.onclick=()=>{document.body.classList.remove("team-open");_openView=null;restorePageScroll();};
+  const tb=$("#teamBack"); if(tb) tb.onclick=closeTeamPage;   // clears the #team= hash too
   const tm=$("#teamModal");
   if(tm){
     tm.querySelectorAll("[data-close]").forEach(x=>x.onclick=()=>{tm.classList.remove("show");_openView=null;});
