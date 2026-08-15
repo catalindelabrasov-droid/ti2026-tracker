@@ -596,7 +596,11 @@ const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const SHARED_OK = !!SB_URL && !!SVC_KEY;
 const svcH = { apikey: SVC_KEY, Authorization: `Bearer ${SVC_KEY}`, "Content-Type": "application/json" };
 
-async function sharedGet(key: string, ttl: number): Promise<string | null> {
+/* Returns the body AND when it was really written. The `at` matters: re-stamping
+   a shared body with Date.now() when copying it into this isolate restarted its
+   clock, so a body already 27 seconds old could be served for another 30 —
+   measured at 54.7s on a 30-second TTL, and up to two hours on the hero shape. */
+async function sharedGet(key: string, ttl: number): Promise<Cached | null> {
   if (!SHARED_OK) return null;
   try {
     const ctl = new AbortController();
@@ -608,8 +612,9 @@ async function sharedGet(key: string, ttl: number): Promise<string | null> {
     if (!r.ok) return null;
     const rows = await r.json();
     if (!Array.isArray(rows) || !rows.length) return null;
-    if (Date.now() - Date.parse(rows[0].updated_at) >= ttl) return null;
-    return String(rows[0].body);
+    const at = Date.parse(rows[0].updated_at);
+    if (!Number.isFinite(at) || Date.now() - at >= ttl) return null;
+    return { at, body: String(rows[0].body) };
   } catch (_e) { return null; }
 }
 
@@ -681,12 +686,10 @@ Deno.serve(async (req) => {
       // Nothing warm here — ask the shared one before doing the slow work.
       const shared = await sharedGet(key, ttl);
       if (shared) {
-        _resp.set(key, { at: Date.now(), body: shared });   // warm this isolate too
-        return new Response(shared, {
-          headers: { ...CORS, "Content-Type": "application/json",
-                     "Cache-Control": `public, max-age=${Math.round(ttl / 1000)}`,
-                     "X-Cache": "shared" },
-        });
+        // Carry the REAL write time through, so this isolate expires it when it
+        // truly expires rather than thirty seconds from now.
+        _resp.set(key, shared);
+        return servedFromCache(url, shared);
       }
     }
     // On-demand roster lookup: /live-matches?roster=TEAM_ID
@@ -720,8 +723,11 @@ Deno.serve(async (req) => {
     if (leagueId) {
       await loadLookups();                     // for the league name
       const detail = await fetchLeagueDetail(Number(leagueId));
+      // Series, not "series OR a name". The name comes from _leagues and
+      // survives even when /leagues/<id>/matches fails, so the `||` let an
+      // empty-but-named detail cache for two minutes.
       return served(url, JSON.stringify(detail),
-        !!detail && (((detail as any).series || []).length > 0 || !!(detail as any).name));
+        !!detail && ((detail as any).series || []).length > 0);
     }
 
     await Promise.all([loadLookups(), loadMeta(), loadLadder()]);
@@ -902,8 +908,21 @@ Deno.serve(async (req) => {
     // If TI is genuinely over and there are no series, this simply declines to
     // cache. That costs speed on an endpoint the page no longer waits for, and
     // never costs correctness.
+    //
+    // topPlayers and the /live fetch are in here because they are what actually
+    // failed in practice. Measured over 54 samples: 45 responses were served
+    // from cache with topPlayers empty — the Players tab read "No player data
+    // yet" while a bypass returned 150 — and one pinned body carried
+    // liveMatches: 0 while four TI matches were being played.
+    //
+    // The /live test is `Array.isArray(games)`, NOT `liveMatches.length > 0`:
+    // between rounds there genuinely is nothing live, and refusing to cache
+    // then would be wrong. jget returns null on failure and an array on
+    // success, so the array is the honest signal for "we actually asked".
     }), !!_leagues && !!_teams &&
         Array.isArray(_topTeams) && _topTeams.length > 0 &&
+        Array.isArray(_topPlayers) && _topPlayers.length > 0 &&
+        Array.isArray(games) &&
         Array.isArray(tiSeries) && tiSeries.length > 0);
   } catch (e) {
     // Deliberately NOT cached: an upstream blip must not be pinned in front of
