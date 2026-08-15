@@ -281,7 +281,13 @@
   .ls-empty{color:var(--ink-faint);font-size:12px}
   /* ---- tab views ---- */
   .tabview{display:none}
-  .tabview.on{display:block;animation:fadein .25s ease}
+  .tabview.on{display:block}
+  /* The fade belongs to a deliberate tab switch and nothing else. It used to
+     sit on .tabview.on, so every full re-render built a fresh node and replayed
+     it from opacity:0 — a visible blink of the whole page. render() replaces
+     #app wholesale and runs twice on load plus on every data change, so the page
+     flashed at moments nobody asked it to. Only activate() adds .anim now. */
+  .tabview.on.anim{animation:fadein .25s ease}
   @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   /* ---- tournaments grid ---- */
   .trn-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:38px 0 8px}
@@ -2463,15 +2469,28 @@ function renderPrize(d,champion){
 }
 
 /* ============ HUB: tabs, live strip, tournaments, meta ============ */
+/* wireHubTabs runs inside render(), which rebuilds the whole page. Its window
+   listeners must NOT be re-added each time — that leaked two per rebuild, and a
+   single Back press was measured firing activate() 121 times after 120 renders,
+   which on the Heroes tab meant 121 parallel requests from one button press.
+   Bound once; this pointer always aims at the newest activate(), so it drives
+   the current nodes rather than the detached ones it closed over. */
+let _hubActivate=null,_hubNavBound=false;
 function wireHubTabs(){
   const tabs=[...document.querySelectorAll(".hubtab")];
   const views={ti:$("#view-ti"),tournaments:$("#view-tournaments"),teams:$("#view-teams"),players:$("#view-players"),heroes:$("#view-heroes")};
   const nav=document.querySelector("nav");
   const valid=Object.keys(views);
-  function activate(k,push){
+  // `animate` is true only when a person switched tabs. On mount it is false,
+  // so a re-render does not replay the fade — see .tabview.on.anim.
+  function activate(k,push,animate){
     if(!valid.includes(k)) k="ti";
     tabs.forEach(x=>x.classList.toggle("on",x.getAttribute("data-hubtab")===k));
-    Object.entries(views).forEach(([key,el])=>{if(el)el.classList.toggle("on",key===k);});
+    Object.entries(views).forEach(([key,el])=>{
+      if(!el) return;
+      el.classList.toggle("anim",!!animate&&key===k);
+      el.classList.toggle("on",key===k);
+    });
     if(nav) nav.style.display=(k==="ti")?"":"none";
     if(push){ const h="#tab="+k; if(location.hash!==h) history.pushState({tab:k},"",h); }
     if(k==="tournaments") renderTournamentsInto();
@@ -2479,12 +2498,17 @@ function wireHubTabs(){
     if(k==="players") renderPlayersTabInto();
     if(k==="heroes"){ wireHeroFilters(); renderHeroesTabInto(); }
   }
-  tabs.forEach(t=>t.onclick=()=>{ activate(t.getAttribute("data-hubtab"),true); window.scrollTo({top:0,behavior:"smooth"}); });
+  tabs.forEach(t=>t.onclick=()=>{ activate(t.getAttribute("data-hubtab"),true,true); window.scrollTo({top:0,behavior:"smooth"}); });
   // respond to back/forward and direct links (#tab=tournaments)
-  window.addEventListener("popstate",()=>{ activate(currentTabFromHash(),false); });
-  window.addEventListener("hashchange",()=>{ activate(currentTabFromHash(),false); });
-  // initial: honor the hash if present
-  activate(currentTabFromHash(),false);
+  _hubActivate=activate;
+  if(!_hubNavBound){
+    _hubNavBound=true;
+    const onNav=()=>{ if(_hubActivate) _hubActivate(currentTabFromHash(),false,true); };
+    window.addEventListener("popstate",onNav);
+    window.addEventListener("hashchange",onNav);
+  }
+  // initial: honor the hash if present — no animation, this is a mount
+  activate(currentTabFromHash(),false,false);
 }
 // Switch hub tabs from anywhere (used by the "see Tournaments" pointer).
 function gotoTab(k){
@@ -7061,16 +7085,45 @@ async function refreshNow(){
   if(changes) console.log(`${changes} watched result(s) updated`);
 }
 function stripVolatile(d){
-  // Compare everything EXCEPT the live/upcoming match scores+status and the
-  // updated timestamp, so pure live-score ticks don't force a full re-render.
+  /* Mask the things that tick constantly, so refreshNow() can tell a real change
+     from noise and take the cheap path — updating the rail — instead of
+     rebuilding the entire page.
+
+     It only ever scrubbed the BRACKET. Every live match until 20 Aug is in the
+     group stage, and the kickoff times slide by a few minutes whenever a series
+     overruns, which is constantly. Measured across 63 consecutive real data.json
+     versions: 56 of 63 updates triggered a full render() that changed nothing a
+     reader could see. That is what made the page blink, stole the caret out of
+     the search box mid-word, and stacked up duplicate listeners and requests.
+
+     `scheduled` is masked for the same reason and was never handled anywhere: a
+     five-minute drift in an estimated kickoff is not a change worth discarding
+     the page for.
+
+     Status is deliberately NOT masked. A match starting or finishing changes the
+     standings and the live markers, and must repaint. */
   try{
     const c=JSON.parse(JSON.stringify(d));
     if(c.meta) delete c.meta.lastUpdated;
-    const liveIds=new Set(liveMatchesOf(d).map(m=>m.id));
-    allMatches(c).forEach(()=>{});
-    const scrub=arr=>arr&&arr.forEach(rd=>(rd.matches||[]).forEach(m=>{if(liveIds.has(m.id)){if(m.teamA)m.teamA.score=null;if(m.teamB)m.teamB.score=null;m.status="x";}}));
-    if(c.bracket&&c.bracket.rounds){scrub(c.bracket.rounds.upper);scrub(c.bracket.rounds.lower);}
-    if(c.bracket&&c.bracket.grandFinal&&liveIds.has(c.bracket.grandFinal.id)){const g=c.bracket.grandFinal;if(g.teamA)g.teamA.score=null;if(g.teamB)g.teamB.score=null;g.status="x";}
+    /* Mask the SCORE of a match that is live, and nothing else about it.
+       The old version masked status too, over the set liveMatchesOf() returns —
+       which counts UPCOMING as well as live. So a match going upcoming -> live
+       compared equal on both sides and never repainted: the live markers simply
+       did not appear until something unrelated forced a render. Status is the
+       signal, never the noise. */
+    const one=m=>{
+      if(!m) return;
+      if(m.status==="live"||m.status==="ongoing"){
+        if(m.teamA)m.teamA.score=null;
+        if(m.teamB)m.teamB.score=null;
+      }
+      if("scheduled" in m) m.scheduled=null;
+    };
+    const rounds=arr=>arr&&arr.forEach(rd=>(rd.matches||[]).forEach(one));
+    if(c.groupStage){ rounds(c.groupStage.rounds); (c.groupStage.eliminationMatches||[]).forEach(one); }
+    if(c.bracket&&c.bracket.rounds){ rounds(c.bracket.rounds.upper); rounds(c.bracket.rounds.lower); }
+    if(c.bracket) one(c.bracket.grandFinal);
+    (c.qualifiers||[]).forEach(q=>(q.matches||[]).forEach(one));
     return c;
   }catch(e){return d;}
 }
