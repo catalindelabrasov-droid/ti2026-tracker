@@ -73,9 +73,14 @@ scoring on 14 Aug. Team names must never be translated.
 Found while building the preview, not predicted. The three self-hosted faces —
 Oswald, Inter, JetBrains Mono — ship only the `latin` and `latin-ext` subsets.
 There is no Cyrillic in any of them, so Russian text would silently fall back to
-the system font and look foreign on our own domain. Six more woff2 files are
-required (three families × two weights), +77 KB, loaded only on `/ru/` via
-`unicode-range`. `preview/build.js` fetches exactly those.
+the system font and look foreign on our own domain.
+
+**Three** more woff2 files, +38 KB total. Not six: the files in `/fonts/` are
+variable fonts, so one file per family per subset covers every weight — which is
+why `index.html` declares eight `@font-face` rules per family that all point at
+the same two files. (The preview embeds twelve static faces instead, because
+that is what the `css2` API returns for an explicit weight list. Its font bill
+is not the site's font bill.)
 
 ## How it ships — alias + `/ru/`
 
@@ -92,6 +97,36 @@ be turned off for the rewrite to survive.
 On `Дота2Тилиг.ru` specifically: it becomes `xn--2-7sbkbwauu0bc.ru` in punycode
 everywhere it is not rendered as text, and *Тилиг* is not a Russian word — league
 is **лига**. Cyrillic domains also conventionally live under `.рф`, not `.ru`.
+
+## What `/ru/` shares with the English site
+
+The pages are separate files, so no English copy changes. Four things are still
+shared, and they are where any damage would come from:
+
+**`netlify.toml` — the only thing that can actually break English.** The alias
+rewrite is a `[[redirects]]` block in the same file that configures headers for
+the whole site. A malformed rule ships to every visitor, not just Russian ones.
+Add it via a deploy preview and check the English routes before promoting.
+
+**`sw.js` — bumping `VERSION` invalidates the shell for everybody.** If `/ru/`
+or the Cyrillic fonts go into `PRECACHE`, `v7` becomes `v8` and every installed
+user re-downloads the shell once, English included. Cheaper not to precache
+Russian from the English worker at all: the Cyrillic files are never fetched by
+an English page anyway, because `unicode-range` tells the browser they contain
+nothing it needs.
+
+**One deploy for both.** The build command is only `rm -f test_no_login.html`,
+so a broken Russian page cannot fail the build — but it does ship in the same
+deploy as English.
+
+**Supabase is one project.** Russian users are just users: same leagues, same
+leaderboard, same rate limits. And Auth allows one email template per type, so
+the confirmation and reset mails stay English for everyone unless we move to a
+custom mailer.
+
+Optional, and the only change worth making to English pages: a
+`<link rel="alternate" hreflang="ru">` pair in `<head>` so search engines treat
+the two as translations rather than near-duplicates. Two lines, no behaviour.
 
 ## Traffic, for the decision
 
