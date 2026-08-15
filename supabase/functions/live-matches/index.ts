@@ -349,9 +349,17 @@ async function fetchLeagueDetail(leagueId: number) {
   // that has just gone 2-1 should not read 1-1 for another quarter of an hour.
   if (c && (Date.now() - c.at < 3 * 60 * 1000)) return c.data;
 
+  /* 25s, not jget's default 8.
+     /leagues/<id>/matches was measured at 5.6 seconds and spikes past 12, so an
+     8-second timeout dropped it often — and this is what builds tiSeries, which
+     carries the roll-up that stops a finished series rendering as live. Every
+     time it timed out the payload came back with tiSeries empty, which is both
+     wrong on the page and (correctly) refused by the response cache, so the
+     stale entry kept being served instead. Slow is fine here; the call is
+     cached for three minutes and no longer blocks the page render. */
   const [rows, tms] = await Promise.all([
-    jget(`/leagues/${leagueId}/matches`),
-    jget(`/leagues/${leagueId}/teams`),
+    jurl(`${OD}/leagues/${leagueId}/matches`, UA, 25000),
+    jurl(`${OD}/leagues/${leagueId}/teams`, UA, 25000),
   ]);
   const names: Record<number, { name: string; logo: string | null }> = {};
   for (const t of (Array.isArray(tms) ? tms : [])) {
@@ -746,13 +754,32 @@ Deno.serve(async (req) => {
     //
     // Valve's broadcast delay shifts game_time against the wall clock; it does
     // not change how often the row is written, which is what this measures.
+    /* MEASURE STALENESS AGAINST THE SNAPSHOT, NOT THE WALL CLOCK.
+       last_update_time is stamped when OpenDota refreshes the whole dump, not
+       per game: on 15 Aug all four TI matches carried just two distinct
+       timestamps between them. Comparing that to `now` therefore measures how
+       far behind OpenDota is, not whether a game is alive — and when the dump
+       ran 11-14 minutes late, a 6-minute limit hid all four matches of a live
+       round. The site said "No pro matches live right now" while four were
+       being played, each 59 to 63 minutes in with no deactivate_time.
+
+       So: a row is current if it was written in the SAME refresh as the newest
+       row we can see. deactivate_time above remains the real "it is over"
+       signal — Valve sets it — and the absolute cap below still throws the
+       whole snapshot away if OpenDota gets properly stuck, which it does: its
+       /live is a Redis dump with an eight-hour TTL. */
     const STALE_RUNNING_SEC = 6 * 60;
     const STALE_DRAFT_SEC = 25 * 60;
+    const SNAPSHOT_MAX_AGE_SEC = 45 * 60;
+    const rows = (Array.isArray(games) ? games : []).filter(isPro);
+    const newestStamp = rows.reduce((m, g) => Math.max(m, g.last_update_time || 0), 0);
+    const snapshotAge = newestStamp ? nowSec - newestStamp : Infinity;
+    const snapshotUsable = snapshotAge <= SNAPSHOT_MAX_AGE_SEC;
     const newestByPair: Record<string, any> = {};
-    for (const g of (Array.isArray(games) ? games : [])) {
-      if (!isPro(g)) continue;
+    for (const g of rows) {
       if (g.deactivate_time) continue;                       // match is over
-      const age = nowSec - (g.last_update_time || 0);
+      if (!snapshotUsable) continue;                         // the whole dump is stuck
+      const age = newestStamp - (g.last_update_time || 0);   // behind THIS snapshot
       // A negative or zero game_time means the horn has not gone yet.
       const drafting = (g.game_time ?? 0) <= 0;
       const limit = drafting ? STALE_DRAFT_SEC : STALE_RUNNING_SEC;
@@ -866,9 +893,18 @@ Deno.serve(async (req) => {
       // and the first version of this gate did not check it, so a payload with
       // tiSeries=[] was cached and served for thirty seconds while ?fresh=1
       // returned 24. If we know TI exists, its series must be there.
+    //
+    // tiSeries is required OUTRIGHT. The first version excused it when
+    // _tiLeagueId was null — but that is set by the same lookup whose failure
+    // empties tiSeries, so the excuse fired exactly when the payload was
+    // broken, and series=0 was cached and served anyway. Measured: five of six
+    // consecutive responses came back with no series at all.
+    // If TI is genuinely over and there are no series, this simply declines to
+    // cache. That costs speed on an endpoint the page no longer waits for, and
+    // never costs correctness.
     }), !!_leagues && !!_teams &&
         Array.isArray(_topTeams) && _topTeams.length > 0 &&
-        (!_tiLeagueId || (Array.isArray(tiSeries) && tiSeries.length > 0)));
+        Array.isArray(tiSeries) && tiSeries.length > 0);
   } catch (e) {
     // Deliberately NOT cached: an upstream blip must not be pinned in front of
     // every visitor for the next thirty seconds.
