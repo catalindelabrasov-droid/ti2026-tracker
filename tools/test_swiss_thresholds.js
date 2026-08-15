@@ -54,6 +54,50 @@ for (const r of rounds) for (const mt of r.matches || []) {
 const rows = Object.entries(rec).map(([team, [w, l]]) => ({ team, w, l }));
 ok(rows.length > 0, `rebuilt ${rows.length} records from completed matches`);
 
+/* WHEN a team became decided, not just whether it is now.
+ *
+ * Both checks below used to read the FINAL record and then ask about the final
+ * round, which false-positives on anyone who reaches a threshold IN that round.
+ * On 15 Aug 2026 OG and Xtreme Gaming both went into round 5 at 1-3 — alive,
+ * correctly scheduled — lost, and finished 1-4. The test called that "kept
+ * playing after hitting the loss limit" and "a decided team scheduled in Round
+ * 5". Neither was true; they were decided BY that game, not before it.
+ *
+ * Contrast HULIGANI (0-4 in round 4) and TEAM VISION (4-0 in round 4), which
+ * really were decided beforehand and really do sit round 5 out. That is the
+ * behaviour these assertions exist to protect, and it still holds.
+ *
+ * So: replay each team's games in round order and record the round in which it
+ * became decided. */
+const decidedAtRound = {};   // team -> 1-based round it became decided, or null
+const recordBefore = {};     // team -> [w,l] as of the end of round ROUNDS-1
+{
+  const run = {};
+  rounds.forEach((r, idx) => {
+    for (const mt of r.matches || []) {
+      if (mt.status !== "completed") continue;
+      const a = mt.teamA || {}, b = mt.teamB || {};
+      if (!a.name || !b.name) continue;
+      const winner = a.score > b.score ? a.name : b.name;
+      for (const nm of [a.name, b.name]) {
+        run[nm] = run[nm] || [0, 0];
+        if (nm === winner) run[nm][0]++; else run[nm][1]++;
+        if (decidedAtRound[nm] === undefined &&
+            (run[nm][0] >= WIN_TARGET || run[nm][1] >= LOSS_LIMIT)) {
+          decidedAtRound[nm] = idx + 1;
+        }
+      }
+    }
+    if (idx === rounds.length - 2) {
+      for (const [nm, v] of Object.entries(run)) recordBefore[nm] = v.slice();
+    }
+  });
+  for (const nm of Object.keys(run)) if (decidedAtRound[nm] === undefined) decidedAtRound[nm] = null;
+  /* A one-round stage has no "before the last round"; fall back to zeroes so the
+     cross-check below simply finds everyone undecided rather than throwing. */
+  for (const nm of Object.keys(run)) if (!recordBefore[nm]) recordBefore[nm] = [0, 0];
+}
+
 /* 1. Nobody may exceed the thresholds. A team at 0-4 under a limit of 3 is the
       original bug, stated as an invariant. */
 const over = rows.filter((r) => r.w > WIN_TARGET || r.l > LOSS_LIMIT);
@@ -65,8 +109,17 @@ ok(!over.length, "no record exceeds the thresholds",
 const played = rows.map((r) => r.w + r.l);
 const maxPlayed = Math.max(...played);
 ok(maxPlayed <= ROUNDS, `most games played (${maxPlayed}) fits in ${ROUNDS} rounds`);
-const survivedPastLimit = rows.filter((r) => r.l >= LOSS_LIMIT && r.w + r.l > LOSS_LIMIT);
-ok(!survivedPastLimit.length, "no team kept playing after hitting the loss limit",
+/* Played on AFTER being decided — measured against the round it became decided
+   in, not against its final record. A team that hits the limit in its last game
+   has games == that round and is fine; one that hits it in round 3 and shows up
+   in round 4 is the real defect. */
+const gamesOf = {};
+rows.forEach((r) => { gamesOf[r.team] = r.w + r.l; });
+const survivedPastLimit = rows.filter((r) => {
+  const at = decidedAtRound[r.team];
+  return at !== null && gamesOf[r.team] > at;
+});
+ok(!survivedPastLimit.length, "no team kept playing after it was decided",
    survivedPastLimit.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
 
 /* 3. The specific labels the user caught. */
@@ -100,8 +153,12 @@ if (last && (last.matches || []).length) {
   if (!inLast.size) {
     console.log(`         (${last.name} is not drawn yet — ${last.matches.length} TBD pairings, nothing to check)`);
   } else {
-    const decided = rows.filter((r) => r.w >= WIN_TARGET || r.l >= LOSS_LIMIT);
-    const undecided = rows.filter((r) => r.w < WIN_TARGET && r.l < LOSS_LIMIT);
+    /* Judged on the record BEFORE this round, which is the only record that
+       could have determined whether a team was scheduled in it. Using the
+       final record asks the schedule to have known results it could not. */
+    const before = (r) => recordBefore[r.team] || [0, 0];
+    const decided = rows.filter((r) => before(r)[0] >= WIN_TARGET || before(r)[1] >= LOSS_LIMIT);
+    const undecided = rows.filter((r) => before(r)[0] < WIN_TARGET && before(r)[1] < LOSS_LIMIT);
     const wronglyPlaying = decided.filter((r) => inLast.has(r.team));
     const wronglySittingOut = undecided.filter((r) => !inLast.has(r.team));
     ok(!wronglyPlaying.length, `no decided team is scheduled in ${last.name}`,

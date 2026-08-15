@@ -63,6 +63,33 @@ for (const t of data.teams || []) {
   if (t.name) teamNames.add(t.name);
   for (const p of t.players || []) if (p.ign) teamNames.add(p.ign);
 }
+/* data.teams[] is NOT the set of names that reach the screen. It carries the
+   org spelling — "BetBoom Team", "Iron Wing TI 2026" — while the fixtures, the
+   standings and every rendered row say "BoomBoys" and "Iron Wing". That is the
+   same alias drift that mis-scored real picks on 14 Aug 2026, and here it made
+   the counter treat "● 0–1 vs BoomBoys" as a different English string from
+   "● #–# vs «team»", so the total crept up every time one of those two teams
+   appeared in a new fixture. Collect from where the names are actually drawn. */
+const addName = (n) => { if (n && n !== "TBD") teamNames.add(n); };
+for (const r of (data.groupStage || {}).rounds || [])
+  for (const mt of r.matches || []) { addName((mt.teamA || {}).name); addName((mt.teamB || {}).name); }
+for (const mt of (data.groupStage || {}).eliminationMatches || []) {
+  addName((mt.teamA || {}).name); addName((mt.teamB || {}).name);
+}
+for (const s of (data.groupStage || {}).standings || []) addName(s.team);
+{
+  const br = (data.bracket || {}).rounds || {};
+  for (const side of [br.upper || [], br.lower || []])
+    for (const r of side) for (const mt of r.matches || []) {
+      addName((mt.teamA || {}).name); addName((mt.teamB || {}).name);
+    }
+  const gf = (data.bracket || {}).grandFinal;
+  if (gf) { addName((gf.teamA || {}).name); addName((gf.teamB || {}).name); }
+}
+for (const q of data.qualifiers || [])
+  for (const mt of q.matches || []) { addName((mt.teamA || {}).name); addName((mt.teamB || {}).name); }
+/* Longest first, so "Iron Wing TI 2026" is consumed before "Iron Wing" can
+   match its prefix and leave " TI 2026" behind as a stray English fragment. */
 const KEEP = new Set(["Bo1", "Bo3", "Bo5", "TBD", "OG", "TI", "GG", "MMR", "Dota", "Dota 2",
   "Valve", "Liquipedia", "OpenDota", "Steam", "Glicko-2", "English", "Twitch", "YouTube",
   "The International", "Corporation", "CC BY-SA", "JSON", "API", "datdota", "BKB", "Email"]);
@@ -102,7 +129,8 @@ const externalStrings = new Set();
      caused. That went red in CI within an hour. Normalising means the number
      tracks translation work, not the tournament. */
   const teamRe = teamNames.size
-    ? new RegExp([...teamNames].map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g")
+    ? new RegExp([...teamNames].sort((a, b) => b.length - a.length)
+        .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g")
     : null;
   const canonical = (t) => {
     let c = t;
