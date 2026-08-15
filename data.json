@@ -1794,7 +1794,7 @@
   ],
   "groupStage": {
     "format": "Swiss-system (16 teams) · Aug 13-16",
-    "note": "Top 8 advance to the Main Event playoffs. Field finalized after qualifiers (June 28).",
+    "note": "Top three go straight to the playoffs. 4th-13th play an elimination round for five more slots. 14th-16th are out. Field finalized after qualifiers (June 28).",
     "standings": [
       {
         "team": "Team Spirit",
@@ -2524,8 +2524,8 @@
     ]
   },
   "bracket": {
-    "format": "Double elimination — top 8 from the group stage · Aug 20-23",
-    "note": "Bracket fills in once the group stage seeds the top 8.",
+    "format": "Double elimination — eight teams out of the group stage · Aug 20-23",
+    "note": "Bracket fills in once the group stage and its elimination round are done.",
     "rounds": {
       "upper": [
         {

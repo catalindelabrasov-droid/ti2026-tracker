@@ -4245,7 +4245,24 @@ function renderGroups(d){
      what we think it is and the qualified/eliminated labels are lying. Warn
      rather than render a confident wrong answer. */
   try{
-    const over=s.filter(r=>(r.w||0)>WIN_TARGET||(r.l||0)>LOSS_LIMIT);
+    /* computeGroupStandings seeds rows as {team,wins,losses,played} — reading
+       r.w/r.l made this `(undefined||0) > 4`, always false, so the guard could
+       never fire. A safety net that cannot trip is worse than none: it reads
+       as coverage. */
+    /* Two separate invariants.
+       Thresholds: computeGroupStandings seeds rows as {team,wins,losses,played}
+       — reading r.w/r.l made this `(undefined||0) > 4`, always false, so the
+       guard could never fire. A safety net that cannot trip is worse than none.
+       Rounds: the thresholds alone do NOT catch the case that actually looms.
+       allMatches() feeds the elimination deciders (el-) into the same pool as
+       the Swiss rounds, so once those are played a 3-2 team becomes 4-2 — six
+       games in a five-round Swiss, a record this board cannot bucket. 4-2 does
+       not exceed 4/4, so only the games-played count sees it. */
+    const over=s.filter(r=>(r.wins||0)>WIN_TARGET||(r.losses||0)>LOSS_LIMIT);
+    const tooMany=s.filter(r=>((r.wins||0)+(r.losses||0))>ROUNDS);
+    if(tooMany.length) console.warn("group stage: "+tooMany.length+
+      " team(s) have played more than "+ROUNDS+" rounds — the elimination round is "+
+      "leaking into the Swiss record", tooMany.map(r=>r.team+" "+r.wins+"-"+r.losses));
     if(over.length) console.warn("group stage: "+over.length+" team(s) exceed the "+
       WIN_TARGET+"/"+LOSS_LIMIT+" thresholds — format may have changed",
       over.map(r=>r.team+" "+r.w+"-"+r.l));
