@@ -1,6 +1,5 @@
 {
   "_comment": "Keys are the text as it appears in the DOM, already entity-decoded. Loaded only by /ru/ pages; an English visitor never fetches this file. See i18n/glossary.ru.md for why particular words were chosen.",
-
   "Live & Upcoming": "Текущие и ближайшие",
   "Upcoming & live": "Ближайшие и текущие",
   "Group Stage": "Групповой этап",
@@ -50,7 +49,6 @@
   "Name": "Имя",
   "Description": "Описание",
   "Presets": "Шаблоны",
-
   "The International": "The International",
   "Main Event": "Основной этап",
   "Main Event — Playoffs": "Основной этап — плей-офф",
@@ -69,7 +67,6 @@
   "Hours": "Часов",
   "Minutes": "Минут",
   "Seconds": "Секунд",
-
   "All": "Все",
   "Live": "Идёт",
   "Live now": "Идёт сейчас",
@@ -93,7 +90,6 @@
   "Active": "Идёт",
   "bye": "проход без игры",
   "Advanced — bye": "Прошли без игры",
-  "goes through,": "проходит,",
   "through": "проходит",
   "Through from each group": "Проходят из каждой группы",
   "After the Swiss": "После швейцарки",
@@ -131,12 +127,10 @@
   "kills": "убийств",
   "gpm": "зпм",
   "min": "мин",
-  "from": "из",
   "out": "выбыл",
   "at least": "минимум",
   "provisional": "предварительно",
   "side-game": "доп. матч",
-
   "Predictions": "Прогнозы",
   "Prediction": "Прогноз",
   "Prediction league": "Лига прогнозов",
@@ -159,7 +153,6 @@
   "Make predictions →": "Сделать прогнозы →",
   "Leaderboard is empty": "Таблица лидеров пуста",
   "Friends · Predictions · Bragging rights": "Друзья · Прогнозы · Право хвастаться",
-
   "My League": "Моя лига",
   "My Leagues": "Мои лиги",
   "📋 My Leagues": "📋 Мои лиги",
@@ -181,7 +174,6 @@
   "📨 Invite teams": "📨 Пригласить команды",
   "Maximum teams": "Максимум команд",
   "Sign in to use leagues": "Войдите, чтобы пользоваться лигами",
-
   "Create a tournament": "Создать турнир",
   "Create tournament": "Создать турнир",
   "⚔️ Create Tournament": "⚔️ Создать турнир",
@@ -228,7 +220,6 @@
   "Accept": "Принять",
   "Decline": "Отклонить",
   "Not needed": "Не требуется",
-
   "Sign in": "Войти",
   "Sign up": "Регистрация",
   "Sign out": "Выйти",
@@ -270,7 +261,6 @@
   "Look around first →": "Сначала осмотритесь →",
   "See what's coming →": "Что дальше →",
   "Delete your account": "Удалить аккаунт",
-
   "Search teams…": "Поиск команд…",
   "Loading…": "Загрузка…",
   "Loading game…": "Загрузка игры…",
@@ -299,7 +289,6 @@
   "No coach listed.": "Тренер не указан.",
   "No current roster listed": "Текущий состав не указан",
   "Roster will fill in from Liquipedia.": "Состав подтянется из Liquipedia.",
-
   "Close": "Закрыть",
   "Close editor": "Закрыть редактор",
   "← Back": "← Назад",
@@ -335,7 +324,6 @@
   "(optional, comma separated)": "(необязательно, через запятую)",
   "— select —": "— выберите —",
   "Auto-updating": "Обновляется автоматически",
-
   "▶ Watch live games": "▶ Смотреть матчи",
   "? How it works": "? Как это работает",
   "How it works": "Как это работает",
@@ -346,7 +334,6 @@
   "📱 Put it on your phone": "📱 Установить на телефон",
   "Install": "Установить",
   "Install TI League": "Установить TI League",
-
   "e.g. Sunday Warriors": "например, Воскресные воины",
   "Sunday Night Cup": "Воскресный кубок",
   "The Aegis Office Pool": "Офисный тотализатор «Эгида»",
