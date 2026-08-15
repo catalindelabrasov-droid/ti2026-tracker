@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T07:00:53.458012+00:00",
+    "lastUpdated": "2026-08-15T08:00:52.652754+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3003677,
-    "note": "$1,600,000 base plus $1,403,677 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3005728,
+    "note": "$1,600,000 base plus $1,405,728 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1276532,
+        "amount": 1277404,
         "team": null
       },
       {
         "place": "2",
-        "amount": 390523,
+        "amount": 390790,
         "team": null
       },
       {
         "place": "3",
-        "amount": 270287,
+        "amount": 270472,
         "team": null
       },
       {
         "place": "4",
-        "amount": 180232,
+        "amount": 180355,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 150173,
+        "amount": 150276,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 120114,
+        "amount": 120196,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 54009,
+        "amount": 54045,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 30059,
+        "amount": 30080,
         "team": null
       },
       {
         "place": "16",
-        "amount": 15030,
+        "amount": 15040,
         "team": null
       }
     ]
@@ -1807,6 +1807,11 @@
         "losses": 0
       },
       {
+        "team": "Nigma Galaxy",
+        "wins": 3,
+        "losses": 1
+      },
+      {
         "team": "Aurora Gaming",
         "wins": 2,
         "losses": 1
@@ -1822,17 +1827,7 @@
         "losses": 1
       },
       {
-        "team": "Nigma Galaxy",
-        "wins": 2,
-        "losses": 1
-      },
-      {
         "team": "Team Liquid",
-        "wins": 2,
-        "losses": 1
-      },
-      {
-        "team": "Vici Gaming",
         "wins": 2,
         "losses": 1
       },
@@ -1848,6 +1843,11 @@
       },
       {
         "team": "Team Yandex",
+        "wins": 2,
+        "losses": 2
+      },
+      {
+        "team": "Vici Gaming",
         "wins": 2,
         "losses": 2
       },
@@ -2235,53 +2235,53 @@
           {
             "id": "gs-r4-m1",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T14:20:00+08:00",
             "teamA": {
               "name": "TEAM VISION",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Team Spirit",
-              "score": null
+              "score": 0
             }
           },
           {
             "id": "gs-r4-m2",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T14:00:00+08:00",
             "teamA": {
               "name": "Iron Wing",
-              "score": null
+              "score": 1
             },
             "teamB": {
               "name": "Team Liquid",
-              "score": null
+              "score": 0
             }
           },
           {
             "id": "gs-r4-m3",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T14:10:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "Aurora Gaming",
-              "score": null
+              "score": 1
             }
           },
           {
             "id": "gs-r4-m4",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-15T13:25:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Vici Gaming",
@@ -2381,7 +2381,7 @@
             "id": "gs-r5-m3",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:30:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2395,7 +2395,7 @@
             "id": "gs-r5-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:15:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2423,7 +2423,7 @@
             "id": "gs-r5-m6",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:45:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
@@ -2437,7 +2437,7 @@
             "id": "gs-r5-m7",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T16:00:00+08:00",
+            "scheduled": "2026-08-15T16:30:00+08:00",
             "teamA": {
               "name": "TBD",
               "score": null
