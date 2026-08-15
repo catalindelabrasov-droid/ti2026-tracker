@@ -22,7 +22,13 @@
 const fs = require("fs");
 const path = require("path");
 
-const toml = fs.readFileSync(path.join(__dirname, "..", "netlify.toml"), "utf8");
+/* Comments are stripped BEFORE parsing. This file documents the trailing-slash
+   trap and the force=true requirement in prose, and a comment sitting between
+   two blocks is otherwise read as part of the earlier one — which made /en/
+   look force-conditioned because the paragraph above the geo rule says
+   "force = true is REQUIRED". */
+const toml = fs.readFileSync(path.join(__dirname, "..", "netlify.toml"), "utf8")
+  .split("\n").filter((l) => !/^\s*#/.test(l)).join("\n");
 
 const rules = [];
 for (const chunk of toml.split("[[redirects]]").slice(1)) {
@@ -35,6 +41,10 @@ for (const chunk of toml.split("[[redirects]]").slice(1)) {
     to: str("to"),
     status: Number((/status\s*=\s*(\d+)/.exec(b) || [])[1] || 301),
     force: /force\s*=\s*true/.test(b),
+    /* Country conditions gate the geo redirect; an unparsed condition would
+       make a forced rule look unconditional. */
+    country: ((/Country\s*=\s*\[([^\]]*)\]/.exec(b) || [])[1] || "")
+      .split(",").map((x) => x.replace(/[^A-Za-z]/g, "").toUpperCase()).filter(Boolean),
   });
 }
 
@@ -70,15 +80,46 @@ for (const a of rules.filter((r) => r.status >= 300 && r.status < 400)) {
 }
 
 // 4. English routes must not be captured, slashes ignored.
-const ENGLISH = ["/", "/index.html", "/guide.html", "/legal.html", "/watch.html",
+const ENGLISH = ["/index.html", "/guide.html", "/legal.html", "/watch.html",
                  "/delete-account.html", "/data.json", "/sw.js", "/manifest.webmanifest"];
 for (const p of ENGLISH) {
   const hit = rules.find((r) => key(r.from) === key(p));
   ok(!hit, `${p} is untouched by the redirect rules`, hit ? `caught by ${hit.from}` : "");
 }
+/* "/" is deliberately caught now — but ONLY by a country-conditioned rule, so
+   a visitor from anywhere else still gets the English homepage. */
+for (const r of rules.filter((x) => key(x.from) === "/")) {
+  ok(r.country.length > 0, `the rule on "/" is country-conditioned`,
+     r.country.length ? "" : "it would redirect EVERYONE to /ru/");
+}
 
-// 5. Nothing may be forced: real files under ru/ must win over the rewrite.
-for (const r of rules) ok(!r.force, `${r.from} is not force-rewritten`);
+/* 5. force = true is allowed ONLY on the geo redirect.
+      "/" has a real index.html behind it and Netlify prefers a real file, so
+      the geo rule cannot fire without force. Anywhere else, force would let a
+      rule shadow a real file — which is exactly what must not happen to the
+      Russian prose pages under ru/. */
+for (const r of rules) {
+  if (!r.force) continue;
+  ok(r.country.length > 0, `${r.from} is forced but has no Country condition`);
+  ok(r.from === "/", `only "/" may be force-redirected, not ${r.from}`);
+  ok(r.status === 302, `${r.from} geo redirect must be 302, not ${r.status}`,
+     "a 301 is cached forever and traps the reader");
+}
+
+/* 6. The English escape hatch must exist and must never be geo-redirected,
+      or the "English" link on /ru/ bounces straight back. */
+const en = rules.find((r) => key(r.from) === "/en");
+ok(!!en, "/en/ escape hatch exists");
+ok(!en || !en.country.length, "/en/ carries no Country condition");
+ok(!en || en.status === 200, "/en/ is a rewrite, not a redirect", en ? String(en.status) : "");
+
+/* 7. Countries that are politically fraught for a Russian-language default
+      must be an explicit decision, not an accident. */
+const geo = rules.find((r) => r.country.length);
+if (geo) {
+  ok(!geo.country.includes("UA"), "UA is not auto-routed to the Russian version");
+  console.log(`         (geo: ${geo.country.join(", ")})`);
+}
 
 // 6. Every /ru rewrite must land on a file that exists.
 for (const r of rules.filter((x) => x.status === 200)) {

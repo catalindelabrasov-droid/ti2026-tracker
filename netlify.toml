@@ -32,6 +32,43 @@
   to = "/index.html"
   status = 200
 
+# The English escape hatch. /en/ is the SAME document as / and is never
+# geo-redirected, so a reader in a Russian-speaking country who wants English
+# has somewhere to land that will not bounce them straight back. The "English"
+# link on every /ru/ page points here.
+#
+# It must be a separate PATH, not a query flag: the geo rule below fires
+# server-side before any script runs, so localStorage and cookies cannot be
+# consulted, and a "/?en=1" would still have to out-match a rule on "/".
+[[redirects]]
+  from = "/en/"
+  to = "/index.html"
+  status = 200
+
+# Send visitors from Russian-speaking countries to /ru/.
+#
+# force = true is REQUIRED and is the one place this file uses it: index.html is
+# a real file at "/", and Netlify serves a real file in preference to any
+# non-forced rule, so without it this rule would simply never fire.
+#
+# 302, not 301. A 301 is cached by the browser forever — a reader who later
+# wants English, or who is travelling, would be stuck with no way to clear it.
+#
+# Googlebot is unaffected without any special handling: it crawls from the US,
+# so it never matches Country and always indexes the English page at "/". That
+# was the objection to auto-redirecting, and geo-conditioning removes it.
+#
+# Only "/" is redirected. Deep links (/guide.html, /watch.html) are left alone
+# so a shared URL always opens the page it points at.
+#
+# UA and GE are deliberately NOT in this list — see the note in the commit.
+[[redirects]]
+  from = "/"
+  to = "/ru/"
+  status = 302
+  force = true
+  conditions = {Country = ["RU", "BY", "KZ", "KG", "TJ", "UZ", "TM", "AM", "AZ", "MD"]}
+
 [[redirects]]
   from = "/ru/index.html"
   to = "/index.html"

@@ -63,7 +63,7 @@ const FOOTER = (extra) => `
     (<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license noopener">CC BY-SA 3.0</a>),
     OpenDota и Steam Web API.<br>
     <a href="/ru/">Трекер</a> · ${extra} ·
-    <a href="/" hreflang="en">English</a>
+    <a href="/en/" hreflang="en">English</a>
   </footer>`;
 
 /* ------------------------------------------------------------------ pages */

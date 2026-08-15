@@ -161,6 +161,12 @@
      dismissible line, and the only thing that records the dismissal is its own
      close button. Buried under the install bar it would be undismissable and
      reappear on every load. */
+  /* The language switch. Deliberately in the toolbar, not only the footer:
+     it is the way back for anyone routed here by their IP. */
+  .tbtn-lang{display:inline-flex;align-items:center;text-decoration:none;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;
+    color:var(--aegis);border-color:rgba(217,164,65,.45)}
+  .tbtn-lang:hover{background:rgba(217,164,65,.12)}
   .lang-hint{position:fixed;left:12px;right:12px;bottom:12px;z-index:500;
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     background:var(--panel-2,#1b2230);border:1px solid var(--line);
@@ -1837,6 +1843,7 @@ function render(d){
       <button class="tbtn tbtn-bell" id="notifBtn" title="Match notifications" aria-label="Match notifications">🔔${notifIds.size?`<span class="bell-count">${notifIds.size}</span>`:""}</button>
       <button class="tbtn tbtn-league" id="myLeaguesBtn" style="display:none">📋 My Leagues</button>
       <button class="tbtn tbtn-league" id="leagueBtn">🏆 Create League</button>
+      ${langToolbarHTML()}
       <button class="tbtn tbtn-league" id="tourneyBtn">⚔️ Create Tournament</button>
       <span class="toolbar-spacer"></span>
       <span class="auth-area" id="authArea">
@@ -6380,9 +6387,22 @@ function P(page){ return LANG==="ru" ? "/ru/"+page : page; }
    woff2 for one word — which is precisely the cost this whole design was
    supposed to avoid. */
 function langSwitchHTML(){
+  /* From /ru/ the English link goes to /en/, NOT to /. A visitor in a
+     Russian-speaking country is geo-redirected off "/" server-side, so "/"
+     would bounce them straight back here and the switch would look broken.
+     /en/ is the same document and carries no geo rule. */
   return LANG==="ru"
-    ? `<a href="/" hreflang="en" data-noloc>English</a>`
+    ? `<a href="/en/" hreflang="en" data-noloc>English</a>`
     : `<a href="/ru/" hreflang="ru" class="lang-sw" data-noloc>Русский</a>`;
+}
+
+/* The toolbar switch. The footer link is easy to miss, and it is the only way
+   back for someone who was redirected here by their IP — a Russian speaker in
+   Germany, or anyone who simply wants the other language. */
+function langToolbarHTML(){
+  return LANG==="ru"
+    ? `<a class="tbtn tbtn-lang" href="/en/" hreflang="en" data-noloc>EN</a>`
+    : `<a class="tbtn tbtn-lang" href="/ru/" hreflang="ru" data-noloc>РУС</a>`;
 }
 
 /* A one-line offer, shown once, only to browsers that actually ask for
