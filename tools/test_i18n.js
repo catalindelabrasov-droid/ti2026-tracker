@@ -113,8 +113,26 @@ console.log("\nRUSSIAN  (path /ru/)");
 {
   const { api, doc } = makeEnv("/ru/", dict, DATA);
   ok(api.LANG === "ru", "LANG resolves to 'ru'");
-  return_check(api, doc);
+  /* AWAITED, and a throw is fatal.
+     This was called bare. process.exit() lives at the BOTTOM of return_check,
+     so an early return — or any rejection — printed a couple of ok lines, no
+     summary, and exited 0. Twenty-two of the twenty-three Russian checks could
+     disappear and `npm test` would still be green. A mutation confirmed it. */
+  return_check(api, doc).catch((e) => {
+    console.error("\nRussian checks threw before finishing: " + e.message);
+    process.exit(1);
+  });
 }
+
+let REACHED_END = false;
+/* Node exits 0 when the event loop drains, so an unfinished async body is
+   indistinguishable from a passing run. This sentinel makes it distinguishable. */
+process.on("exit", (code) => {
+  if (code === 0 && !REACHED_END) {
+    console.error("\ntest_i18n DID NOT FINISH — the Russian checks stopped early.");
+    process.exitCode = 1;
+  }
+});
 
 async function return_check(api, doc) {
   await api.loadLang();
@@ -187,6 +205,7 @@ async function return_check(api, doc) {
   ok(fresh.querySelector("h3").textContent === "Таблица лидеров",
      "MutationObserver localises nodes added after the initial pass");
 
+  REACHED_END = true;      // the sentinel above turns a silent stop into exit 1
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : "\nall checks pass");
   process.exit(fail ? 1 : 0);
 }

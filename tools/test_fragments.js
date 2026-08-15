@@ -33,17 +33,31 @@ const decode = (s) =>
 const nodes = [];
 for (const m of src.matchAll(/>([^<>]{1,300})</g)) {
   nodes.push({
+    index: m.index,
     text: decode(m[1]).replace(/\s+/g, " ").trim(),
     before: src.slice(Math.max(0, m.index - 90), m.index + 1),
     after: src.slice(m.index + m[0].length - 1, m.index + m[0].length + 90),
   });
 }
 
+/* Respect data-noloc exactly as localize() does — it skips anything inside
+   closest("[data-noloc]"), so a checker that ignores it reports a mix on markup
+   the runtime never touches. The span is the element itself: from its opening
+   tag to the matching close, not a guess based on distance. */
+const NOLOC = [];
+for (const m of src.matchAll(/<([a-z0-9]+)[^>]*\bdata-noloc\b[^>]*>/gi)) {
+  const tag = m[1];
+  const end = src.indexOf(`</${tag}>`, m.index);
+  NOLOC.push([m.index, end < 0 ? m.index + m[0].length : end]);
+}
+const inNoloc = (i) => NOLOC.some(([a, b]) => i >= a && i <= b);
+
 let fail = 0;
 const bad = [];
 
 for (const k of keys) {
   for (const n of nodes.filter((x) => x.text === k)) {
+    if (inNoloc(n.index)) continue;   // localize() never touches it
     /* EVERY inline element that can carry words has to be listed here. The
        first version checked only b/strong/em, so it missed <i>at least</i> —
        which shipped and spliced "минимум" into an English sentence on the
@@ -56,13 +70,35 @@ for (const k of keys) {
 
     /* The sentence runs INTO this node if what precedes it closes an inline
        element, and OUT of it if what follows opens one. */
+    /* Two ways a fragment sits inside a sentence, and the first version only
+       saw one of them.
+
+       BETWEEN two inline elements:   … <b>3 wins</b> goes through, <b>3 losses</b> …
+       AS the inline element itself:  … they're <i>at least</i> worth, so …
+
+       `openLeft` below tests for a CLOSING tag before the node. For the second
+       shape the character before is an OPENING tag, so the check never fired —
+       which is why re-adding "at least" still reproduces the shipped bug. Adding
+       `i` to the tag list, as I did earlier, was fixing the wrong thing: the tag
+       list was never the problem, the direction was. */
+    const insideInline = new RegExp(`<(${INLINE})[^>]*>\\s*$`).test(n.before) &&
+                         new RegExp(`^</(${INLINE})>`).test(n.after);
+    /* Only a fragment if the sentence CONTINUES past the element on both sides —
+       otherwise it is a legitimate emphasised label standing on its own.
+       Before: lowercase word or comma right before the opening tag.
+       After:  lowercase word right after the closing tag. */
+    const beforeWords = n.before.replace(new RegExp(`<(${INLINE})[^>]*>\\s*$`), "");
+    const sentenceAround = insideInline &&
+      /[a-z,]['’]?\s*$/.test(beforeWords) &&
+      new RegExp(`^</(${INLINE})>\\s*[a-z,]`).test(n.after);
+
     const openLeft = !decorative && new RegExp(`(</(${INLINE})>|\\})\\s*$`).test(n.before);
     const openRight = new RegExp(`^<\\s*(${INLINE})[ >]`).test(n.after);
 
     const commaEnd = /,$/.test(k);
     const lowerStart = /^[a-z]/.test(k) && !/^[a-z]+ [a-z]+ /.test(k);
 
-    if ((openLeft && openRight) || commaEnd || (lowerStart && openLeft && openRight)) {
+    if ((openLeft && openRight) || sentenceAround || commaEnd || (lowerStart && openLeft && openRight)) {
       bad.push({ k, ctx: (n.before.slice(-60) + "[[" + n.text + "]]" + n.after.slice(0, 60)).replace(/\s+/g, " ") });
       fail++;
       break;
@@ -93,17 +129,6 @@ const CODEY = /[`${}='"; ]\s*$|[`${}=;]|\bconst\b|\blet\b|\breturn\b|\/\*|\*\//;
 /* The tail is captured up to the NEXT tag, not to an arbitrary length. A capped
    {2,90} truncated long tails, so the dictionary lookup below compared a prefix
    against a full key and reported an already-translated tail as missing. */
-/* Respect data-noloc exactly as localize() does — it skips anything inside
-   closest("[data-noloc]"), so a checker that ignores it reports a mix on markup
-   the runtime never touches. The span is the element itself: from its opening
-   tag to the matching close, not a guess based on distance. */
-const NOLOC = [];
-for (const m of src.matchAll(/<([a-z0-9]+)[^>]*\bdata-noloc\b[^>]*>/gi)) {
-  const tag = m[1];
-  const end = src.indexOf(`</${tag}>`, m.index);
-  NOLOC.push([m.index, end < 0 ? m.index + m[0].length : end]);
-}
-const inNoloc = (i) => NOLOC.some(([a, b]) => i >= a && i <= b);
 
 for (const m of src.matchAll(new RegExp(`<(${INLINE_TAGS})[^>]*>([^<>{}\`]{2,60})</\\1>([^<>\`]{2,400})(?=<)`, "g"))) {
   if (inNoloc(m.index)) continue;                  // localize() never sees it
