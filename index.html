@@ -4941,12 +4941,93 @@ async function loadData(skipOverride){
 /* ----------------------------- auth UI (front-end only; backend wired at deploy) ----------------------------- */
 const LS_USER="ti2026_user";
 const LS_PENDING="ti2026_pending_signup";
+/* Nine of these were missing, and they were exactly the wrong nine: the geo rule
+   in netlify.toml sends RU, BY, KZ, KG, TJ, UZ, TM, AM, AZ and MD to /ru/, and
+   only RU had a prefix. So a reader in Minsk or Almaty was routed to the Russian
+   version by our own rule and then could not enter their own phone number. */
 const COUNTRY_PREFIXES=[
   ["RO","+40"],["US","+1"],["GB","+44"],["DE","+49"],["FR","+33"],["ES","+34"],["IT","+39"],
-  ["NL","+31"],["SE","+46"],["PL","+48"],["UA","+380"],["RU","+7"],["CN","+86"],["SG","+65"],
+  ["NL","+31"],["SE","+46"],["PL","+48"],["UA","+380"],["RU","+7"],
+  ["BY","+375"],["KZ","+7"],["KG","+996"],["TJ","+992"],["UZ","+998"],["TM","+993"],
+  ["AM","+374"],["AZ","+994"],["MD","+373"],
+  ["CN","+86"],["SG","+65"],
   ["PH","+63"],["ID","+62"],["MY","+60"],["IN","+91"],["BR","+55"],["AR","+54"],["PE","+51"],
   ["AU","+61"],["CA","+1"],["JP","+81"],["KR","+82"],["AE","+971"],["SA","+966"],["TR","+90"]
 ];
+
+/* Where is this reader? Answered without a network call and without an IP
+   lookup — the time zone the browser already reports is a better locator than
+   an IP anyway (a VPN moves the IP, not the clock) and costs nothing in privacy.
+   Locale region is the fallback: "ru-KZ" carries KZ even when the zone is one
+   this list does not name. Neither is authoritative, so this only picks the
+   DEFAULT — every option stays selectable.
+
+   Written as "CC:zone,zone" because the list is long and mechanical; a nested
+   object literal of the same data is three times the lines and no clearer. */
+const TZ_COUNTRY=(()=>{
+  const m={};
+  (`RO:Europe/Bucharest
+MD:Europe/Chisinau,Europe/Tiraspol
+BY:Europe/Minsk
+UA:Europe/Kyiv,Europe/Kiev,Europe/Simferopol,Europe/Uzhgorod,Europe/Zaporozhye
+RU:Europe/Moscow,Europe/Kaliningrad,Europe/Samara,Europe/Volgograd,Europe/Saratov,Europe/Astrakhan,Europe/Ulyanovsk,Europe/Kirov,Asia/Yekaterinburg,Asia/Omsk,Asia/Novosibirsk,Asia/Barnaul,Asia/Tomsk,Asia/Novokuznetsk,Asia/Krasnoyarsk,Asia/Irkutsk,Asia/Chita,Asia/Yakutsk,Asia/Khandyga,Asia/Vladivostok,Asia/Ust-Nera,Asia/Magadan,Asia/Sakhalin,Asia/Srednekolymsk,Asia/Kamchatka,Asia/Anadyr
+KZ:Asia/Almaty,Asia/Aqtobe,Asia/Aqtau,Asia/Atyrau,Asia/Oral,Asia/Qostanay,Asia/Qyzylorda
+KG:Asia/Bishkek
+TJ:Asia/Dushanbe
+UZ:Asia/Tashkent,Asia/Samarkand
+TM:Asia/Ashgabat
+AM:Asia/Yerevan
+AZ:Asia/Baku
+GB:Europe/London
+DE:Europe/Berlin,Europe/Busingen
+FR:Europe/Paris
+ES:Europe/Madrid,Atlantic/Canary,Africa/Ceuta
+IT:Europe/Rome
+NL:Europe/Amsterdam
+SE:Europe/Stockholm
+PL:Europe/Warsaw
+TR:Europe/Istanbul
+CN:Asia/Shanghai,Asia/Urumqi,Asia/Chongqing,Asia/Harbin,Asia/Macau,Asia/Hong_Kong
+SG:Asia/Singapore
+PH:Asia/Manila
+ID:Asia/Jakarta,Asia/Makassar,Asia/Jayapura,Asia/Pontianak
+MY:Asia/Kuala_Lumpur,Asia/Kuching
+IN:Asia/Kolkata,Asia/Calcutta
+JP:Asia/Tokyo
+KR:Asia/Seoul
+AE:Asia/Dubai
+SA:Asia/Riyadh
+PE:America/Lima
+BR:America/Sao_Paulo,America/Bahia,America/Fortaleza,America/Recife,America/Maceio,America/Araguaina,America/Belem,America/Santarem,America/Manaus,America/Boa_Vista,America/Porto_Velho,America/Cuiaba,America/Campo_Grande,America/Rio_Branco,America/Eirunepe,America/Noronha
+US:America/New_York,America/Chicago,America/Denver,America/Los_Angeles,America/Phoenix,America/Anchorage,America/Detroit,America/Adak,Pacific/Honolulu
+CA:America/Toronto,America/Vancouver,America/Edmonton,America/Winnipeg,America/Halifax,America/St_Johns,America/Regina,America/Whitehorse,America/Yellowknife
+AU:Australia/Sydney,Australia/Melbourne,Australia/Brisbane,Australia/Perth,Australia/Adelaide,Australia/Hobart,Australia/Darwin`)
+    .split("\n").forEach(line=>{
+      const [cc,zones]=line.split(":");
+      zones.split(",").forEach(z=>{ m[z]=cc; });
+    });
+  return m;
+})();
+
+function detectCountry(){
+  try{
+    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";
+    if(TZ_COUNTRY[tz]) return TZ_COUNTRY[tz];
+    /* Argentina publishes a zone per province; matching the branch avoids
+       listing fifteen of them. */
+    if(/^America\/Argentina\//.test(tz)) return "AR";
+    if(/^America\/Indiana\/|^America\/Kentucky\/|^America\/North_Dakota\//.test(tz)) return "US";
+  }catch(e){}
+  try{
+    /* "ru-KZ" -> KZ. Only a 2-letter region counts; "ru" alone says nothing
+       about location, and a 3-digit UN region code is not a country. */
+    for(const l of (navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""])){
+      const r=/-([A-Z]{2})\b/.exec(String(l).toUpperCase().replace(/_/g,"-"));
+      if(r&&COUNTRY_PREFIXES.some(([cc])=>cc===r[1])) return r[1];
+    }
+  }catch(e){}
+  return null;
+}
 function openModal(id){
   closeModals();
   document.querySelectorAll(`#${id} .err`).forEach(e=>e.classList.remove("show"));
@@ -4961,8 +5042,21 @@ function clearErr(fieldId){const inp=$("#"+fieldId),err=$("#"+fieldId+"_err");if
 const isEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 function populatePrefixes(){
   const sel=$("#su_prefix"); if(!sel||sel.options.length) return;
-  COUNTRY_PREFIXES.forEach(([cc,pre])=>{const o=document.createElement("option");o.value=pre;o.textContent=`${cc} ${pre}`;sel.appendChild(o);});
-  sel.value="+40";
+  COUNTRY_PREFIXES.forEach(([cc,pre])=>{
+    const o=document.createElement("option");
+    o.value=pre;
+    /* The country code has to live on the option, not just in its label:
+       +1 is both US and CA and +7 is both RU and KZ, so selecting by VALUE
+       would silently land on whichever comes first in the list. */
+    o.setAttribute("data-cc",cc);
+    o.textContent=`${cc} ${pre}`;
+    sel.appendChild(o);
+  });
+  const cc=detectCountry();
+  const match=cc&&sel.querySelector(`option[data-cc="${cc}"]`);
+  /* +40 stays the fallback — this is a Romanian-run site and that is the single
+     likeliest origin when we genuinely cannot tell. */
+  if(match) match.selected=true; else sel.value="+40";
 }
 function renderAuthArea(){
   const area=$("#authArea"); if(!area) return;
