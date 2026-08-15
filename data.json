@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T11:00:54.855782+00:00",
+    "lastUpdated": "2026-08-15T11:45:15.664169+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2353,7 +2353,7 @@
             "id": "gs-r5-m1",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T19:30:00+08:00",
+            "scheduled": "2026-08-15T20:00:00+08:00",
             "teamA": {
               "name": "Team Liquid",
               "score": null
@@ -2380,15 +2380,15 @@
           {
             "id": "gs-r5-m3",
             "bestOf": 3,
-            "status": "upcoming",
+            "status": "live",
             "scheduled": "2026-08-15T18:40:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": null
+              "score": 0
             },
             "teamB": {
               "name": "Team Falcons",
-              "score": null
+              "score": 1
             }
           },
           {
@@ -2409,7 +2409,7 @@
             "id": "gs-r5-m5",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T20:00:00+08:00",
+            "scheduled": "2026-08-15T19:45:00+08:00",
             "teamA": {
               "name": "Iron Wing",
               "score": null
@@ -2422,11 +2422,11 @@
           {
             "id": "gs-r5-m6",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-15T17:35:00+08:00",
             "teamA": {
               "name": "Team Resilience",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Xtreme Gaming",
@@ -2436,7 +2436,7 @@
           {
             "id": "gs-r5-m7",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-15T17:35:00+08:00",
             "teamA": {
               "name": "OG",
@@ -2444,7 +2444,7 @@
             },
             "teamB": {
               "name": "GamerLegion",
-              "score": 1
+              "score": 2
             }
           }
         ]
