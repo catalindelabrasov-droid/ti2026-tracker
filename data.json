@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-15T05:01:15.634405+00:00",
+    "lastUpdated": "2026-08-15T05:15:14.525695+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2278,7 +2278,7 @@
             "id": "gs-r4-m4",
             "bestOf": 3,
             "status": "upcoming",
-            "scheduled": "2026-08-15T13:30:00+08:00",
+            "scheduled": "2026-08-15T13:15:00+08:00",
             "teamA": {
               "name": "Nigma Galaxy",
               "score": null
@@ -2319,7 +2319,7 @@
           {
             "id": "gs-r4-m7",
             "bestOf": 3,
-            "status": "live",
+            "status": "completed",
             "scheduled": "2026-08-15T10:00:00+08:00",
             "teamA": {
               "name": "Team Resilience",
@@ -2327,7 +2327,7 @@
             },
             "teamB": {
               "name": "Team Yandex",
-              "score": 1
+              "score": 2
             }
           },
           {
