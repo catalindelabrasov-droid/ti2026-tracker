@@ -47,7 +47,11 @@ jobs:
 
       - name: Run updater
         env:
-          LIQUIPEDIA_CONTACT: ${{ vars.LIQUIPEDIA_CONTACT || 'set-your-contact@example.com' }}
+          # A contactable User-Agent is the one Liquipedia API rule that is
+          # actually enforced, and the penalty is a silent block mid-tournament.
+          # The fallback is a real monitored address now, not a placeholder, so
+          # this keeps working even if the repo variable is never set.
+          LIQUIPEDIA_CONTACT: ${{ vars.LIQUIPEDIA_CONTACT || 'contact@dota2tileague.com' }}
           OPENDOTA_LEAGUE_ID: ${{ vars.OPENDOTA_LEAGUE_ID || '' }}
           OPENDOTA_API_KEY: ${{ secrets.OPENDOTA_API_KEY || '' }}
           # League backend: finished results feed the prediction leaderboard.

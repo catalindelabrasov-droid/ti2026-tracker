@@ -27,9 +27,15 @@ import urllib.request
 import urllib.parse
 
 # ---------------------------------------------------------------------------
-# CONFIG — change CONTACT to your own email/URL before deploying.
+# CONFIG
 # ---------------------------------------------------------------------------
-CONTACT = os.environ.get("LIQUIPEDIA_CONTACT", "your-email@example.com")
+# Liquipedia's API terms make a contactable User-Agent mandatory — it is the one
+# rule they actually enforce, and the penalty is a block, not a letter. This used
+# to default to "your-email@example.com", so any run without LIQUIPEDIA_CONTACT
+# set introduced us with a placeholder. The default is now a real, monitored
+# address (forwarded to the owner via Forward Email, delivery confirmed), so the
+# environment variable is an override rather than a requirement.
+CONTACT = os.environ.get("LIQUIPEDIA_CONTACT", "contact@dota2tileague.com")
 USER_AGENT = f"TI2026-Tracker/1.0 ({CONTACT}) python-urllib"
 API = "https://liquipedia.net/dota2/api.php"
 PAGE = "The_International/2026"          # main tournament page

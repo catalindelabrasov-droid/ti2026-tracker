@@ -34,7 +34,7 @@ jobs:
         env:
           # Set these in repo Settings → Secrets and variables → Actions → Variables.
           # Liquipedia requires a real contact in the User-Agent.
-          LIQUIPEDIA_CONTACT: ${{ vars.LIQUIPEDIA_CONTACT || 'set-your-contact@example.com' }}
+          LIQUIPEDIA_CONTACT: ${{ vars.LIQUIPEDIA_CONTACT || 'contact@dota2tileague.com' }}
           # OpenDota (secondary source for live scores). Set the TI 2026 league id
           # to enable it; leave blank to use Liquipedia only. API key is optional.
           OPENDOTA_LEAGUE_ID: ${{ vars.OPENDOTA_LEAGUE_ID || '' }}

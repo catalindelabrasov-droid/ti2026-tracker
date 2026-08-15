@@ -8,24 +8,19 @@
     "qualifier meta: '# teams · # matches' (index.html:3687) — two independent plurals in one line",
     "group stage: '● #–# vs «team»' -> 'против' (index.html:4376)",
     "singletons: '# more appear as rounds are drawn', '# placements · # teams', '# qualified', 'Round # · # of # series decided', 'Updated 3:40 PM'",
-    "TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later in the file, so it hits the temporal dead zone, throws, and blanks the whole page. Use function declarations, which read LANG at call time."
+    "TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later in the file, so it hits the temporal dead zone, throws, and blanks the whole page. Use function declarations, which read LANG at call time.",
+    "EMPTY STATES, added 15 Aug when no match was live: \"Check back when the group stage begins on # August.\" and \"No TI # matches live or upcoming\". Both are interpolated (a date, a TI number), so a ru/strings.json key cannot match them. They are the MOST visible untranslated strings on the site, because they render when nothing else is on screen. Left during the tournament by the owner's decision."
   ],
-  "ours": 14,
-  "total": 15,
+  "ours": 8,
+  "total": 8,
   "known": [
-    "# game",
-    "# games",
-    "# more appear as rounds are drawn",
     "# placements · # teams",
     "# qualified",
     "# teams · # matches",
-    "Game #",
+    "Check back when the group stage begins on # August.",
+    "No TI # matches live or upcoming",
     "Round # · # of # series decided",
-    "Sat #:# PM · Bo#",
-    "Series · Bo#",
     "beat «team» #–#",
-    "lost to «team» #–#",
-    "● #–# vs «team»",
-    "● live · Bo#"
+    "lost to «team» #–#"
   ]
 }
