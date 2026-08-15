@@ -11,14 +11,12 @@
     "TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later in the file, so it hits the temporal dead zone, throws, and blanks the whole page. Use function declarations, which read LANG at call time.",
     "EMPTY STATES, added 15 Aug when no match was live: \"Check back when the group stage begins on # August.\" and \"No TI # matches live or upcoming\". Both are interpolated (a date, a TI number), so a ru/strings.json key cannot match them. They are the MOST visible untranslated strings on the site, because they render when nothing else is on screen. Left during the tournament by the owner's decision."
   ],
-  "ours": 8,
-  "total": 8,
+  "ours": 6,
+  "total": 6,
   "known": [
     "# placements · # teams",
     "# qualified",
     "# teams · # matches",
-    "Check back when the group stage begins on # August.",
-    "No TI # matches live or upcoming",
     "Round # · # of # series decided",
     "beat «team» #–#",
     "lost to «team» #–#"

@@ -2503,7 +2503,14 @@ function wireHubTabs(){
   _hubActivate=activate;
   if(!_hubNavBound){
     _hubNavBound=true;
-    const onNav=()=>{ if(_hubActivate) _hubActivate(currentTabFromHash(),false,true); };
+    /* Animate only when the hash actually names a tab. Opening a team panel now
+       writes "#team=…", which fires hashchange; currentTabFromHash finds no
+       tab= in it and falls back to "ti", so this ran with animate=true and put
+       .anim on #view-ti while body.team-open was hiding it. Closing the panel
+       then revealed a node whose animation restarted — a full-page 250ms fade
+       every time you shut a team, which is precisely the stray fade the .anim
+       change exists to remove. */
+    const onNav=()=>{ if(_hubActivate) _hubActivate(currentTabFromHash(),false,/[#&]tab=/i.test(location.hash)); };
     window.addEventListener("popstate",onNav);
     window.addEventListener("hashchange",onNav);
   }
@@ -7129,19 +7136,34 @@ function stripVolatile(d){
   try{
     const c=JSON.parse(JSON.stringify(d));
     if(c.meta) delete c.meta.lastUpdated;
-    /* Mask the SCORE of a match that is live, and nothing else about it.
-       The old version masked status too, over the set liveMatchesOf() returns —
-       which counts UPCOMING as well as live. So a match going upcoming -> live
-       compared equal on both sides and never repainted: the live markers simply
-       did not appear until something unrelated forced a render. Status is the
-       signal, never the noise. */
+    /* SCORES ARE NOT MASKED. That was the first attempt here and it was wrong:
+       taking the cheap path repaints #liveRail and nothing else, but a live
+       score also appears on the Swiss board's per-team line ("● 0–1 vs X · 34'")
+       and on the elimination-round and bracket cards, all of which sit outside
+       the rail. Masking them left those frozen until some unrelated match
+       started or finished — and in the elimination round or a grand final, one
+       series can be the only thing live for the better part of an hour. The old
+       code had the same hole for the bracket; it was simply never reachable
+       before 20 Aug.
+
+       What IS masked is the kickoff time, and only at 15-minute resolution.
+       Liquipedia nudges published times by a few minutes whenever a series
+       overruns, which is constantly, and that alone accounted for most of the
+       56-in-63 updates that were rebuilding the whole page for nothing. Rounding
+       rather than blanking keeps the distinction that matters: a genuine
+       postponement crosses a bucket and still repaints, so the displayed time
+       cannot go stale. Blanking it outright, which was the second attempt, meant
+       a match moved by two hours never updated at all.
+
+       Status is never masked. A match starting or finishing changes the
+       standings and the live markers, and must always repaint. */
+    const BUCKET=15*60*1000;
     const one=m=>{
       if(!m) return;
-      if(m.status==="live"||m.status==="ongoing"){
-        if(m.teamA)m.teamA.score=null;
-        if(m.teamB)m.teamB.score=null;
+      if(m.scheduled){
+        const t=Date.parse(m.scheduled);
+        if(Number.isFinite(t)) m.scheduled=Math.round(t/BUCKET)*BUCKET;
       }
-      if("scheduled" in m) m.scheduled=null;
     };
     const rounds=arr=>arr&&arr.forEach(rd=>(rd.matches||[]).forEach(one));
     if(c.groupStage){ rounds(c.groupStage.rounds); (c.groupStage.eliminationMatches||[]).forEach(one); }

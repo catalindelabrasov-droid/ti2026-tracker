@@ -60,26 +60,8 @@ function eachMatch(d, fn) {
 /* ---------- 1. noise must NOT rebuild ------------------------------------ */
 console.log("noise does not rebuild the page");
 {
-  const live = w.liveMatchesOf(data).filter((m) => m.status === "live");
-  console.log(`         (${live.length} live right now)`);
-
-  /* A live score tick, wherever the live match happens to be. */
-  if (live.length) {
-    const d = clone();
-    let done = false;
-    eachMatch(d, (m) => { if (!done && m.status === "live" && m.teamA) { m.teamA.score = (m.teamA.score || 0) + 1; done = true; } });
-    ok(done && !rebuilds(d, data), "a live score tick takes the cheap path");
-  } else {
-    /* Manufacture one so this never silently skips. */
-    const base = clone();
-    let id = null;
-    eachMatch(base, (m) => { if (!id && (m.teamA || {}).name && m.teamA.name !== "TBD") { m.status = "live"; m.teamA.score = 0; m.teamB.score = 0; id = m.id; } });
-    const d = JSON.parse(JSON.stringify(base));
-    eachMatch(d, (m) => { if (m.id === id) m.teamA.score = 1; });
-    ok(!!id && !rebuilds(d, base), "a live score tick takes the cheap path (simulated)");
-  }
-
-  /* Kickoff drift — the dominant real-world trigger. */
+  /* Kickoff drift — the dominant real-world trigger, and the one thing this is
+     allowed to swallow. */
   const drift = clone();
   let moved = 0;
   eachMatch(drift, (m) => {
@@ -92,6 +74,46 @@ console.log("noise does not rebuild the page");
   const stamped = clone();
   stamped.meta.lastUpdated = new Date().toISOString();
   ok(!rebuilds(stamped, data), "a new lastUpdated alone does NOT rebuild");
+}
+
+/* ---------- 1b. a REAL postponement must still repaint -------------------
+   The second attempt at this blanked `scheduled` outright, which swallowed a
+   two-hour postponement as readily as a five-minute nudge — and liveSignature
+   does not carry `scheduled` either, so nothing repainted and the site showed
+   the old time indefinitely. The mask rounds to 15 minutes instead, so drift
+   stays inside a bucket and a real move crosses one. */
+console.log("\nbut a real postponement still repaints");
+{
+  const late = clone();
+  let n = 0;
+  eachMatch(late, (m) => {
+    if (m.scheduled && n < 1) { m.scheduled = new Date(Date.parse(m.scheduled) + 2 * 3600 * 1000).toISOString(); n++; }
+  });
+  ok(n > 0, "found a fixture to postpone");
+  ok(rebuilds(late, data), "a two-hour postponement DOES rebuild");
+}
+
+/* ---------- 1c. live scores are NOT masked ------------------------------
+   THIS ASSERTION IS INVERTED FROM ITS FIRST VERSION, and the reason matters.
+   It originally asserted that a live score tick takes the cheap path — I wrote
+   the test to agree with the code, and both were wrong. The cheap path repaints
+   #liveRail and nothing else, but a live score ALSO shows on the Swiss board's
+   per-team line ("● 0–1 vs X · 34'") and on the elimination-round and bracket
+   cards, none of which are in the rail. Masking froze them until an unrelated
+   match started or finished; in an elimination round or a grand final that can
+   be the better part of an hour. */
+console.log("\na live score change must repaint — it is on the board, not just the rail");
+{
+  const named = [];
+  eachMatch(data, (m) => { if ((m.teamA || {}).name && m.teamA.name !== "TBD") named.push(m.id); });
+  const target = named[0];
+  const at = (score) => {
+    const d = clone();
+    eachMatch(d, (m) => { if (m.id === target) { m.status = "live"; m.teamA.score = score; m.teamB.score = 0; } });
+    return d;
+  };
+  ok(!!target && rebuilds(at(1), at(0)),
+     "a live score tick DOES rebuild, so the group board cannot go stale", target);
 }
 
 /* ---------- 2. real change MUST rebuild ---------------------------------- */
@@ -127,11 +149,16 @@ console.log("\nbut a real change still does");
   ok(rebuilds(withStatus("live", 0, 0), withStatus("upcoming", null, null)),
      "a match STARTING rebuilds", target);
 
-  /* And the control: the same match, same status, only the score moving, must
-     NOT rebuild — otherwise the two assertions above would pass simply because
-     any edit rebuilds. */
-  ok(!rebuilds(withStatus("live", 2, 0), withStatus("live", 1, 0)),
-     "…while a score change WITHIN a live match still does not", target);
+  /* The control that keeps the two assertions above honest: something that must
+     NOT rebuild. Kickoff drift is that thing — if even this rebuilt, the two
+     above would pass simply because every edit rebuilds. */
+  const same = clone(), nudged = clone();
+  let bumped = 0;
+  eachMatch(nudged, (m) => {
+    if (m.scheduled && bumped < 1) { m.scheduled = new Date(Date.parse(m.scheduled) + 3 * 60000).toISOString(); bumped++; }
+  });
+  ok(bumped > 0 && !rebuilds(nudged, same),
+     "…while a three-minute kickoff nudge still does not", `${bumped} moved`);
 
   /* A pairing being drawn. */
   const drawn = clone();
