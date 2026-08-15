@@ -4376,6 +4376,28 @@ function renderGroups(d){
     const [aw,al]=a.split("-").map(Number), [bw,bl]=b.split("-").map(Number);
     return (bw-aw)||(al-bl);
   });
+  /* Language helpers, at FUNCTION scope so the elimination section below can
+     use T() too — leaving them inside the bucket callback made renderGroups
+     throw ReferenceError and blank the whole group stage.
+
+     These subtitles carry a NUMBER, so no dictionary entry can ever match them:
+     the text differs per render. They were therefore the most-read English left
+     on the Russian board. Composed per language instead, which for Russian means
+     a plural FUNCTION — three forms chosen by the last TWO digits, not the last
+     one. 11 takes the "many" form while 21 takes "one". */
+  const plural=(n,one,few,many)=>{
+    const d=n%10, dd=n%100;
+    return (dd>=11&&dd<=14)?many : d===1?one : (d>=2&&d<=4)?few : many;
+  };
+  const RU=LANG==="ru";
+  const T=(en,ru)=>RU?ru:en;
+  const winsFor=(n)=>RU
+    ? `${n} ${plural(n,"победа","победы","побед")} до слота в плей-офф`
+    : `${n} ${n===1?"win":"wins"} for a playoff slot`;
+  const lossesFor=(n)=>RU
+    ? `${n} ${plural(n,"поражение","поражения","поражений")} до вылета`
+    : `${n} ${n===1?"loss":"losses"} and you're out`;
+
   const board=keys.map(k=>{
     const [w,l]=k.split("-").map(Number);
     const arr=buckets[k];
@@ -4399,20 +4421,20 @@ function renderGroups(d){
     /* capped AND safe means the outcome is already settled — neither threshold
        is reachable, so every remaining result ends in the elimination round.
        "at worst" would imply something better is still available. */
-    if(capped&&safe) parts.push("the elimination round either way");
+    if(capped&&safe) parts.push(T("the elimination round either way","в раунд на вылет в любом случае"));
     else{
-      if(!capped&&nw>0&&nw<=left) parts.push(`${nw} ${nw===1?"win":"wins"} for a playoff slot`);
-      else if(capped) parts.push("top three out of reach");
-      if(safe) parts.push("elimination round at worst");
-      else if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} and you're out`);
+      if(!capped&&nw>0&&nw<=left) parts.push(winsFor(nw));
+      else if(capped) parts.push(T("top three out of reach","топ-3 уже недостижим"));
+      if(safe) parts.push(T("elimination round at worst","в худшем случае — раунд на вылет"));
+      else if(nl>0&&nl<=left) parts.push(lossesFor(nl));
     }
     /* parts is never empty. `capped` is exactly "nw > left", so the if/else
        above always pushes one clause for any bucket that is neither qualified
        nor out. A fourth fallback branch here was unreachable — brute-forced
        over every (w,l) with w+l <= ROUNDS, it fired zero times. */
-    const note=qual?"straight to the playoffs"
-      :out?"out of the tournament"
-      :left===0?"to the elimination round"
+    const note=qual?T("straight to the playoffs","напрямую в плей-офф")
+      :out?T("out of the tournament","выбыли из турнира")
+      :left===0?T("to the elimination round","в раунд на вылет")
       :parts.join(" · ");
     const teams=arr.map(r=>{
       const i=infoFor(r.team);
@@ -4465,8 +4487,11 @@ function renderGroups(d){
       <div class="sw-elimhead">
         <h3>Elimination Round</h3>
         <span class="sw-elimnote">${elimNamed.length
-          ?"Winners take the last five playoff slots. Losers are out."
-          :"Drawn once the Swiss rounds finish · "+elim.length+" matches for five slots"}</span>
+          ?T("Winners take the last five playoff slots. Losers are out.",
+             "Победители забирают последние пять мест в плей-офф. Проигравшие выбывают.")
+          :T("Drawn once the Swiss rounds finish · "+elim.length+" matches for five slots",
+             "Пары определятся после швейцарских раундов · "+elim.length+" "+
+               plural(elim.length,"матч","матча","матчей")+" за пять мест")}</span>
       </div>
       ${elimNamed.length?`<div class="bracket-round">${elimNamed.map(m=>bracketMatch(m)).join("")}</div>`:""}
     </div>`;

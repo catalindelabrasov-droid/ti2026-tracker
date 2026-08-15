@@ -1,14 +1,14 @@
 /* Run every test, then report. Do NOT stop at the first failure.
  *
  * `npm test` chained the files with `&&`, so the first red file aborted the run
- * and everything after it went unreported — you fixed one, re-ran, found the
- * next, and never saw the shape of the whole. This runs all of them and exits
- * non-zero if any failed.
+ * and everything after it went unreported.
  *
- * Files are DISCOVERED, not listed. A hand-maintained list is how
- * test_pick_series.py sat unrun for weeks while guarding _pick_series in
- * update_data.py — the code that rewrites data.json every 15 minutes in
- * production.
+ * Files are DISCOVERED, not listed — a hand-maintained list is why
+ * test_pick_series.py sat unrun for weeks while guarding the code that rewrites
+ * data.json every 15 minutes in production. But discovery inherited the
+ * mirror-image blindness: nothing noticed a file LEAVING the set. Deleting 12 of
+ * 13 files reported "all 2 test files passed", exit 0; renaming one to the
+ * common `*.test.js` convention made it vanish just as quietly. Hence the floor.
  */
 const { spawnSync } = require("child_process");
 const fs = require("fs");
@@ -18,53 +18,77 @@ const DIR = __dirname;
 const ROOT = path.join(DIR, "..");
 const results = [];
 
+/* A hung test must not hold CI to the 6-hour Actions ceiling. */
+const TIMEOUT_MS = 120000;
+
 const banner = (status, name) => {
   const line = "=".repeat(64);
   console.log(`\n${line}\n${status}  ${name}\n${line}`);
 };
 
+const record = (f, r, kind) => {
+  const out = (r.stdout || "") + (r.stderr || "");
+  const timedOut = r.error && r.error.code === "ETIMEDOUT";
+  const code = timedOut ? 1 : r.status;
+  results.push({ f, code, out, kind });
+  banner(timedOut ? "TIMEOUT" : code === 0 ? "PASS" : "FAIL", f);
+  if (timedOut) console.log(`  killed after ${TIMEOUT_MS / 1000}s`);
+  process.stdout.write(out.trimEnd() + "\n");
+};
+
 /* ---- JavaScript ---- */
 const jsFiles = fs.readdirSync(DIR).filter((f) => /^test_.*\.js$/.test(f)).sort();
-if (!jsFiles.length) {
-  console.error("no test_*.js found in tools/ — refusing to report success");
+const EXPECTED_JS = 13;
+if (jsFiles.length < EXPECTED_JS) {
+  console.error(`Expected at least ${EXPECTED_JS} test_*.js files in tools/, found ${jsFiles.length}.`);
+  console.error(`Found: ${jsFiles.join(", ") || "(none)"}`);
+  console.error("A test file was deleted, renamed, or moved into a subdirectory.");
+  console.error("If that was deliberate, lower EXPECTED_JS in tools/run-all.js.");
   process.exit(1);
 }
 for (const f of jsFiles) {
-  const r = spawnSync(process.execPath, [path.join(DIR, f)], { encoding: "utf8", cwd: ROOT });
-  const out = (r.stdout || "") + (r.stderr || "");
-  results.push({ f, code: r.status, out });
-  banner(r.status === 0 ? "PASS" : "FAIL", f);
-  process.stdout.write(out.trimEnd() + "\n");
+    /* --strict on the budget test. Without it the file reports REGRESSION and
+     exits 0, so npm test passed on a declared regression — it was already in
+     one at HEAD (37 -> 38) and nobody would ever have seen it. */
+  const argv = f === "test_ru_completeness.js" ? [path.join(DIR, f), "--strict"] : [path.join(DIR, f)];
+  record(f, spawnSync(process.execPath, argv,
+    { encoding: "utf8", cwd: ROOT, timeout: TIMEOUT_MS }), "js");
 }
 
 /* ---- Python ---- */
 const pyFiles = fs.readdirSync(DIR).filter((f) => /^test_.*\.py$/.test(f)).sort();
 for (const f of pyFiles) {
-  let r = spawnSync("python", [path.join(DIR, f)], { encoding: "utf8", cwd: ROOT });
-  if (r.error) r = spawnSync("python3", [path.join(DIR, f)], { encoding: "utf8", cwd: ROOT });
-  if (r.error) {
-    /* Loud, and it does not count as a pass. */
-    console.log(`\nSKIP  ${f} — no python on PATH (this file is UNVERIFIED)`);
-    results.push({ f, code: 0, skipped: true, out: "" });
+  let r = spawnSync("python", [path.join(DIR, f)], { encoding: "utf8", cwd: ROOT, timeout: TIMEOUT_MS });
+  if (r.error && r.error.code === "ENOENT") {
+    r = spawnSync("python3", [path.join(DIR, f)], { encoding: "utf8", cwd: ROOT, timeout: TIMEOUT_MS });
+  }
+  if (r.error && r.error.code === "ENOENT") {
+    /* A SKIP is NOT a pass. It used to be pushed with code 0, so it counted in
+       "all 14 test files passed" — the one line a CI badge or a skimmed log
+       actually shows, immediately contradicting the warning above it. */
+    console.log(`\nSKIP  ${f} — no python on PATH. This file is UNVERIFIED.`);
+    results.push({ f, code: 0, skipped: true, out: "", kind: "py" });
     continue;
   }
-  const out = (r.stdout || "") + (r.stderr || "");
-  results.push({ f, code: r.status, out });
-  banner(r.status === 0 ? "PASS" : "FAIL", f);
-  process.stdout.write(out.trimEnd() + "\n");
+  record(f, r, "py");
 }
 
 /* ---- summary ---- */
 const failed = results.filter((r) => r.code !== 0);
 const skipped = results.filter((r) => r.skipped);
+const ran = results.filter((r) => !r.skipped);
 const rule = "-".repeat(64);
 console.log(`\n${rule}`);
 for (const r of results) {
   console.log(`  ${r.skipped ? "SKIP" : r.code === 0 ? "pass" : "FAIL"}  ${r.f}`);
 }
 console.log(rule);
-if (skipped.length) console.log(`${skipped.length} file(s) SKIPPED — those are unverified, not passing.`);
-console.log(failed.length
-  ? `${failed.length} of ${results.length} test files FAILED: ${failed.map((r) => r.f).join(", ")}`
-  : `all ${results.length} test files passed`);
+if (failed.length) {
+  console.log(`${failed.length} of ${results.length} test files FAILED: ${failed.map((r) => r.f).join(", ")}`);
+} else if (skipped.length) {
+  /* Never say "all N passed" when some were not run. */
+  console.log(`${ran.length} test files passed, ${skipped.length} SKIPPED and unverified: ${skipped.map((r) => r.f).join(", ")}`);
+} else {
+  console.log(`all ${ran.length} test files passed`);
+}
 process.exit(failed.length ? 1 : 0);

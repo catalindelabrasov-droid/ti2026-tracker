@@ -1984,6 +1984,30 @@ def main():
     except Exception as e:
         print(f"  ! OpenDota step failed (continuing): {e}", file=sys.stderr)
 
+    # RECOMPUTE the Swiss standings AFTER the OpenDota merge.
+    #
+    # compute_group_standings() runs once, at parse time, off the Liquipedia
+    # rounds. run_opendota() then merges newer scores into those same rounds and
+    # flips series to "completed" — and nothing recomputed the array, so save()
+    # wrote fresh rounds beside a stale standings block. Observed live: the file
+    # said Aurora Gaming 2-1 and BoomBoys 2-1 while its own rounds said 3-1 and
+    # 2-2.
+    #
+    # Nobody saw it because renderGroups() recomputes from the merged matches and
+    # uses standings[] only to seed team names — the page repairs it at render
+    # time, which is exactly why it survived. It still ships a self-contradicting
+    # artifact to anyone reading /data.json, and index.html falls back to the raw
+    # array when no series is decided.
+    try:
+        gs = data.get("groupStage") or {}
+        if gs.get("rounds"):
+            fresh = compute_group_standings(gs["rounds"])
+            if fresh and fresh != gs.get("standings"):
+                gs["standings"] = fresh
+                changed.append("standings(recomputed after merge)")
+    except Exception as e:
+        print(f"  ! standings recompute failed (continuing): {e}", file=sys.stderr)
+
     data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     data["meta"]["dataSource"] = (
         "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota"

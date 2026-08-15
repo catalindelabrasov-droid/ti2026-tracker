@@ -83,32 +83,73 @@ ok(maxBefore <= ROUNDS, `nobody exceeds ${ROUNDS} games before`, `max ${maxBefor
    touching the dangerous path at all. So play the Swiss out first. */
 const clone = JSON.parse(JSON.stringify(data));
 const rounds = clone.groupStage.rounds || [];
-for (const rd of rounds) {
-  for (const m of rd.matches || []) {
-    if (m.status === "completed") continue;
-    const a = (m.teamA || {}).name, b = (m.teamB || {}).name;
-    if (!a || !b || a === "TBD" || b === "TBD") continue;
-    m.teamA = { name: a, score: 2 };
-    m.teamB = { name: b, score: 0 };
-    m.status = "completed";
-  }
-}
-/* Round 5 fixtures are undrawn, so pair the survivors by record ourselves —
-   3-1 v 3-1, 2-2 v 2-2, 1-3 v 1-3, which is how Liquipedia draws it. */
-const mid = w.computeGroupStandings(clone).rows || [];
 const lastRound = rounds[rounds.length - 1];
+
+/* Complete every round EXCEPT the last, then decide the last from the resulting
+   standings.
+ *
+ * The first version completed ALL named matches, including the final round, and
+ * only afterwards looked for teams on 3-1 / 2-2 / 1-3. That works only while
+ * the final round is undrawn. The moment it IS drawn — hours away as this is
+ * written — the fast-forward plays it, nobody is left in those buckets, the
+ * pool comes back empty, `lastRound.matches = []` DELETES the round, and the
+ * file fails four ways for a fixture reason on the busiest day of the stage. A
+ * suite that is red for a known-bogus reason stops being read.
+ */
+const complete = (m) => {
+  const a = (m.teamA || {}).name, b = (m.teamB || {}).name;
+  if (!a || !b || a === "TBD" || b === "TBD") return false;
+  m.teamA = { name: a, score: 2 };
+  m.teamB = { name: b, score: 0 };
+  m.status = "completed";
+  return true;
+};
+
+for (const rd of rounds) {
+  if (rd === lastRound) continue;                 // decided below
+  for (const m of rd.matches || []) if (m.status !== "completed") complete(m);
+}
+
 if (lastRound) {
-  const pool = [];
-  for (const rec of ["3-1", "2-2", "1-3"]) {
-    const [rw, rl] = rec.split("-").map(Number);
-    pool.push(...mid.filter((r) => r.wins === rw && r.losses === rl).map((r) => r.team));
+  const mid = w.computeGroupStandings(clone).rows || [];
+  const drawn = (lastRound.matches || []).filter((m) => ((m.teamA || {}).name || "TBD") !== "TBD");
+  /* A real draw is only usable if it RECONCILES with the fast-forward.
+     The live draw is made against standings that still contain unfinished
+     matches; completing those first can put a team in the final round that has
+     already played all ROUNDS games, producing a 5-0 in a five-round Swiss.
+     That is a fixture artefact, not a product defect, so check before trusting
+     it and say which path was taken. */
+  let usedDraw = false;
+  if (drawn.length) {
+    const snapshot = JSON.stringify(lastRound.matches);
+    for (const m of lastRound.matches) if (m.status !== "completed") complete(m);
+    const trial = w.computeGroupStandings(clone).rows || [];
+    const impossible = trial.filter((r) => r.wins + r.losses > ROUNDS || r.wins > ROUNDS - 1 || r.losses > ROUNDS - 1);
+    if (impossible.length) {
+      console.log(`         (real draw does not reconcile with the fast-forward — ` +
+                  `${impossible.map((r) => r.team + " " + r.wins + "-" + r.losses).join(", ")}; synthesising instead)`);
+      lastRound.matches = JSON.parse(snapshot);
+    } else {
+      usedDraw = true;
+      console.log(`         (final round already drawn: ${drawn.length} real pairings used)`);
+    }
   }
-  lastRound.matches = [];
-  for (let i = 0; i + 1 < pool.length; i += 2) {
-    lastRound.matches.push({
-      id: `gs-r${rounds.length}-m${i / 2 + 1}`, bestOf: 3, status: "completed",
-      teamA: { name: pool[i], score: 2 }, teamB: { name: pool[i + 1], score: 0 },
-    });
+  if (!usedDraw) {
+    /* Undrawn: pair the survivors by record, the way Liquipedia does. */
+    const pool = [];
+    for (const rec of ["3-1", "2-2", "1-3"]) {
+      const [rw, rl] = rec.split("-").map(Number);
+      pool.push(...mid.filter((r) => r.wins === rw && r.losses === rl).map((r) => r.team));
+    }
+    ok(pool.length >= 4, "enough survivors to synthesise the final round", `${pool.length} teams`);
+    lastRound.matches = [];
+    for (let i = 0; i + 1 < pool.length; i += 2) {
+      lastRound.matches.push({
+        id: `gs-r${rounds.length}-m${i / 2 + 1}`, bestOf: 3, status: "completed",
+        teamA: { name: pool[i], score: 2 }, teamB: { name: pool[i + 1], score: 0 },
+      });
+    }
+    console.log(`         (final round undrawn: synthesised ${lastRound.matches.length} pairings)`);
   }
 }
 const endOfSwiss = w.computeGroupStandings(clone).rows || [];

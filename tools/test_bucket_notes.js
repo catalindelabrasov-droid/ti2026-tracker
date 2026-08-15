@@ -37,21 +37,36 @@ if (!st) { console.error("swissTarget() not found in index.html"); process.exit(
 const WIN_TARGET = new Function("rounds", st[1])(ROUNDS);
 const LOSS_LIMIT = WIN_TARGET;
 
-/* Extract the real block: from the qual/out derivation up to where the bucket
-   markup begins. It ends by assigning `note`, which is what we return. */
+/* TWO ranges. The language helpers (plural / T / winsFor / lossesFor) sit ABOVE
+   the bucket map, because the elimination section below needs T() as well.
+   Lifting only the second range leaves T undefined and this file fails loudly —
+   which is correct. It is not widened blindly: if the markers move again it must
+   break rather than quietly test less. */
+const H_START = "const plural=(n,one,few,many)";
+const H_END = "const board=keys.map(k=>{";      // helpers end where the map begins
+const hFrom = src.indexOf(H_START);
+const hTo = src.indexOf(H_END, hFrom);
 const from = src.indexOf("const qual=w>=WIN_TARGET");
 const to = src.indexOf("const teams=arr.map", from);
-if (from < 0 || to < 0) {
+if (hFrom < 0 || hTo < 0 || from < 0 || to < 0) {
   console.error("could not lift the note logic from renderGroups — markers moved");
   process.exit(1);
 }
+const helpers = src.slice(hFrom, hTo);
 const block = src.slice(from, to);
-if (!/const note\s*=/.test(block)) {
-  console.error("lifted block does not assign `note` — refusing to test nothing");
+if (!/const note\s*=/.test(block) || !/const T=/.test(helpers) || !/plural/.test(helpers)) {
+  console.error("lifted text is missing `note`, `T` or `plural` — refusing to test nothing");
   process.exit(1);
 }
-const noteFn = new Function("w", "l", "WIN_TARGET", "LOSS_LIMIT", "ROUNDS", block + "\nreturn note;");
-const noteFor = (w, l) => noteFn(w, l, WIN_TARGET, LOSS_LIMIT, ROUNDS);
+/* LANG is injected, so the SAME shipped logic is exercised in both languages. */
+const noteFn = new Function("w", "l", "WIN_TARGET", "LOSS_LIMIT", "ROUNDS", "LANG",
+  helpers + "\n" + block + "\nreturn note;");
+const noteIn = (lang, w, l) => noteFn(w, l, WIN_TARGET, LOSS_LIMIT, ROUNDS, lang);
+const noteFor = (w, l) => noteIn("en", w, l);
+/* LANG must be supplied here too — the helper block reads it to set RU. */
+const pluralFn = new Function("n", "LANG",
+  helpers + "\nreturn plural(n,'победа','победы','побед');").bind(null);
+const pl = (n) => pluralFn(n, "ru");
 
 let fail = 0;
 const ok = (c, m, x) => { if (!c) { console.log("  FAIL " + m + (x ? "   " + x : "")); fail++; } };
@@ -97,6 +112,28 @@ for (let w = 0; w <= ROUNDS; w++) {
 
 /* The labels must actually be the current ones. If the product is rewritten and
    this file is not, that is the failure mode this whole file exists to avoid. */
+/* RUSSIAN. These subtitles carry a number, so no dictionary entry can match
+   them — they are composed per language, and a missed branch shows English on
+   the Russian board. Three of them did, until today. */
+for (let w = 0; w <= ROUNDS; w++) {
+  for (let l = 0; l + w <= ROUNDS; l++) {
+    if (w > WIN_TARGET || l > LOSS_LIMIT) continue;
+    if (w >= WIN_TARGET && l >= LOSS_LIMIT) continue;
+    const ru = noteIn("ru", w, l);
+    ok(/[А-яЁё]/.test(ru), `${w}-${l} russian subtitle is not Russian`, ru);
+    ok(!/(win|wins|loss|losses|playoff|elimination|reach|either way)/i.test(ru),
+       `${w}-${l} russian subtitle still has English words`, ru);
+  }
+}
+
+/* Russian plural is three forms chosen by the LAST TWO digits: 11 behaves like
+   "many" while 21 behaves like "one". A last-digit-only rule gets both wrong. */
+const PLURAL = [[1,"победа"],[2,"победы"],[4,"победы"],[5,"побед"],[11,"побед"],
+                [12,"побед"],[14,"побед"],[21,"победа"],[22,"победы"],[25,"побед"],
+                [0,"побед"],[101,"победа"],[111,"побед"]];
+for (const [n, want] of PLURAL) ok(pl(n) === want, `plural(${n}) = "${want}"`, pl(n));
+console.log(`  plural checked at n = ${PLURAL.map(([n]) => n).join(", ")}`);
+
 const joined = [...seen].join(" | ");
 ok(!/to qualify|to elimination|placing decided|awaiting the final/.test(joined),
    "no retired label survives", joined);
