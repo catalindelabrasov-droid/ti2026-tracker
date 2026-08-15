@@ -4307,9 +4307,22 @@ function renderGroups(d){
     const arr=buckets[k];
     const qual=w>=WIN_TARGET, out=l>=LOSS_LIMIT;
     const nw=WIN_TARGET-w, nl=LOSS_LIMIT-l;
+    /* A clause is only true if the team has enough games left to get there.
+       Without this the board told a 1-3 team with ONE match remaining that it
+       needed "3 wins to qualify", and a 3-0 team with two matches remaining
+       that it was "4 losses" from elimination. Both arithmetically impossible,
+       and both were on screen. */
+    const left=Math.max(0,ROUNDS-(w+l));
+    const parts=[];
+    if(nw>0&&nw<=left) parts.push(`${nw} ${nw===1?"win":"wins"} to qualify`);
+    if(nl>0&&nl<=left) parts.push(`${nl} ${nl===1?"loss":"losses"} to elimination`);
     const note=qual?"through to the playoffs"
       :out?"out of the tournament"
-      :`${nw} ${nw===1?"win":"wins"} to qualify · ${nl} ${nl===1?"loss":"losses"} to elimination`;
+      :parts.length?parts.join(" · ")
+      /* Neither threshold is reachable in the games that remain — the record
+         itself decides. Say that rather than invent a number. */
+      :left>0?`${left} ${left===1?"match":"matches"} left · placing decided on record`
+      :"awaiting the final standings";
     const teams=arr.map(r=>{
       const i=infoFor(r.team);
       const pips=Array.from({length:ROUNDS},(_,n)=>`<i class="${i.pips[n]||""}"></i>`).join("");
