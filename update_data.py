@@ -447,10 +447,24 @@ def aggregate_series(rows, team_names):
     """
     series = {}
     for g in rows:
-        rad = (g.get("radiant_team_name") or g.get("radiant_name") or "").strip() \
-            or team_names.get(g.get("radiant_team_id"), "")
-        dire = (g.get("dire_team_name") or g.get("dire_name") or "").strip() \
-            or team_names.get(g.get("dire_team_id"), "")
+        # .strip() OUTSIDE the `or` chain, not bound to the first term only. It
+        # used to apply to the per-game name alone, so when that was absent —
+        # OpenDota returns radiant_team_name: null for every row in league 19719
+        # — the fallback from /leagues/{id}/teams came through untouched. That
+        # list spells team 10136357 as 'Nigma Galaxy ' WITH A TRAILING SPACE, the
+        # only one of the sixteen with stray whitespace. _match_key() strips and
+        # this did not, so the two keys never met:
+        #     data.json  -> 'nigma galaxy|team spirit'
+        #     opendota   -> 'nigma galaxy |team spirit'
+        # Every Nigma fixture was invisible to the merge: no per-game rows, no
+        # score backfill, and — the part that matters — no promotion to
+        # live/completed when Liquipedia lags, which is what the prediction lock
+        # leans on and what makes collect_completed_results write a result at
+        # all. Nigma finished 2nd and go straight to the playoffs.
+        rad = ((g.get("radiant_team_name") or g.get("radiant_name") or "")
+               or team_names.get(g.get("radiant_team_id"), "")).strip()
+        dire = ((g.get("dire_team_name") or g.get("dire_name") or "")
+                or team_names.get(g.get("dire_team_id"), "")).strip()
         if not rad or not dire:
             continue
         a, b = sorted([rad, dire], key=str.lower)
@@ -490,7 +504,11 @@ def build_series_pair_map(rows, team_names):
     """
     out = {}
     for s in aggregate_series(rows, team_names):
-        out.setdefault(f"{s['a'].lower()}|{s['b'].lower()}", []).append(s)
+        # Stripped here too. aggregate_series is fixed above, but this key must
+        # agree with _match_key() character for character or a whole team drops
+        # out of the merge in silence — one trailing space cost Nigma Galaxy
+        # every game row it should have had.
+        out.setdefault(f"{s['a'].strip().lower()}|{s['b'].strip().lower()}", []).append(s)
     if out:
         print(f"  · OpenDota: aggregated {sum(len(v) for v in out.values())} main-event series.")
     return out
