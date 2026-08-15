@@ -1,4 +1,14 @@
 {
-  "ours": 14,
-  "total": 32
+  "_note": "Set 2026-08-15 after the dictionary block landed. TOTAL fell 32 -> 18. OURS rose 14 -> 15, and that one is honest, not hidden: 'Round # · # of # series decided' appeared once round 5 was underway. Every one of the 15 remaining is INTERPOLATED — a template literal with a number or team name in it — so no ru/strings.json entry can ever match them; they need the code to emit a key. See _outstanding.",
+  "_outstanding": [
+    "live-card time: 'Sat 12:40 PM · Bo3' -> 'вс 15:40 · Bo3' (index.html:2344). US 12-hour clock above the fold; 13 hardcoded en-US locale calls, fix with one shared helper",
+    "group stage: 'beat/lost to «team» #–#' -> 'обыграли/проиграли' (index.html:4377)",
+    "live-card labels: Series/Game/live/# game (index.html:2362,2369,2373,2340)",
+    "qualifier meta: '# teams · # matches' (index.html:3687) — two plurals in one line",
+    "group stage: '● #–# vs «team»' -> 'против' (index.html:4376)",
+    "singletons: '# more appear as rounds are drawn', '# placements · # teams', '# qualified', 'Round # · # of # series decided', 'Updated 3:40 PM'",
+    "TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later, so it hits the temporal dead zone, throws, and blanks the page. Use function declarations, which read LANG at call time."
+  ],
+  "ours": 15,
+  "total": 18
 }
