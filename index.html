@@ -175,6 +175,21 @@
     letter-spacing:.02em;text-transform:uppercase}
   .sw-elimnote{font-family:'JetBrains Mono',monospace;font-size:10.5px;
     letter-spacing:.05em;color:var(--ink-dim)}
+  /* The confirmed-teams block. Same row component as the group stage buckets,
+     so the two read as one idea — this round is the Swiss run continued, not a
+     separate table. */
+  .sw-elimconf{display:flex;align-items:baseline;gap:10px;margin:2px 0 10px}
+  .sw-elimconfhead{font-family:'JetBrains Mono',monospace;font-size:10.5px;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint)}
+  .sw-elimconfcount{font-family:'JetBrains Mono',monospace;font-size:10.5px;
+    color:var(--ink-faint);opacity:.75}
+  .sw-elimteams{margin-bottom:18px}
+  /* The sixth bubble is this round, not the Swiss. Marked so the strip reads as
+     "five rounds, then the decider" rather than six equal games. */
+  .sw-elimteams .sw-tpips i.is-elim{margin-left:5px;position:relative}
+  .sw-elimteams .sw-tpips i.is-elim::before{content:"";position:absolute;
+    left:-3.5px;top:50%;transform:translateY(-50%);width:1px;height:9px;
+    background:var(--line)}
   .sw-elim .bracket-round{display:grid;gap:10px;
     grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .lb-provisional{padding:11px 16px;margin-top:10px;font-size:12.5px;line-height:1.55;
@@ -4348,7 +4363,7 @@ function renderGroups(d){
   const infoFor=(name)=>{
     const list=(byTeam[tkey(name)||tnorm(name)]||[]).slice()
       .sort((x,y)=>{const a=seq(x.m),b=seq(y.m);return a[0]-b[0]||a[1]-b[1]||a[2]-b[2];});
-    const pips=[]; let live=null,last=null,next=null;
+    const pips=[]; let live=null,last=null,next=null,elimPip=null,elimLive=false;
     list.forEach(({m,home})=>{
       const us=home?m.teamA:m.teamB, them=home?m.teamB:m.teamA;
       const os=(us||{}).score, ts=(them||{}).score;
@@ -4359,12 +4374,21 @@ function renderGroups(d){
            mark would silently push the first one off. The elimination result
            still reaches `last`, so the status line shows it. */
         if(SWISS_ID.test(m.id||"")) pips.push(os>ts?"w":"l");
+        /* Kept SEPARATE, deliberately. The elimination round section draws a
+           ROUNDS+1 strip and needs this as its sixth mark, but the group-stage
+           buckets must keep rendering exactly ROUNDS marks — pushing it into
+           `pips` above would shift every group-stage row and drop round 1 off
+           the front, which is the bug the comment above is warning about. */
+        if(ELIM_ID.test(m.id||"")) elimPip=os>ts?"w":"l";
         last={opp:(them||{}).name,os,ts,won:os>ts,when:m.scheduled};
       }
-      else if(m.status==="live"){ live={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute}; }
+      else if(m.status==="live"){
+        live={opp:(them||{}).name,os:os??0,ts:ts??0,min:m.gameMinute};
+        if(ELIM_ID.test(m.id||"")) elimLive=true;
+      }
       else if(!next&&m.scheduled){ next={opp:(them||{}).name,when:m.scheduled}; }
     });
-    return {pips,live,last,next};
+    return {pips,live,last,next,elimPip,elimLive};
   };
   const when=t=>{try{return new Date(t).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"});}catch(e){return"";}};
   /* A finished result is a button: it opens the series game by game.
@@ -4492,6 +4516,52 @@ function renderGroups(d){
      it put five identical "TBD vs TBD" cards on the live board, each with a
      working notification bell. Until the pairings are actually drawn, show the
      heading and say so; no empty cards. */
+  /* Who is ALREADY certain of this round, before any pairing is drawn.
+     A team belongs here when it can neither still reach a direct playoff slot
+     nor still be eliminated — the same `capped && safe` pair the buckets above
+     use for their wording, applied per team rather than per bucket. That is
+     knowable long before Liquipedia publishes the draw: with one Swiss game
+     left, every 2-2 team is in this round whichever way that game goes.
+
+     Before this, the section said "drawn once the Swiss rounds finish" and
+     showed nothing — while eight teams were already mathematically certain to
+     be in it, and the page knew. */
+  const elimConfirmed=s.filter(r=>{
+    const left=Math.max(0,ROUNDS-(r.wins+r.losses));
+    /* Redundant while WIN_TARGET === LOSS_LIMIT, and checked exhaustively over
+       every record reachable in a ROUNDS-long Swiss rather than just today's
+       data: a team on the win target already has wins+left >= WIN_TARGET, and
+       one on the loss limit already has losses+left >= LOSS_LIMIT, so the
+       expression below excludes both on its own. Kept because the two are only
+       equal by construction one line apart — if the format ever gives them
+       different values this becomes load-bearing, and it is cheaper than
+       rediscovering that from a wrong board. Mutation-testing it will report a
+       survivor; that is expected, not a gap. */
+    if(r.wins>=WIN_TARGET||r.losses>=LOSS_LIMIT) return false;
+    return (r.wins+left)<WIN_TARGET && (r.losses+left)<LOSS_LIMIT;
+  });
+
+  /* Same row as the group stage, one bubble longer. The strip is ROUNDS+1: the
+     Swiss run, then this round. Empty slots are the games not played yet — a
+     team still in its round-5 game shows four marks and TWO blanks, one for
+     that result and one for the elimination match. */
+  const ELIM_SLOTS=ROUNDS+1;
+  const elimRows=!elimConfirmed.length?"":`<div class="sw-teams sw-elimteams">${
+    elimConfirmed.map(r=>{
+      const i=infoFor(r.team);
+      const marks=i.pips.slice(0,ROUNDS);
+      while(marks.length<ROUNDS) marks.push("");        // round 5 not played yet
+      marks.push(i.elimPip||"");                        // the sixth: this round
+      const pips=Array.from({length:ELIM_SLOTS},(_,n)=>
+        `<i class="${marks[n]||""}${n===ROUNDS?" is-elim":""}"></i>`).join("");
+      return `<div class="sw-team ${i.elimLive?"is-live":""}" data-team="${esc(r.team)}" data-teams="${esc(r.team)}" role="button" tabindex="0">
+        <span class="sw-tlogo">${teamLogo(r.team,20)}</span>
+        <span class="sw-tname">${esc(r.team)}</span>
+        <span class="sw-tpips" title="${T("Five Swiss rounds, then this one","Пять швейцарских раундов, затем этот")}">${pips}</span>
+        <span class="sw-tline">${lineFor(i,r.team)}</span>
+      </div>`;
+    }).join("")}</div>`;
+
   const elimSection=!elim.length?"":`
     <div class="sw-elim">
       <div class="sw-elimhead">
@@ -4503,6 +4573,13 @@ function renderGroups(d){
              "Пары определятся после швейцарских раундов · "+elim.length+" "+
                plural(elim.length,"матч","матча","матчей")+" за пять мест")}</span>
       </div>
+      ${elimConfirmed.length?`<div class="sw-elimconf">
+        <span class="sw-elimconfhead">${T("Confirmed for this round","Уже в этом раунде")}</span>
+        <span class="sw-elimconfcount">${elimConfirmed.length}${
+          elimConfirmed.length<elim.length*2
+            ? T(" of "+(elim.length*2)," из "+(elim.length*2))
+            : ""}</span>
+      </div>${elimRows}`:""}
       ${elimNamed.length?`<div class="bracket-round">${elimNamed.map(m=>bracketMatch(m)).join("")}</div>`:""}
     </div>`;
 
