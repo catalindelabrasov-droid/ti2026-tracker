@@ -177,6 +177,9 @@
     letter-spacing:.05em;color:var(--ink-dim)}
   .sw-elim .bracket-round{display:grid;gap:10px;
     grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .lb-provisional{padding:11px 16px;margin-top:10px;font-size:12.5px;line-height:1.55;
+    color:var(--aegis-bright);background:rgba(217,164,65,.10);
+    border:1px solid rgba(217,164,65,.34)}
   .lang-hint{position:fixed;left:12px;right:12px;bottom:12px;z-index:500;
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     background:var(--panel-2,#1b2230);border:1px solid var(--line);
@@ -5815,11 +5818,18 @@ function lgOthersBlock(lg,m,unlockedToSee){
 
 function lgLeaderboard(lg){
   // Prefer the server-computed board (scores ALL members); fall back to local.
-  let board;
+  let board, provisional=false;
   if(lg.board && lg.board.length){
     board=lg.board.map(p=>({name:p.username,points:p.points,correct:p.correct,scored:p.scored}));
   }else{
+    /* The server board is the real one: it scores every rule — streak, sweep,
+       upset, first-game, reverse-sweep, consensus, perfect-day and the outcome
+       bonuses. This local fallback scores TWO of them, so its totals are always
+       lower and its order can differ. It used to render silently, so a member
+       whose leaderboard call failed saw a plausible, materially wrong board and
+       no reason to doubt it. Say so instead. */
     board=lgComputeLeaderboard(lg);
+    provisional=true;
   }
   if(!board.length) return `<div class="lg-empty"><div class="big">🏆</div><h3>Leaderboard is empty</h3><div class="hint">Points appear here as matches finish and predictions are scored.</div></div>`;
   const rows=board.map((p,i)=>`<tr class="lb-row ${i===0?'top1':''} ${p.name===lg.me?'lb-you':''}">
@@ -5832,12 +5842,34 @@ function lgLeaderboard(lg){
       <div><h3 style="margin:0">Standings</h3><div class="hint" style="margin:4px 0 0">${board.length} players · updates automatically after each result</div></div>
       <span class="lb-live"><span class="lb-livedot"></span>Live</span>
     </div>
+    ${provisional?`<div class="lg-card lb-provisional">Provisional — the scoring service did not answer, so this is a local estimate from winner and exact-score only. Bonuses are not counted and the order may change. Refresh to get the real board.</div>`:""}
     <div class="lg-card" style="padding:0;overflow:hidden">
     <table class="lb-table"><thead><tr><th>#</th><th>Player</th><th style="text-align:right">Accuracy</th><th style="text-align:right">Points</th></tr></thead><tbody>${rows}</tbody></table>
   </div>
   <div class="hint" style="margin-top:14px">Scored from finished matches: +${rPts(lg.rules,'winner')} correct winner, +${rPts(lg.rules,'exactScore')} exact-score bonus. Tournament outcome bonuses (champion +${rPts(lg.rules,'champion')}, top 4 +${rPts(lg.rules,'topFour')}) apply once the event ends.</div>`;
 }
 
+/* Compare a pick with a result the way the SERVER does.
+   This fallback used raw string equality — the exact drift that team_norm() and
+   migration 0020 fixed server-side. A pick stored as "BetBoom Team" against a
+   result recorded as "BoomBoys" scored as WRONG here while the real leaderboard
+   scored it right, so the two boards disagreed about the same person. */
+function samePick(pick, winner){
+  if(!pick||!winner) return false;
+  if(pick===winner) return true;
+  try{
+    if(canonTeam(pick)===canonTeam(winner)) return true;
+    if(tkey(pick)===tkey(winner)) return true;
+    /* Consult the alias table DIRECTLY as well. canonTeam() only applies an
+       alias when the target is in tiFieldNames(), which is empty until DATA has
+       loaded — so on a cold render "BetBoom Team" would not resolve to
+       "BoomBoys" and a correct pick would be scored wrong. */
+    const a=TEAM_ALIASES[tnorm(pick)], b=TEAM_ALIASES[tnorm(winner)];
+    if(a&&(a===winner||tkey(a)===tkey(winner))) return true;
+    if(b&&(b===pick||tkey(b)===tkey(pick))) return true;
+    return false;
+  }catch(e){ return false; }
+}
 function lgComputeLeaderboard(lg){
   // Build per-player points from locked predictions vs finished results.
   const results={}; allMatches(DATA).forEach(m=>{ if(m.status==="completed"||m.status==="done"){const w=matchWinner(m);results[m.id]={winner:w==="A"?m.teamA.name:w==="B"?m.teamB.name:null,sa:m.teamA.score,sb:m.teamB.score};}});
@@ -5848,15 +5880,19 @@ function lgComputeLeaderboard(lg){
   Object.entries(lg.predictions||{}).forEach(([mid,p])=>{
     if(!p.locked) return; const r=results[mid]; if(!r) return;
     const me=ensure(lg.me); me.scored++;
-    if(r.winner&&p.pick===r.winner){me.points+=rPts(lg.rules,'winner');me.correct++;if(p.sa==r.sa&&p.sb==r.sb)me.points+=rPts(lg.rules,'exactScore');}
+    if(r.winner&&samePick(p.pick,r.winner)){me.points+=rPts(lg.rules,'winner');me.correct++;if(p.sa==r.sa&&p.sb==r.sb)me.points+=rPts(lg.rules,'exactScore');}
   });
   // others (demo/seeded)
   Object.entries(lg.otherPredictions||{}).forEach(([mid,arr])=>{
     const r=results[mid]; if(!r) return;
-    arr.forEach(o=>{const pl=ensure(o.name);pl.scored++;if(r.winner&&o.pick===r.winner){pl.points+=rPts(lg.rules,'winner');pl.correct++;if(o.sa==r.sa&&o.sb==r.sb)pl.points+=rPts(lg.rules,'exactScore');}});
+    arr.forEach(o=>{const pl=ensure(o.name);pl.scored++;if(r.winner&&samePick(o.pick,r.winner)){pl.points+=rPts(lg.rules,'winner');pl.correct++;if(o.sa==r.sa&&o.sb==r.sb)pl.points+=rPts(lg.rules,'exactScore');}});
   });
   // include members with 0
-  lg.members.forEach(m=>ensure(m));
+  /* Defensive: this is the DEGRADED path — it runs precisely when things have
+     already gone wrong. An undefined members list threw here and took the
+     whole league page with it, turning a missing leaderboard into a blank
+     screen. */
+  (lg.members||[]).forEach(m=>ensure(m));
   return Object.values(players).sort((a,b)=>b.points-a.points||b.correct-a.correct);
 }
 
