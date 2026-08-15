@@ -134,8 +134,19 @@ if (geo) {
   console.log(`         (geo: ${geo.country.join(", ")})`);
 }
 
-// 6. Every /ru rewrite must land on a file that exists.
+// 6. Every rewrite must land on a file that exists.
 for (const r of rules.filter((x) => x.status === 200)) {
+  /* A splat target is a template, not a path — "/:splat" stands for whatever
+     followed the wildcard, so there is no single file to look for here. Which
+     files it can reach is checked properly in test_lang_paths.js, by resolving
+     the links the page actually emits. What matters at this level is that the
+     splat is carried through: "/en/*" -> "/" would resolve for every path while
+     serving the homepage in place of every sub-page. */
+  if (r.from.includes("*")) {
+    ok(r.to.includes(":splat"),
+       `${r.from} -> ${r.to} keeps the splat (a bare target would serve one page for every path)`);
+    continue;
+  }
   const target = path.join(__dirname, "..", r.to.replace(/^\//, ""));
   ok(fs.existsSync(target), `${r.from} -> ${r.to} target exists`);
 }
