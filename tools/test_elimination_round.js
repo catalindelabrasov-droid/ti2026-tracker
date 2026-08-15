@@ -228,12 +228,39 @@ ok(!/Elimination Round/.test(w.renderGroups(noElim)),
    identical "TBD vs TBD" cards, each with a working notification bell, on the
    board during the Swiss. */
 const today = w.renderGroups(data);
-ok(/Elimination Round/.test(today), "the heading shows during the Swiss (fixtures exist)");
+ok(/Elimination Round/.test(today), "the heading shows (fixtures exist)");
+
+/* Which state is data.json actually in? This used to assert the UNDRAWN case
+   unconditionally, and went red the moment Liquipedia published the pairings on
+   15 Aug — the tournament simply moved past the assertion. Both states are
+   correct at different times, so check the one we are in and SAY which, so a
+   future reader cannot mistake a skipped branch for a passing one. */
+const drawn = (data.groupStage.eliminationMatches || [])
+  .filter((m) => ((m.teamA || {}).name || "TBD") !== "TBD");
+console.log(`         (data.json has ${drawn.length} of ${(data.groupStage.eliminationMatches || []).length} pairings drawn)`);
+
 const tbdCards = (today.match(/data-teams="TBD TBD"/g) || []).length;
-ok(tbdCards === 0, "no empty TBD-vs-TBD cards are rendered before the draw", `${tbdCards} found`);
+ok(tbdCards === 0, "no empty TBD-vs-TBD cards are ever rendered", `${tbdCards} found`);
+
 const bells = (today.match(/data-notif="el-/g) || []).length;
-ok(bells === 0, "no notification bells on undrawn fixtures", `${bells} found`);
-ok(/Drawn once the Swiss rounds finish/.test(today), "it says the pairings are not drawn yet");
+if (drawn.length === 0) {
+  ok(bells === 0, "before the draw: no notification bells on undrawn fixtures", `${bells} found`);
+  ok(/Drawn once the Swiss rounds finish/.test(today), "before the draw: it says the pairings are not drawn yet");
+} else {
+  ok(bells === drawn.length,
+     "after the draw: one notification bell per real fixture", `${bells} bells / ${drawn.length} fixtures`);
+  ok(/Winners take the last five playoff slots/.test(today),
+     "after the draw: the note explains what is at stake");
+  /* Both named teams must reach the card, or the bell is attached to a fixture
+     the reader cannot identify. */
+  /* Escape locally: the page's esc() is a top-level const arrow, so it is not a
+     window property and cannot be reached from out here. */
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const missing = drawn.filter((m) => !today.includes(esc(m.teamA.name)) || !today.includes(esc(m.teamB.name)));
+  ok(missing.length === 0, "after the draw: every drawn pairing names both teams",
+     missing.map((m) => m.id).join(", "));
+}
 
 /* ---- 5b. the pip strip must agree with the record beside it ----
    Every gs- match carries a real `scheduled`; every el- match has

@@ -248,10 +248,17 @@ const externalStrings = new Set();
   const fresh = oursSet.filter((t) => !knownSet.has(t));
   const gone = base.known.filter((t) => !oursSet.includes(t));
 
-  if (gone.length) console.log(`  ${gone.length} known string(s) no longer appear (translated, or the data moved on)`);
+  /* Report what is not currently rendering, but do NOT remove it.
+     The list is "strings we know about and have accepted", not "strings on
+     screen right now". Narrowing it automatically reintroduced exactly the
+     flapping this guard was written to end: a string that only renders in some
+     tournament states — "# more appear as rounds are drawn", or a live-card
+     time that first shows a Sunday — dropped out of the list while absent and
+     tripped the guard again the moment it came back. Nothing here was new; the
+     page had simply moved between states. Entries are added deliberately and
+     removed deliberately. */
+  if (gone.length) console.log(`  ${gone.length} known string(s) not rendering in this state (kept in the list)`);
   if (!fresh.length) {
-    /* Only shrink the list — never silently absorb a new string. */
-    if (gone.length) { write({}); console.log("  known list narrowed"); }
     console.log("no new English strings on /ru/");
     process.exit(0);
   }
