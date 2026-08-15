@@ -8,11 +8,20 @@
  */
 const fs = require("fs");
 const path = require("path");
+/* Exit NON-ZERO when jsdom is missing.
+ *
+ * This used to print SKIP and exit 0, so a run with no dependencies installed
+ * looked exactly like a run where all 28 checks passed. A test that cannot
+ * execute is not a passing test, and reporting it as one is worse than not
+ * having it — I quoted "26 checks against a real DOM" as evidence while this
+ * file was silently skipping. */
 let JSDOM;
 try { ({ JSDOM } = require("jsdom")); }
 catch (e) {
-  console.log("SKIP test_i18n: jsdom not installed (npm i -D jsdom)");
-  process.exit(0);
+  console.error("test_i18n CANNOT RUN: jsdom is not installed.");
+  console.error("  npm install            (jsdom is a devDependency in package.json)");
+  console.error("This is a failure, not a skip — nothing was verified.");
+  process.exit(1);
 }
 
 const REPO = path.join(__dirname, "..");
@@ -56,10 +65,18 @@ function makeEnv(pathname, strings, data) {
   return { api: fn(...Object.values(scope)), w, doc: w.document };
 }
 
+/* Load the REAL data.json rather than inventing a shape.
+ *
+ * The first version of this fixture wrote players as {name}/{nick}. data.json
+ * actually keys them `ign`, so the shipped guard read a field that does not
+ * exist and protected 0 of 84 player handles — while this test passed. A
+ * fabricated fixture proves the test agrees with itself, not with production.
+ * Same mistake as the seriesGamesBtn/fromStratz one. */
+const REAL = JSON.parse(fs.readFileSync(path.join(REPO, "data.json"), "utf8"));
 const DATA = {
   teams: [
-    { name: "Heroes", players: [{ name: "Live" }, { nick: "Standings" }] },
-    { name: "Team Spirit", players: [{ name: "Yatoro" }] },
+    { name: "Heroes", players: [{ ign: "Live", role: "Carry" }, { ign: "Standings", role: "Mid" }] },
+    ...(REAL.teams || []).slice(0, 4),
   ],
 };
 
@@ -137,6 +154,18 @@ async function return_check(api, doc) {
   const nicks = [...doc.querySelectorAll(".nick")].map((e) => e.textContent);
   ok(nicks[0] === "Live", "player named 'Live' NOT translated");
   ok(nicks[1] === "Standings", "player nicked 'Standings' NOT translated");
+
+  /* The check that would have caught the ign bug: a handle taken from the real
+     file, not one this test made up. */
+  const realIgn = ((REAL.teams || []).flatMap((t) => t.players || [])[0] || {}).ign;
+  ok(!!realIgn, "data.json players still expose `ign`", realIgn ? "e.g. " + realIgn : "SHAPE CHANGED");
+  if (realIgn) ok(api.ruText(realIgn) === null, "a REAL player handle is protected", realIgn);
+
+  /* And a name from tiFieldNames() — the list standings and fixtures actually
+     render, which drifts from DATA.teams (BoomBoys vs "BetBoom Team"). */
+  const field = (REAL.teams || []).map((t) => t.name).filter(Boolean);
+  const drifted = field.find((n) => /BoomBoys|Iron Wing|BetBoom/i.test(n)) || field[0];
+  if (drifted) ok(api.ruText(drifted) === null, "a real team name is protected", drifted);
 
   ok(txt("[data-noloc]") === "Playoffs", "[data-noloc] respected");
   ok(doc.querySelector("script").textContent.includes('"Playoffs"'), "script contents untouched");

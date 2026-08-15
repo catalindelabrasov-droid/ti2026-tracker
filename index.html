@@ -6353,10 +6353,23 @@ let _protCache={d:undefined,set:new Set()};
 function protectedText(){
   if(_protCache.d===DATA) return _protCache.set;
   const s=new Set();
+  /* Players are keyed `ign` in data.json — not `name`/`nick`. Reading the wrong
+     field guarded 0 of 84 handles while a synthetic test that invented `name`
+     passed happily. All three are read now, so a shape change cannot silently
+     empty this set again. */
   ((DATA||{}).teams||[]).forEach(t=>{
-    if(t.name) s.add(t.name);
-    (t.players||[]).forEach(p=>{ if(p&&p.name) s.add(p.name); if(p&&p.nick) s.add(p.nick); });
+    if(t&&t.name) s.add(t.name);
+    (t&&t.players||[]).forEach(p=>{
+      if(!p) return;
+      if(p.ign) s.add(p.ign);
+      if(p.name) s.add(p.name);
+      if(p.nick) s.add(p.nick);
+    });
   });
+  /* DATA.teams is the participant list, which drifts from the names actually
+     rendered in standings and fixtures — "BoomBoys" and "Iron Wing" live in
+     tiFieldNames(), which is why canonTeam() exists at all. Guard both. */
+  try{ tiFieldNames().forEach(n=>{ if(n) s.add(n); }); }catch(e){}
   _protCache={d:DATA,set:s};
   return s;
 }
