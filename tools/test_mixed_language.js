@@ -123,8 +123,34 @@ function scan(label, htmlStr) {
 
 console.log("");
 let total = 0;
-total += scan("group stage", w.renderGroups(data));
-total += scan("live & upcoming", w.renderLive(data));
+
+/* EVERY render surface, not two.
+   The first version scanned renderGroups and renderLive only — and the defect
+   that actually shipped ("минимум" spliced into an English sentence) lived in
+   renderTeamsTabInto, which was not among them. Two of sixteen surfaces is not
+   coverage, it is a sample that happened to miss the bug. */
+const SURFACES = [
+  ["group stage", () => w.renderGroups(data)],
+  ["live & upcoming", () => w.renderLive(data)],
+  ["playoffs bracket", () => w.renderBracket(data)],
+  ["teams", () => w.renderTeams(data)],
+  ["qualifiers", () => w.renderQualifiers(data)],
+  ["prize pool", () => w.renderPrize(data, null)],
+  ["teams tab", () => w.renderTeamsTabInto && w.renderTeamsTabInto()],
+  ["players tab", () => w.renderPlayersTabInto && w.renderPlayersTabInto()],
+  ["tournaments", () => w.renderTournaments && w.renderTournaments()],
+  ["live strip", () => w.renderLiveStrip && w.renderLiveStrip()],
+];
+let scanned = 0;
+for (const [name, fn] of SURFACES) {
+  let markup;
+  try { markup = fn(); } catch (e) { console.log(`  --   ${name}: threw (${e.message.slice(0, 50)})`); continue; }
+  if (typeof markup !== "string" || !markup.trim()) { console.log(`  --   ${name}: renders nothing here`); continue; }
+  total += scan(name, markup);
+  scanned++;
+}
+ok(scanned >= 5, `scanned ${scanned} of ${SURFACES.length} surfaces`,
+   scanned < 5 ? "too few rendered to call this coverage" : "");
 
 /* And with the Swiss finished plus the elimination round drawn — the state that
    produced "Вылетели · out of the tournament". */

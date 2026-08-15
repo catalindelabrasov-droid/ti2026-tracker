@@ -1,7 +1,12 @@
 """_pick_series: the disaster cases, the review's three bypasses, and every
 path that must keep working."""
+import os
 import sys, datetime
-sys.path.insert(0, r"C:\Users\Azog\Desktop\ti2026-tracker")
+# Resolve the repo from THIS file, not from an absolute path on one machine.
+# The hardcoded path meant this could only ever run on a single laptop — and it
+# guards _pick_series in update_data.py, the code that rewrites data.json every
+# 15 minutes in production. It was also never wired into `npm test`.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import update_data as U
 
 def ser(sid, sa, sb, start):

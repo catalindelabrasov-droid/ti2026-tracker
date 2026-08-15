@@ -28,7 +28,14 @@ const SUPABASE_VARS = new Set([
 let fail = 0;
 const ok = (c, m, x) => { console.log((c ? "  ok   " : "  FAIL ") + m + (x ? "   " + x : "")); if (!c) fail++; };
 
-if (!fs.existsSync(DIR)) { console.log("no email-templates/ directory — nothing to check"); process.exit(0); }
+/* A missing directory is a FAILURE, not "nothing to check". Renaming or
+   moving email-templates/ turned this file into a no-op that reported
+   success — the same skip-equals-pass shape as the jsdom guard. */
+if (!fs.existsSync(DIR)) {
+  console.error("email-templates/ is MISSING. This is a failure, not a skip —");
+  console.error("the auth email templates are unverified and may be unshippable.");
+  process.exit(1);
+}
 const files = fs.readdirSync(DIR).filter((f) => f.endsWith(".html") && !f.startsWith("DEPRECATED"));
 ok(files.length > 0, `${files.length} template(s) found`);
 

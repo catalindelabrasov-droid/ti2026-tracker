@@ -1,0 +1,50 @@
+# Run the test suite on every push and pull request.
+#
+# WHY THIS EXISTS
+#
+# Until now nothing ran these. `.github/workflows/` held only update.yml, the
+# data updater, so `npm test` executed exactly when somebody remembered to type
+# it. A suite nobody runs is documentation, not a safety net — and this repo
+# deployed straight to a live tournament from `main`.
+#
+# It is deliberately NOT a deploy gate. Netlify builds from main independently,
+# and blocking a data-updater commit behind a test run would stall the 15-minute
+# refresh during a live event. This tells you something broke; it does not stop
+# the site updating.
+name: tests
+
+on:
+  push:
+    branches: [main, "ru-i18n"]
+    # The updater commits data.json every ~15 minutes. Those runs would drown
+    # out real signal and burn Actions minutes for no benefit.
+    paths-ignore:
+      - "data.json"
+      - "**/*.md"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # jsdom is a devDependency; without it several files exit 1 by design
+      # rather than skipping, so this step is not optional.
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      # test_pick_series.py guards _pick_series in update_data.py — the code
+      # that rewrites data.json in production. run-all.js reports SKIP loudly if
+      # python is absent, so make sure it is not.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Test
+        run: npm test

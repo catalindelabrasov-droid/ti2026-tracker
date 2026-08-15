@@ -1,15 +1,30 @@
 // Pull the real functions out of index.html and replay the two defects.
 const fs=require('fs');
-const src=fs.readFileSync('index.html','utf8');
+const src=fs.readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
 const grab=(name)=>{
   const i=src.indexOf('function '+name+'(');
   if(i<0) throw new Error('not found: '+name);
   let d=0,j=src.indexOf('{',i);
   for(let k=j;k<src.length;k++){ if(src[k]==='{')d++; else if(src[k]==='}'){d--; if(!d) return src.slice(i,k+1);} }
 };
-const ORGWORDS=/\b(gaming|esports?|e-sports|club|team|the|ti|20\d\d)\b/g;
-const tnorm=(s)=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
-const tkey=(s)=>tnorm(s).replace(/[.\-_'"]/g," ").replace(ORGWORDS," ").replace(/\s+/g," ").trim();
+/* Lift ORGWORDS, tnorm and tkey from index.html rather than re-typing them.
+   Hand-copied, this file was exercising its OWN regexes: dropping `gaming|team`
+   from the shipped ORGWORDS, or `.toLowerCase()` from the shipped tnorm, was
+   completely invisible here — and the whole "stripped-key fallback keeps
+   working" section (Aurora Gaming <-> Aurora, Iron Wing TI 2026 <-> Iron Wing)
+   was testing the copy. These decide whether a playoff rematch inherits a group
+   result on 21 Aug. */
+const lift=(name)=>{
+  const m=new RegExp("\\bconst\\s+"+name+"\\s*=\\s*([^;]+);").exec(src);
+  if(!m) throw new Error("could not lift const "+name+" from index.html");
+  return m[1].trim();
+};
+/* eval the VALUE, not a declaration: `eval("const x=…")` binds inside the eval
+   and the name never reaches this scope. tkey's body resolves tnorm and
+   ORGWORDS at call time from here, so order matters. */
+const ORGWORDS=eval(lift('ORGWORDS'));
+const tnorm=eval(lift('tnorm'));
+const tkey=eval(lift('tkey'));
 eval(grab('fxDecided')); eval(grab('chooseFixture')); eval(grab('findFixture'));
 
 let ok=0,fail=0;

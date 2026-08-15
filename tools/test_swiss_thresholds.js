@@ -87,19 +87,45 @@ const last = rounds[rounds.length - 1];
 if (last && (last.matches || []).length) {
   const inLast = new Set();
   for (const mt of last.matches) {
-    if ((mt.teamA || {}).name) inLast.add(mt.teamA.name);
-    if ((mt.teamB || {}).name) inLast.add(mt.teamB.name);
+    const a = (mt.teamA || {}).name, b = (mt.teamB || {}).name;
+    if (a && a !== "TBD") inLast.add(a);
+    if (b && b !== "TBD") inLast.add(b);
   }
-  const decided = rows.filter((r) => r.w >= WIN_TARGET || r.l >= LOSS_LIMIT);
-  const undecided = rows.filter((r) => r.w < WIN_TARGET && r.l < LOSS_LIMIT);
-  const wronglySittingOut = undecided.filter((r) => !inLast.has(r.team));
-  const wronglyPlaying = decided.filter((r) => inLast.has(r.team));
-  ok(!wronglyPlaying.length, `no decided team is scheduled in ${last.name}`,
-     wronglyPlaying.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
-  console.log(`         (${last.name}: ${last.matches.length} matches, ${inLast.size} teams; ` +
-              `${decided.length} decided, ${undecided.length} still alive` +
-              (wronglySittingOut.length ? `, ${wronglySittingOut.length} not yet drawn` : "") + ")");
+  /* SAY when this cannot conclude anything.
+     Every pairing in the final round is TBD until it is drawn, so `inLast` was
+     a set containing the string "TBD" and nothing else — no real team could
+     ever match, and "no decided team is scheduled" passed without examining a
+     single pairing. Reporting that as a pass is the vacuous shape this repo
+     produced eight times; it is skipped out loud now. */
+  if (!inLast.size) {
+    console.log(`         (${last.name} is not drawn yet — ${last.matches.length} TBD pairings, nothing to check)`);
+  } else {
+    const decided = rows.filter((r) => r.w >= WIN_TARGET || r.l >= LOSS_LIMIT);
+    const undecided = rows.filter((r) => r.w < WIN_TARGET && r.l < LOSS_LIMIT);
+    const wronglyPlaying = decided.filter((r) => inLast.has(r.team));
+    const wronglySittingOut = undecided.filter((r) => !inLast.has(r.team));
+    ok(!wronglyPlaying.length, `no decided team is scheduled in ${last.name}`,
+       wronglyPlaying.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
+    /* This was computed and then only printed — never asserted. A team that is
+       still alive and NOT in the final round is the mirror-image scheduling
+       error, and it was silently tolerated. */
+    ok(!wronglySittingOut.length, `every undecided team is scheduled in ${last.name}`,
+       wronglySittingOut.map((r) => `${r.team} ${r.w}-${r.l}`).join(", "));
+    console.log(`         (${last.name}: ${last.matches.length} matches, ${inLast.size} real teams; ` +
+                `${decided.length} decided, ${undecided.length} still alive)`);
+  }
 }
+
+/* The three record-specific checks above iterate over whatever buckets exist
+   today. Once the Swiss finishes, 1-3 and 3-0 stop existing and those loops run
+   zero times — passing, printing nothing, verifying nothing about the bug they
+   were written for. Count what was actually examined and fail if the whole
+   section became a no-op. */
+const examined = at(1, 3).length + at(0, 4).length + at(3, 0).length;
+ok(examined > 0,
+   "the record-specific checks examined at least one real team",
+   examined ? `${examined} examined` : "0 — every bucket they name has emptied; " +
+     "add the current buckets or move these to a synthetic fixture");
 
 console.log(fail ? `\n${fail} CHECK(S) FAILED` : "\nall checks pass");
 process.exit(fail ? 1 : 0);

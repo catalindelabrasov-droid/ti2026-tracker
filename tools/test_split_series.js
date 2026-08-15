@@ -1,8 +1,20 @@
 const fs=require('fs');
-const src=fs.readFileSync('index.html','utf8');
+const src=fs.readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
 const grab=n=>{const i=src.indexOf('function '+n+'(');let d=0;
   for(let k=src.indexOf('{',i);k<src.length;k++){if(src[k]==='{')d++;else if(src[k]==='}'){d--;if(!d)return src.slice(i,k+1);}}};
-const M_SERIES_GAP=12*3600*1000;
+
+/* Lift top-level constants from index.html instead of re-typing them.
+   A hand-copied constant makes the test exercise its own value: changing the
+   shipped M_SERIES_GAP from 12h to 60s — which would shatter every Bo3 into
+   one-game "series" — was completely invisible, and so were ORGWORDS and
+   tnorm. A test that declares its own copy only ever tests itself. */
+const lift=(name)=>{
+  const re=new RegExp("\\bconst\\s+"+name+"\\s*=\\s*([^;]+);");
+  const m=re.exec(src);
+  if(!m) throw new Error("could not lift const "+name+" from index.html");
+  return m[1].trim();
+};
+const M_SERIES_GAP=eval(lift('M_SERIES_GAP'));
 eval(grab('mSplitSeries')); eval(grab('mPickSeries'));
 let ok=0,fail=0;
 const check=(n,g,w)=>{ if(JSON.stringify(g)===JSON.stringify(w)){ok++;console.log('  PASS  '+n);}

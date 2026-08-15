@@ -113,6 +113,19 @@ ok(!!en, "/en/ escape hatch exists");
 ok(!en || !en.country.length, "/en/ carries no Country condition");
 ok(!en || en.status === 200, "/en/ is a rewrite, not a redirect", en ? String(en.status) : "");
 
+/* 6b. The geo redirect must EXIST. Every check below was gated on finding it,
+      so deleting the whole block turned three assertions into no-ops and the
+      suite reported success on a site with no Russian routing at all. */
+const geoRule = rules.find((r) => r.country.length > 0);
+ok(!!geoRule, "the geo redirect exists at all", geoRule ? "" : "no rule carries a Country condition");
+if (geoRule) {
+  ok(key(geoRule.from) === "/", 'geo redirect is on "/"', geoRule.from);
+  ok(geoRule.to === "/ru/", "geo redirect targets /ru/", geoRule.to);
+  ok(geoRule.force === true, "geo redirect is forced (index.html is a real file at /)");
+  ok(geoRule.country.includes("RU"), "RU is routed", geoRule.country.join(","));
+  ok(geoRule.country.length >= 5, "at least five countries routed", String(geoRule.country.length));
+}
+
 /* 7. Countries that are politically fraught for a Russian-language default
       must be an explicit decision, not an accident. */
 const geo = rules.find((r) => r.country.length);
