@@ -2306,10 +2306,39 @@ function liveRailInner(d){
   const undrawn=all.length-matches.length;
   const elsewhere=liveProMatches().length;
   if(!matches.length){
+    /* This used to end with a hardcoded 'Check back when the group stage begins
+       on 13 Aug'. It renders whenever nothing is live or drawn — every night and
+       between rounds — so from the 14th onward the front page was telling
+       readers to come back for a stage that had already started, with 39 group
+       matches played, and by the main event it would have been three weeks
+       stale. A date written into a sentence cannot stay true; derive it.
+
+       Helpers are local on purpose: plural() and T() live inside renderGroups
+       and are invisible here. LANG is read at CALL time, which is what makes
+       this safe — a module-scope const referencing it would hit the temporal
+       dead zone and blank the page. */
+    const t=(en,ru)=>LANG==="ru"?ru:en;
+    const plur=(n,one,few,many)=>{const a=n%10,b=n%100;return (b>=11&&b<=14)?many:a===1?one:(a>=2&&a<=4)?few:many;};
+    const started=allMatches(d).some(m=>m.status==="completed");
+    const startsAt=((d.meta||{}).dates||{}).groupStageStart;
+    const soon=startsAt&&new Date(startsAt).getTime()>Date.now();
+    const day=(iso)=>{try{return new Date(iso).toLocaleDateString(LANG==="ru"?"ru-RU":"en-US",{day:"numeric",month:"long"});}catch(e){return"";}};
+
     // Don't dead-end: if Dota is being played somewhere, say so and point there.
-    return `<div class="empty"><b>No TI 2026 matches live or upcoming</b>
-      ${elsewhere?`${elsewhere} pro ${elsewhere===1?'match is':'matches are'} live elsewhere right now — see the <button class="linklike" data-goto-tab="tournaments">Tournaments</button> tab.`
-                 :'Check back when the group stage begins on 13 August.'}</div>`;
+    const tail=elsewhere
+      ? (LANG==="ru"
+          ? `Прямо сейчас на других турнирах ${plur(elsewhere,"идёт","идут","идут")} ${elsewhere} про-${plur(elsewhere,"матч","матча","матчей")} — смотрите вкладку <button class="linklike" data-goto-tab="tournaments">Турниры</button>.`
+          : `${elsewhere} pro ${elsewhere===1?'match is':'matches are'} live elsewhere right now — see the <button class="linklike" data-goto-tab="tournaments">Tournaments</button> tab.`)
+      : (soon&&!started)
+        ? t(`Starts ${day(startsAt)}.`,`Начало ${day(startsAt)}.`)
+      : started
+        ? t("The next matches appear here as rounds are drawn.",
+            "Следующие матчи появятся здесь после жеребьёвки.")
+        : t("Check back shortly.","Загляните чуть позже.");
+
+    return `<div class="empty"><b>${t("No TI 2026 matches live or upcoming",
+      "Нет текущих и ближайших матчей TI 2026")}</b>
+      ${tail}</div>`;
   }
   return `<div class="rail-group"><div class="rail-label">The International 2026${
       undrawn?`<span class="rail-note">${undrawn} more appear as rounds are drawn</span>`:""}</div>
