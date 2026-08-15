@@ -109,3 +109,33 @@ jobs:
           fi
           echo "Could not push data.json, and origin has nothing newer. This one is real."
           exit 1
+
+  # Ask production whether it still works.
+  #
+  # This exists because on 15 Aug 2026, mid-tournament, four URLs under /en/
+  # had been 404 for days while all eighteen test files passed. They all read
+  # the repo; none of them can prove a URL answers. The user found it by
+  # clicking a link, which is the one detector nobody should be relying on.
+  #
+  # It hangs off the updater rather than a `schedule:` trigger for the reason
+  # documented at the top of this file: GitHub's cron is best-effort and got
+  # deprioritised on this repo. pg_cron drives the updater every 15 minutes, so
+  # piggybacking gives a reliable heartbeat for free.
+  #
+  # `if: always()` — a failed data update is exactly when it is most worth
+  # asking whether the site is still standing.
+  verify-production:
+    needs: update
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # No install: the checker is dependency-free on purpose, so a broken
+      # lockfile can never be the reason production goes unwatched.
+      - name: Ask production whether it works
+        run: node tools/check_production.js
