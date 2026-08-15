@@ -1,0 +1,51 @@
+-- Close ladder_settle to end users.
+--
+-- This is the same hole 0010_stages.sql closed for tournament_confirm, on the
+-- function the ladder uses. 0009_ladder.sql:303 granted it to `authenticated`
+-- and nothing ever revoked it, so if the live ACL still matches the repo, any
+-- signed-up account can settle any ladder match.
+--
+-- ladder_settle is security definer and its body never checks the caller — its
+-- one use of auth.uid() records `confirmed_by`, it does not gate anything. It
+-- reads whatever score_a/score_b are already stored and applies them.
+--
+-- What that bypasses: ladder_report (0009:201) is the real gate. It refuses to
+-- confirm a score reported by the same person (`m.reported_by = auth.uid()`)
+-- and refuses a score the two captains disagree on. Calling ladder_settle
+-- directly skips both — one account reports 2-0 in its own favour, calls
+-- settle, and both teams' Glicko rating, RD, W/L, streak and peak move
+-- permanently. ladder_matches is anon-readable, so the match ids are public.
+--
+-- WHY THIS IS SAFE
+--
+-- ladder_settle has exactly one caller: `perform ladder_settle(m.id)` at
+-- 0009:241, inside ladder_report. ladder_report is itself security definer, so
+-- that call runs as the function owner and does not consult the caller's
+-- grants. Nothing in index.html or any edge function calls ladder_settle. The
+-- grant to `authenticated` has no legitimate use — it is pure attack surface,
+-- and removing it changes no behaviour that anyone can reach through the app.
+--
+-- The function body is deliberately NOT touched here. Rewriting a scoring
+-- function during a live tournament is how the league_leaderboard streak bug
+-- got in; a grant change cannot alter any rating maths.
+--
+-- BEFORE: verify the hole is actually live (read-only, no writes):
+--
+--   select proname, proacl from pg_proc
+--   where proname in ('ladder_settle','ladder_respond','tournament_confirm');
+--
+-- `authenticated=X/...` on ladder_settle means it is live. tournament_confirm
+-- should already show service_role only — that is what a closed one looks like.
+--
+-- AFTER: confirm the ladder still works end to end — captain A reports a score,
+-- captain B confirms the same score, both ratings move.
+
+revoke execute on function public.ladder_settle(uuid) from public, authenticated, anon;
+grant  execute on function public.ladder_settle(uuid) to service_role;
+
+-- KNOWN, NOT FIXED HERE: ladder_settle has no `if not found` guard. For an id
+-- that does not exist, `select * into m` leaves every field NULL and
+-- `if m.status = 'done'` evaluates to NULL rather than true, so it falls
+-- through instead of returning early. It is harmless only because the later
+-- updates key off m.team_a / m.team_b, which are NULL and match no rows.
+-- Worth an explicit guard once TI is over and the body can be edited safely.
