@@ -4550,7 +4550,14 @@ async function fetchLiveFeed(){
   // Pull live pro matches from our Supabase function (OpenDota-backed).
   // Returns [] on any failure so the site still works from curated data.
   try{
-    const res=await fetch(LIVE_FN_URL,{cache:"no-store"});
+    /* Give up after 25s rather than hanging forever. The function fans out to
+       OpenDota, which has been answering in 8-19 seconds; a request that is
+       still open after 25 has found something worse than slow, and the page is
+       already fully usable from data.json without it. */
+    const ctl=("AbortController" in window)?new AbortController():null;
+    const bail=ctl?setTimeout(()=>ctl.abort(),25000):null;
+    const res=await fetch(LIVE_FN_URL,{cache:"no-store",signal:ctl?ctl.signal:undefined});
+    if(bail) clearTimeout(bail);
     if(!res.ok) return {liveMatches:[],events:[]};
     const j=await res.json();
     const live=j.liveMatches||[];
@@ -6192,11 +6199,24 @@ async function init(){
   wireLeague();
   const data=await loadData();
   if(!data){$("#app").innerHTML=`<div class="wrap"><div class="loading">Couldn't load <b>data.json</b>.<br>If opening the file directly, run a local server (browsers block fetch on file://).</div></div>`;return;}
-  // pull the live pro-match feed (STRATZ) in parallel; non-blocking on failure
-  try{ LIVE_FEED=await fetchLiveFeed(); }catch(e){}
   if(!localStorage.getItem(LS_SEEN)){const base={};allMatches(data).forEach(m=>{const a=m.teamA||{},b=m.teamB||{};base[m.id]=`${a.score}-${b.score}-${m.status}`;});localStorage.setItem(LS_SEEN,JSON.stringify(base));}
+
+  /* PAINT FIRST, ENRICH AFTER.
+     This used to `await fetchLiveFeed()` before rendering anything. The comment
+     called it non-blocking, and it was — on FAILURE. On slowness it blocked
+     completely: data.json arrives in about 120ms and the whole page was then
+     held behind a call that measured 8 to 19 SECONDS, because it fans out to
+     OpenDota, whose league endpoint takes 5s and whose /leagues list is a 1MB
+     download. People saw a blank page for fifteen seconds on every refresh.
+     The feed only adds live scores and the ticker on top of what data.json
+     already contains, so render now, re-render when it lands. */
   render(data);
   setupAutoRefresh();
+  fetchLiveFeed().then(feed=>{
+    if(!feed) return;
+    LIVE_FEED=feed;
+    render(DATA||data);        // same path the 30s refresh uses
+  }).catch(()=>{});
 }
 
 /* ----------------------------- auto-refresh (Live & Upcoming) ----------------------------- */
