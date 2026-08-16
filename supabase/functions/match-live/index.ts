@@ -11,18 +11,18 @@
 //   STRATZ was the obvious choice and is NOT usable here. Its free token is
 //   bound to the IP that created it ("You cannot use different IP Addresses when
 //   using the API"), and an edge function has a datacenter IP, so the parked
-//   STRATZ_TOKEN returns 403 no matter what. Valve's GetLiveLeagueGames would
-//   give per-player net worth, items, towers and roshan, but needs a Steam Web
-//   API key we do not have yet.
-//   OpenDota's /live needs no credentials and already carries the two things
-//   that matter most — radiant_lead (net worth swing) and the full draft with
-//   pro player names — so v1 is built on that.
+//   STRATZ_TOKEN returns 403 no matter what.
+//   Valve's GetLiveLeagueGames is the primary source now — see STEAM_LIVE below.
+//   It carries the real series score, the draft flag and per-player detail, and
+//   reports its own stream delay (10s at TI 2026, not the 15 min folklore).
+//   OpenDota's /live is the fallback: no credentials, and it carries
+//   radiant_lead and the full draft with pro player names.
 //
-// The stream half needs no credentials either: Twitch's public channel page
-// carries isLiveBroadcast and a description naming the teams, e.g.
-// "[EN-C] Aurora Gaming vs. GamerLegion - The International 2026 - Group Stage".
-// That is scraping, so it is cached hard and degrades to "this channel is live
-// but we could not read its title" rather than failing.
+// The stream half USED to scrape twitch.tv channel pages for isLiveBroadcast.
+// It no longer does, on two counts. It was ~4 MB of HTML per refresh to answer
+// a yes/no question and broke whenever Twitch changed a template; and the
+// Twitch Developer Services Agreement (XI.I) permits only documented endpoints.
+// It now calls Helix once for all fourteen channels. See resolveStreams().
 
 const OPENDOTA = "https://api.opendota.com/api";
 const UA = { "User-Agent": "dota2tileague/1.0 (https://dota2tileague.com)" };
@@ -88,29 +88,88 @@ let _heroes: { at: number; data: Record<string, any> } | null = null;
 const STREAM_TTL = 90_000;
 const HERO_TTL = 6 * 60 * 60 * 1000;
 
+/* Twitch's documented API, not the web page.
+ *
+ * This used to fetch https://twitch.tv/<channel> for all fourteen channels and
+ * regex the HTML for "isLiveBroadcast". That is roughly 4 MB of markup per
+ * refresh to answer a yes/no question, and it broke silently whenever Twitch
+ * changed a template.
+ *
+ * It is also no longer allowed. The Twitch Developer Services Agreement,
+ * section XI.I: "unless you have Twitch's prior written permission, [you] will
+ * only access Program Materials documented on the Twitch Developer Site."
+ * Scraping the page is not documented access. Helix is.
+ *
+ * The credentials stay server-side, exactly like STEAM_KEY: this function calls
+ * Twitch and returns shaped data, so the secret never reaches a browser.
+ *
+ * DEGRADES, NEVER BREAKS. The same agreement (section IX) lets Twitch revoke
+ * access "for any reason or no reason at all, at any time", so every failure
+ * path here serves the last good snapshot and, failing that, an empty list.
+ * No stream links is a worse page; a thrown error is a broken one. */
+const TWITCH_ID = Deno.env.get("TWITCH_CLIENT_ID") ?? "";
+const TWITCH_SECRET = Deno.env.get("TWITCH_CLIENT_SECRET") ?? "";
+
+let _tok: { v: string; exp: number } | null = null;
+async function twitchToken(): Promise<string | null> {
+  if (!TWITCH_ID || !TWITCH_SECRET) return null;
+  if (_tok && Date.now() < _tok.exp) return _tok.v;
+  try {
+    const r = await fetch("https://id.twitch.tv/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: TWITCH_ID, client_secret: TWITCH_SECRET, grant_type: "client_credentials",
+      }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (!j?.access_token) return null;
+    // Tokens last ~54 days; re-fetch an hour early rather than on the cliff.
+    _tok = { v: j.access_token, exp: Date.now() + Math.max(60_000, (j.expires_in - 3600) * 1000) };
+    return _tok.v;
+  } catch (_e) { return null; }
+}
+
 async function resolveStreams() {
   if (_streams && Date.now() - _streams.at < STREAM_TTL) return _streams.data;
-  const out = await Promise.all(CHANNELS.map(async ({ c, lang }) => {
-    try {
-      const r = await fetch(`https://www.twitch.tv/${c}`, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; dota2tileague/1.0)" },
-      });
-      if (!r.ok) return null;
-      const h = await r.text();
-      if (!/isLiveBroadcast/.test(h)) return null;
-      const desc = (h.match(/<meta name="description" content="([^"]{0,200})"/) || [])[1] || "";
-      const m = desc.match(/\[[A-Z]{2}[-\s]?[A-Z]?\]\s*(.+?)\s+vs\.?\s+(.+?)\s*[-|]/i);
+  const tok = await twitchToken();
+  if (!tok) return _streams?.data ?? [];
+  try {
+    // ONE request for every channel. Helix omits offline channels entirely, so
+    // presence in the response IS the liveness answer - no marker to grep for.
+    const qs = CHANNELS.map(({ c }) => `user_login=${encodeURIComponent(c)}`).join("&");
+    const r = await fetch(`https://api.twitch.tv/helix/streams?${qs}&first=100`, {
+      headers: { "Client-Id": TWITCH_ID, Authorization: `Bearer ${tok}` },
+    });
+    if (!r.ok) return _streams?.data ?? [];
+    const j = await r.json();
+    const byLogin: Record<string, any> = {};
+    for (const s of (j?.data ?? [])) byLogin[String(s.user_login || "").toLowerCase()] = s;
+
+    const data = CHANNELS.map(({ c, lang }) => {
+      const s = byLogin[c.toLowerCase()];
+      if (!s) return null;                                   // not live
+      const title = String(s.title || "").replace(/\s+/g, " ").trim();
+      // Same shape the title always had; the old code read it out of the page's
+      // meta description, which was this string plus Twitch's own suffix.
+      const m = title.match(/\[[A-Z]{2}[-\s]?[A-Z]?\]\s*(.+?)\s+vs\.?\s+(.+?)\s*[-|]/i);
       return {
         channel: c, lang, url: `https://www.twitch.tv/${c}`,
-        title: desc.replace(/\s+/g, " ").trim().slice(0, 160),
+        title: title.slice(0, 160),
         teamA: m ? m[1].trim() : null,
         teamB: m ? m[2].trim() : null,
+        // New, and not yet used by anything - see the note on replays below.
+        viewers: typeof s.viewer_count === "number" ? s.viewer_count : null,
+        startedAt: s.started_at ?? null,
+        game: s.game_name ?? null,
+        twitchLang: s.language ?? null,
       };
-    } catch (_e) { return null; }
-  }));
-  const data = out.filter(Boolean) as any[];
-  _streams = { at: Date.now(), data };
-  return data;
+    }).filter(Boolean) as any[];
+
+    _streams = { at: Date.now(), data };
+    return data;
+  } catch (_e) { return _streams?.data ?? []; }
 }
 
 // Team logos.
