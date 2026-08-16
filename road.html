@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Road to the Title — The International 2026</title>
+<meta name="description" content="Every match the champion played at The International 2026, from the first game of the group stage to the last game of the grand final.">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<meta name="theme-color" content="#0b0e13">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TI League">
+<meta property="og:title" content="The Road to the Title — The International 2026">
+<meta property="og:description" content="Every match the champion played at The International 2026 — group stage to grand final, wins and losses.">
+<meta property="og:image" content="https://dota2tileague.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dota2tileague.com/og-image.png">
+<style>
+  :root{
+    --bg:#0b0e13; --panel:#151b26; --panel2:#1b2230; --line:#28303f; --line-soft:#1f2632;
+    --ink:#e9eef5; --ink-dim:#8e99ac; --ink-faint:#5b6478;
+    --aegis:#d9a441; --aegis-bright:#f3c764;
+    --win:#4ec98f; --loss:#ef5350;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 18px 80px; background:var(--bg); color:var(--ink);
+    font:16px/1.6 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  a{color:var(--aegis)}
+
+  .back{
+    display:inline-block;margin:22px 0 0;font-family:ui-monospace,Consolas,monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;
+  }
+  .back:hover{color:var(--aegis)}
+
+  header.top{padding:26px 0 22px}
+  .eyebrow{
+    font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--aegis);margin:0 0 12px;
+  }
+  h1{font-size:clamp(28px,7vw,44px);line-height:1.06;margin:0 0 10px;letter-spacing:-.02em;font-weight:800}
+  .champ{display:flex;align-items:center;gap:14px;margin:0 0 8px}
+  .champ img{width:52px;height:52px;object-fit:contain;border-radius:8px;background:var(--panel2)}
+  .sub{color:var(--ink-dim);margin:0;font-size:16px}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:22px 0 6px;
+  }
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .stat .n{font-family:ui-monospace,Consolas,monospace;font-size:22px;font-weight:700;line-height:1.1}
+  .stat .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
+  .stat.brink{border-color:rgba(239,83,80,.45)}
+  .stat.brink .n{color:var(--loss)}
+
+  h2{
+    font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:500;
+    margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line-soft);
+  }
+
+  .m{
+    display:flex;align-items:center;gap:12px;padding:11px 14px;margin-bottom:8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    border-left:3px solid var(--line);
+  }
+  .m.w{border-left-color:var(--win)}
+  .m.l{border-left-color:var(--loss)}
+  .m .res{
+    font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:700;
+    width:22px;flex:none;text-align:center;
+  }
+  .m.w .res{color:var(--win)} .m.l .res{color:var(--loss)}
+  .m .opp{flex:1;min-width:0;display:flex;align-items:center;gap:9px}
+  .m .opp img{width:22px;height:22px;object-fit:contain;flex:none}
+  .m .opp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m .sc{
+    font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;
+    font-size:15px;font-weight:700;flex:none;
+  }
+  .m .when{
+    font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--ink-faint);
+    flex:none;width:104px;text-align:right;
+  }
+  @media(max-width:520px){ .m .when{display:none} }
+
+  .pick{margin:18px 0 0}
+  .pick select{
+    background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+    padding:9px 12px;font:inherit;font-size:14px;max-width:100%;
+  }
+  .note{color:var(--ink-dim);font-size:14.5px;margin:14px 0 0}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line-soft);
+    font-size:12.5px;color:var(--ink-faint);line-height:1.7}
+  footer a{color:var(--ink-dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/" id="back">&larr; The International 2026 tracker</a>
+  <div id="app"><p class="note" id="boot">Loading…</p></div>
+  <footer>
+    <span id="foot-src">Match data from Liquipedia and OpenDota.</span>
+    <br>Fan-made tracker. Not affiliated with, endorsed by or sponsored by Valve Corporation.
+    <br><a href="/">Tracker</a> · <a href="/guide.html">How it works</a> · <a href="/legal.html">Terms, privacy &amp; disclaimer</a>
+  </footer>
+</div>
+
+<script>
+/* The champion's whole run, first match to last.
+ *
+ * The point of this page is the SHAPE of the run, not the trophy: a team that
+ * went 2-3 in the group stage and still won is a better story than one that
+ * never lost, and you only see that if the losses are shown as prominently as
+ * the wins. That is also why data.json's per-match history must never be
+ * truncated anywhere upstream - this page is the reason it is kept.
+ */
+const RU = /^\/ru(\/|$)/.test(location.pathname);
+const T = (en, ru) => (RU ? ru : en);
+const LOC = () => (RU ? "ru-RU" : "en-US");
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const norm = (s) => String(s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+
+/* Same loose key the rest of the site uses: fixtures say "Aurora", the client
+   says "Aurora Gaming", and both must land on one team. */
+const tkey = (s) => norm(s).replace(/[.\-_'"]/g, " ")
+  .replace(/\b(gaming|esports?|e-sports|club|team|the)\b/g, " ")
+  .replace(/\s+/g, "").trim();
+
+function collect(data) {
+  /* Every match in the tournament, in the order it was played, tagged with the
+     stage it belonged to. */
+  const out = [];
+  const push = (m, stage, order) => {
+    if (!m || !m.teamA || !m.teamB) return;
+    const a = m.teamA.name, b = m.teamB.name;
+    if (!a || !b || /^tbd$/i.test(a) || /^tbd$/i.test(b)) return;
+    out.push({ ...m, stage, order });
+  };
+  (data.groupStage?.rounds || []).forEach((r, i) =>
+    (r.matches || []).forEach((m) => push(m, T("Group stage · round ", "Групповой этап · раунд ") + (i + 1), 10 + i)));
+  (data.groupStage?.eliminationMatches || []).forEach((m) =>
+    push(m, T("Elimination round", "Раунд на выбывание"), 20));
+  const br = data.bracket?.rounds || {};
+  ["upper", "lower"].forEach((side, si) =>
+    (br[side] || []).forEach((r, i) =>
+      (r.matches || []).forEach((m) => push(m, r.name || side, 30 + si * 10 + i))));
+  push(data.bracket?.grandFinal, T("Grand final", "Гранд-финал"), 90);
+  return out;
+}
+
+function roadFor(all, team) {
+  const k = tkey(team);
+  return all
+    .filter((m) => tkey(m.teamA.name) === k || tkey(m.teamB.name) === k)
+    .map((m) => {
+      const home = tkey(m.teamA.name) === k;
+      const me = home ? m.teamA : m.teamB, them = home ? m.teamB : m.teamA;
+      const played = m.status === "completed" && me.score != null && them.score != null;
+      return {
+        stage: m.stage, order: m.order, scheduled: m.scheduled,
+        opponent: them.name, mine: me.score, theirs: them.score,
+        won: played ? me.score > them.score : null, played,
+      };
+    })
+    .sort((x, y) => (x.order - y.order) ||
+      (Date.parse(x.scheduled || 0) - Date.parse(y.scheduled || 0)));
+}
+
+function champion(data) {
+  const gf = data.bracket?.grandFinal;
+  if (!gf || gf.status !== "completed") return null;
+  if (gf.teamA?.score == null || gf.teamB?.score == null) return null;
+  return gf.teamA.score > gf.teamB.score ? gf.teamA.name : gf.teamB.name;
+}
+
+function render(data, team, isChamp) {
+  const all = collect(data);
+  const road = roadFor(all, team);
+  const logos = data.logos || {};
+  const logo = (n) => {
+    const hit = Object.keys(logos).find((x) => tkey(x) === tkey(n));
+    return hit ? logos[hit] : null;
+  };
+  const when = (iso) => {
+    try { return new Date(iso).toLocaleDateString(LOC(), { month: "short", day: "numeric" }); }
+    catch (e) { return ""; }
+  };
+
+  const played = road.filter((m) => m.played);
+  const w = played.filter((m) => m.won).length;
+  const l = played.length - w;
+  const games = played.reduce((a, m) => a + (m.mine || 0) + (m.theirs || 0), 0);
+
+  /* The two numbers that carry the story. A run is interesting because of its
+     shape, not its total: the longest unbeaten stretch, and whether they ever
+     lost at all and still came back. "Games dropped in a win" was tried here
+     first and read as noise - for a Bo3 the answer is almost always 1. */
+  let streak = 0, best = 0;
+  played.forEach((m) => { if (m.won) { streak++; best = Math.max(best, streak); } else streak = 0; });
+  const firstLoss = played.findIndex((m) => !m.won);
+  const recovered = firstLoss > -1 && played.slice(firstLoss).some((m) => m.won);
+
+  const teams = [...new Set(all.flatMap((m) => [m.teamA.name, m.teamB.name]))].sort();
+
+  const head = `
+    <header class="top">
+      <p class="eyebrow">${isChamp
+        ? T("Champions · The International 2026", "Чемпионы · The International 2026")
+        : T("The International 2026", "The International 2026")}</p>
+      <div class="champ">
+        ${logo(team) ? `<img src="${esc(logo(team))}" alt="">` : ""}
+        <h1>${esc(team)}</h1>
+      </div>
+      <p class="sub">${isChamp
+        ? T("Every match on the way to the Aegis — first game to last.",
+            "Каждый матч на пути к Эгиде — от первой игры до последней.")
+        : T("Every match they played at this tournament.",
+            "Все матчи команды на этом турнире.")}</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><div class="n">${w}&ndash;${l}</div>
+        <div class="l">${T("Series record", "Серии")}</div></div>
+      <div class="stat"><div class="n">${games}</div>
+        <div class="l">${T("Games played", "Сыграно игр")}</div></div>
+      <div class="stat"><div class="n">${best}</div>
+        <div class="l">${T("Longest win streak", "Победная серия подряд")}</div></div>
+      ${recovered ? `<div class="stat brink"><div class="n">${l}</div>
+        <div class="l">${T("Losses they came back from", "Поражений, после которых вернулись")}</div></div>` : ""}
+    </div>`;
+
+  let body = "", lastStage = null;
+  road.forEach((m) => {
+    if (m.stage !== lastStage) { body += `<h2>${esc(m.stage)}</h2>`; lastStage = m.stage; }
+    const cls = !m.played ? "" : (m.won ? "w" : "l");
+    const res = !m.played ? "·" : (m.won ? "W" : "L");
+    const sc = m.played ? `${m.mine}&ndash;${m.theirs}`
+      : `<span style="color:var(--ink-faint)">${T("upcoming", "скоро")}</span>`;
+    body += `
+      <div class="m ${cls}">
+        <div class="res">${res}</div>
+        <div class="opp">
+          ${logo(m.opponent) ? `<img src="${esc(logo(m.opponent))}" alt="">` : ""}
+          <span>${esc(m.opponent)}</span>
+        </div>
+        <div class="sc">${sc}</div>
+        <div class="when">${esc(when(m.scheduled))}</div>
+      </div>`;
+  });
+
+  if (!road.length) {
+    body = `<p class="note">${T("No matches recorded for this team yet.",
+      "Для этой команды пока нет матчей.")}</p>`;
+  }
+
+  const picker = `
+    <div class="pick">
+      <label class="l" for="team" style="display:block;font-size:11px;letter-spacing:.08em;
+        text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px">
+        ${T("Show another team", "Другая команда")}</label>
+      <select id="team">${teams.map((t) =>
+        `<option value="${esc(t)}"${tkey(t) === tkey(team) ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>
+    </div>`;
+
+  document.getElementById("app").innerHTML = head + body + picker;
+  document.getElementById("team").addEventListener("change", (e) => {
+    const u = new URL(location.href);
+    u.searchParams.set("team", e.target.value);
+    location.href = u.toString();
+  });
+  document.title = `${team} — ${T("The Road to the Title", "Путь к титулу")} — The International 2026`;
+}
+
+(async () => {
+  try {
+    const r = await fetch("/data.json", { cache: "no-store" });
+    const data = await r.json();
+    const champ = champion(data);
+    const asked = new URLSearchParams(location.search).get("team");
+    const team = asked || champ ||
+      (data.groupStage?.standings || [])[0]?.team ||
+      data.groupStage?.rounds?.[0]?.matches?.[0]?.teamA?.name;
+    if (!team) {
+      document.getElementById("app").innerHTML =
+        `<p class="note">${T("No tournament data yet.", "Данных пока нет.")}</p>`;
+      return;
+    }
+    render(data, team, !asked && !!champ && tkey(team) === tkey(champ));
+    if (RU) document.getElementById("back").textContent = "← " + "The International 2026";
+  } catch (e) {
+    document.getElementById("app").innerHTML =
+      `<p class="note">${T("Could not load the tournament data.", "Не удалось загрузить данные турнира.")}</p>`;
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
