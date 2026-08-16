@@ -23,6 +23,32 @@
 <link rel="alternate" hreflang="en" href="https://dota2tileague.com/">
 <link rel="alternate" hreflang="ru" href="https://dota2tileague.com/ru/">
 <link rel="alternate" hreflang="x-default" href="https://dota2tileague.com/">
+<!-- Open Graph / Twitter. Without these a shared link renders as a bare line of
+     text: no image, no card. Every channel worth reaching (Telegram, VK, Discord,
+     Facebook groups, Reddit) is a link-sharing channel, so this is what decides
+     whether a share is looked at or scrolled past.
+     og:url is deliberately ABSENT, for exactly the reason the canonical above is:
+     one static value cannot be right for a document served at two paths, and
+     hard-coding "/" would attribute every share of /ru/ to the English page.
+     A scraper with no og:url falls back to the URL it actually fetched, which is
+     correct for both. The JS cannot help here - crawlers do not run it, which is
+     also why og:title and og:description below are English on both paths. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TI League">
+<meta property="og:title" content="The International 2026 — Results Tracker">
+<meta property="og:description" content="Live results, brackets and a fantasy prediction league you can play with your friends. Free, no ads, English and Russian.">
+<meta property="og:image" content="https://dota2tileague.com/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="dota2tileague.com — The International 2026: live results, brackets and a fantasy prediction league with your friends.">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The International 2026 — Results Tracker">
+<meta name="twitter:description" content="Live results, brackets and a fantasy prediction league you can play with your friends. Free, no ads, English and Russian.">
+<meta name="twitter:image" content="https://dota2tileague.com/og-image.png">
+<meta name="twitter:image:alt" content="dota2tileague.com — The International 2026: live results, brackets and a fantasy prediction league with your friends.">
 <style>
 /* Self-hosted: no visitor's IP goes to Google just to read the page.
      Exactly the families, weights and unicode-ranges Google was serving.
