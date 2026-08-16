@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-16T07:00:15.837689+00:00",
+    "lastUpdated": "2026-08-16T07:50:55.926854+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3051664,
-    "note": "$1,600,000 base plus $1,451,664 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3052837,
+    "note": "$1,600,000 base plus $1,452,837 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1296926,
+        "amount": 1297424,
         "team": null
       },
       {
         "place": "2",
-        "amount": 396762,
+        "amount": 396915,
         "team": null
       },
       {
         "place": "3",
-        "amount": 274605,
+        "amount": 274711,
         "team": null
       },
       {
         "place": "4",
-        "amount": 183111,
+        "amount": 183182,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 152572,
+        "amount": 152631,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 122033,
+        "amount": 122080,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 54871,
+        "amount": 54892,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 30539,
+        "amount": 30551,
         "team": null
       },
       {
         "place": "16",
-        "amount": 15270,
+        "amount": 15276,
         "team": null
       }
     ]
@@ -2485,11 +2485,11 @@
       {
         "id": "el-r1m3",
         "bestOf": 3,
-        "status": "live",
+        "status": "completed",
         "scheduled": "2026-08-16T12:30:00+08:00",
         "teamA": {
           "name": "Team Spirit",
-          "score": 1
+          "score": 2
         },
         "teamB": {
           "name": "Team Resilience",
@@ -2499,11 +2499,11 @@
       {
         "id": "el-r1m4",
         "bestOf": 3,
-        "status": "live",
+        "status": "completed",
         "scheduled": "2026-08-16T13:45:00+08:00",
         "teamA": {
           "name": "Iron Wing",
-          "score": 1
+          "score": 2
         },
         "teamB": {
           "name": "GamerLegion",
