@@ -102,6 +102,27 @@
   to = "/index.html"
   status = 200
 
+# Russian social card. /ru/ serves the SAME document as "/", localised in the
+# browser — and crawlers do not run JavaScript, so a link shared into Telegram
+# or VK unfurled with the English description and the English image. This
+# rewrites those meta tags on the way out.
+#
+# It is scoped to the two spellings of the index path ONLY. The real files
+# under ru/ (guide, legal, delete-account) carry no og: tags, so running there
+# would buffer 25 KB of HTML to change nothing.
+#
+# The function fails open: it clones the response before reading it and returns
+# that clone on any throw, so the worst case is the English card that was being
+# served anyway — never a 500 on a live path. See the header of
+# netlify/edge-functions/ru-social-meta.js.
+[[edge_functions]]
+  function = "ru-social-meta"
+  path = "/ru"
+
+[[edge_functions]]
+  function = "ru-social-meta"
+  path = "/ru/"
+
 # Not translated yet — the watch page is almost entirely team names, scores and
 # embedded streams. Serving the English one keeps the link working.
 [[redirects]]
