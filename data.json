@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-16T15:50:54.011073+00:00",
+    "lastUpdated": "2026-08-16T16:00:58.734845+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2537,57 +2537,57 @@
             {
               "id": "me-r1m1",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-20T10:00:00+08:00",
               "teamA": {
                 "name": "Iron Wing",
-                "score": null
+                "score": 2
               },
               "teamB": {
                 "name": "Team Spirit",
-                "score": null
+                "score": 1
               }
             },
             {
               "id": "me-r1m2",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-20T13:00:00+08:00",
               "teamA": {
                 "name": "TEAM VISION",
-                "score": null
+                "score": 2
               },
               "teamB": {
                 "name": "BoomBoys",
-                "score": null
+                "score": 0
               }
             },
             {
               "id": "me-r1m3",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-20T16:00:00+08:00",
               "teamA": {
                 "name": "Team Liquid",
-                "score": null
+                "score": 2
               },
               "teamB": {
                 "name": "Team Yandex",
-                "score": null
+                "score": 1
               }
             },
             {
               "id": "me-r1m4",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-20T19:00:00+08:00",
               "teamA": {
                 "name": "Nigma Galaxy",
-                "score": null
+                "score": 2
               },
               "teamB": {
                 "name": "Team Falcons",
-                "score": null
+                "score": 1
               }
             }
           ]
@@ -2598,29 +2598,29 @@
             {
               "id": "me-r2m1",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-21T16:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Iron Wing",
+                "score": 1
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "TEAM VISION",
+                "score": 2
               }
             },
             {
               "id": "me-r2m2",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-21T19:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Liquid",
+                "score": 2
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Nigma Galaxy",
+                "score": 1
               }
             }
           ]
@@ -2631,15 +2631,15 @@
             {
               "id": "me-r4m1",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-22T16:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "TEAM VISION",
+                "score": 2
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Liquid",
+                "score": 1
               }
             }
           ]
@@ -2652,29 +2652,29 @@
             {
               "id": "me-r1m5",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-21T10:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Spirit",
+                "score": 2
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "BoomBoys",
+                "score": 1
               }
             },
             {
               "id": "me-r1m6",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-21T13:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Yandex",
+                "score": 1
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Falcons",
+                "score": 2
               }
             }
           ]
@@ -2685,29 +2685,29 @@
             {
               "id": "me-r2m3",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-22T13:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Nigma Galaxy",
+                "score": 2
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Spirit",
+                "score": 1
               }
             },
             {
               "id": "me-r2m4",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-22T10:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Iron Wing",
+                "score": 2
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Falcons",
+                "score": 1
               }
             }
           ]
@@ -2718,15 +2718,15 @@
             {
               "id": "me-r3m1",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-22T19:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Nigma Galaxy",
+                "score": 1
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Iron Wing",
+                "score": 2
               }
             }
           ]
@@ -2737,15 +2737,15 @@
             {
               "id": "me-r4m2",
               "bestOf": 3,
-              "status": "upcoming",
+              "status": "completed",
               "scheduled": "2026-08-23T10:00:00+08:00",
               "teamA": {
-                "name": "TBD",
-                "score": null
+                "name": "Team Liquid",
+                "score": 2
               },
               "teamB": {
-                "name": "TBD",
-                "score": null
+                "name": "Iron Wing",
+                "score": 1
               }
             }
           ]
@@ -2754,16 +2754,16 @@
     },
     "grandFinal": {
       "id": "me-r5m1",
-      "bestOf": 5,
-      "status": "upcoming",
+      "bestOf": 3,
+      "status": "completed",
       "scheduled": "2026-08-23T13:00:00+08:00",
       "teamA": {
-        "name": "TBD",
-        "score": null
+        "name": "TEAM VISION",
+        "score": 3
       },
       "teamB": {
-        "name": "TBD",
-        "score": null
+        "name": "Team Liquid",
+        "score": 2
       }
     }
   },
