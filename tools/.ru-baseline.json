@@ -1,16 +1,6 @@
 {
   "_note": "The test rewrites ours/total when they improve, and that drops these notes — put them back. 2026-08-15: 32 -> 18 when the dictionary block landed, then 18 -> 14 when the team-name normaliser was fixed to read names from the fixtures and standings rather than data.teams[], which carries the org spelling ('BetBoom Team', 'Iron Wing TI 2026') while every rendered row says 'BoomBoys' and 'Iron Wing'. That drift made '● 0–1 vs BoomBoys' count as a different English string from '● #–# vs «team»', so the total crept up whenever those two teams appeared in a new fixture. Same alias drift that mis-scored real picks on 14 Aug. | The known list is never narrowed automatically: strings that only render in some tournament states were dropping out while absent and tripping the guard when they returned. Weekday variants of the live-card time are pre-listed for the same reason.",
-  "_outstanding": [
-    "Every remaining string is INTERPOLATED — a template literal with a number or a team name in it — so no ru/strings.json entry can match them. They need the code to emit a key.",
-    "live-card time: 'Sat 12:40 PM · Bo3' -> 'вс 15:40 · Bo3' (index.html:2344). A US 12-hour clock above the fold is the loudest sign the page was not made for a Russian reader. Systemic: 13 hardcoded en-US locale calls, fix with one shared helper rather than 13 edits",
-    "group stage: 'beat/lost to «team» #–#' -> 'обыграли/проиграли' (index.html:4377) — teams take a plural verb in Russian",
-    "live-card labels: Series/Game/live/# game (index.html:2362,2369,2373,2340). 'Bo3' stays 'Bo3' — it is used untranslated in Russian esports prose",
-    "qualifier meta: '# teams · # matches' (index.html:3687) — two independent plurals in one line",
-    "group stage: '● #–# vs «team»' -> 'против' (index.html:4376)",
-    "singletons: '# more appear as rounds are drawn', '# placements · # teams', '# qualified', 'Round # · # of # series decided', 'Updated 3:40 PM'",
-    "TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later in the file, so it hits the temporal dead zone, throws, and blanks the whole page. Use function declarations, which read LANG at call time.",
-    "EMPTY STATES, added 15 Aug when no match was live: \"Check back when the group stage begins on # August.\" and \"No TI # matches live or upcoming\". Both are interpolated (a date, a TI number), so a ru/strings.json key cannot match them. They are the MOST visible untranslated strings on the site, because they render when nothing else is on screen. Left during the tournament by the owner's decision."
-  ],
+  "_outstanding": "Every remaining string is INTERPOLATED — a template literal with a number or a team name in it — so no ru/strings.json entry can match them. They need the code to emit a key.,live-card time: 'Sat 12:40 PM · Bo3' -> 'вс 15:40 · Bo3' (index.html:2344). A US 12-hour clock above the fold is the loudest sign the page was not made for a Russian reader. Systemic: 13 hardcoded en-US locale calls, fix with one shared helper rather than 13 edits,group stage: 'beat/lost to «team» #–#' -> 'обыграли/проиграли' (index.html:4377) — teams take a plural verb in Russian,live-card labels: Series/Game/live/# game (index.html:2362,2369,2373,2340). 'Bo3' stays 'Bo3' — it is used untranslated in Russian esports prose,qualifier meta: '# teams · # matches' (index.html:3687) — two independent plurals in one line,group stage: '● #–# vs «team»' -> 'против' (index.html:4376),singletons: '# more appear as rounds are drawn', '# placements · # teams', '# qualified', 'Round # · # of # series decided', 'Updated 3:40 PM',TRAP: plural()/T() live inside renderGroups. Do NOT hoist 'const RU=LANG===\"ru\"' to module scope — LANG is a const declared later in the file, so it hits the temporal dead zone, throws, and blanks the whole page. Use function declarations, which read LANG at call time.,EMPTY STATES, added 15 Aug when no match was live: \"Check back when the group stage begins on # August.\" and \"No TI # matches live or upcoming\". Both are interpolated (a date, a TI number), so a ru/strings.json key cannot match them. They are the MOST visible untranslated strings on the site, because they render when nothing else is on screen. Left during the tournament by the owner's decision. | 2026-08-16: the weekday/time strings (\"Thu 11:00 AM · Bo3\") are a REAL untranslated defect, NOT an accepted exception. index.html has 12 hardcoded toLocaleString(\"en-US\") calls; line 2399 already shows the correct LANG===\"ru\"?\"ru-RU\":\"en-US\" pattern. Listed here only so one date-driven regression does not block CI - it appeared because the playoff fixtures came into range, not because of any code change. REMOVE these two entries when the formatters are localised.",
   "ours": 6,
   "total": 6,
   "known": [
@@ -30,6 +20,8 @@
     "Series · Bo#",
     "Sun #:# AM · Bo#",
     "Sun #:# PM · Bo#",
+    "Thu #:# AM · Bo#",
+    "Thu #:# PM · Bo#",
     "beat «team» #–#",
     "lost to «team» #–#",
     "● #–# vs «team»",

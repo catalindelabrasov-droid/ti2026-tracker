@@ -22,6 +22,47 @@ const OD = "https://api.opendota.com/api";
 const VALVE_LB = "https://www.dota2.com/webapi/ILeaderboard/GetDivisionLeaderboard/v0001";
 const DIVISIONS = ["europe", "americas", "se_asia", "china"];
 
+/* WHO IS ACTUALLY PLAYING — Valve, not OpenDota.
+ *
+ * OpenDota's /live is a Redis dump fed from Valve's "top games by MMR" endpoint,
+ * and it does not reliably set deactivate_time when a game ends: the row simply
+ * goes quiet. "Finished" and "the dump is lagging" therefore look identical from
+ * the outside, and every heuristic below is an attempt to tell them apart from
+ * staleness alone.
+ *
+ * It does not work. On 16 Aug 2026 the front page showed Team Resilience 50-21
+ * Team Spirit and GamerLegion 15-25 Iron Wing as LIVE while both were over —
+ * their rows sat 0 and 5 minutes behind the freshest row, inside every window
+ * here, with no deactivate_time. A 50-21 scoreline at 49 minutes is a finished
+ * stomp, and the site said it was in progress. Third occurrence of this bug.
+ *
+ * GetLiveLeagueGames is Valve's own league feed and is definitive: a match that
+ * is not in it is not being played. So it decides LIVENESS, and OpenDota keeps
+ * providing the DETAIL (kills, clock, draft) it is good at.
+ *
+ * Deliberately a gate, not a rewrite. If the key is missing or Valve is
+ * unreachable this returns null and the staleness heuristics below run exactly
+ * as before — the page degrades to today's behaviour rather than emptying. */
+const STEAM_KEY = Deno.env.get("STEAM_API_KEY") ?? "";
+const STEAM_LIVE = "https://api.steampowered.com/IDOTA2Match_570/GetLiveLeagueGames/v1/";
+let _valveIds: { at: number; ids: Set<string> } | null = null;
+const VALVE_IDS_TTL = 20_000;
+
+async function valveLiveIds(): Promise<Set<string> | null> {
+  if (!STEAM_KEY) return null;
+  if (_valveIds && Date.now() - _valveIds.at < VALVE_IDS_TTL) return _valveIds.ids;
+  try {
+    const r = await fetch(`${STEAM_LIVE}?key=${encodeURIComponent(STEAM_KEY)}`, { headers: UA });
+    if (!r.ok) return _valveIds?.ids ?? null;
+    const j = await r.json();
+    const games = j?.result?.games;
+    if (!Array.isArray(games)) return _valveIds?.ids ?? null;
+    const ids = new Set(games.map((g: any) => String(g.match_id)));
+    _valveIds = { at: Date.now(), ids };
+    return ids;
+  } catch (_e) { return _valveIds?.ids ?? null; }   // last good answer, else fall back
+}
+
 const UA = { "User-Agent": "dota2tileague/1.0" };
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -781,15 +822,30 @@ Deno.serve(async (req) => {
     const newestStamp = rows.reduce((m, g) => Math.max(m, g.last_update_time || 0), 0);
     const snapshotAge = newestStamp ? nowSec - newestStamp : Infinity;
     const snapshotUsable = snapshotAge <= SNAPSHOT_MAX_AGE_SEC;
+    /* Valve's own list of what is on a game server right now. Null means we
+       could not ask, in which case the staleness heuristics below stay in
+       charge exactly as they were. See valveLiveIds() at the top of the file. */
+    const valveIds = await valveLiveIds();
+
     const newestByPair: Record<string, any> = {};
     for (const g of rows) {
       if (g.deactivate_time) continue;                       // match is over
-      if (!snapshotUsable) continue;                         // the whole dump is stuck
-      const age = newestStamp - (g.last_update_time || 0);   // behind THIS snapshot
-      // A negative or zero game_time means the horn has not gone yet.
-      const drafting = (g.game_time ?? 0) <= 0;
-      const limit = drafting ? STALE_DRAFT_SEC : STALE_RUNNING_SEC;
-      if (!g.last_update_time || age > limit) continue;       // feed went quiet
+      if (valveIds) {
+        /* AUTHORITATIVE PATH. Valve knows within ~10s. If a match is not on its
+           list it is not being played, whatever OpenDota is still serving — and
+           if it IS on the list we keep it even when OpenDota's row has gone
+           quiet, because dropping a genuinely live match is the other failure
+           this code has already had (four matches hidden while being played on
+           15 Aug). Staleness stops deciding anything once Valve can answer. */
+        if (!valveIds.has(String(g.match_id))) continue;
+      } else {
+        if (!snapshotUsable) continue;                       // the whole dump is stuck
+        const age = newestStamp - (g.last_update_time || 0); // behind THIS snapshot
+        // A negative or zero game_time means the horn has not gone yet.
+        const drafting = (g.game_time ?? 0) <= 0;
+        const limit = drafting ? STALE_DRAFT_SEC : STALE_RUNNING_SEC;
+        if (!g.last_update_time || age > limit) continue;     // feed went quiet
+      }
       const pair = [String(g.team_name_radiant), String(g.team_name_dire)]
         .sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1).join("|");
       const prev = newestByPair[pair];
