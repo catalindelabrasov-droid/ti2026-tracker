@@ -186,7 +186,15 @@ console.log(`\nthe strip is ${ROUNDS}+1`);
     const mismatched = rows.filter((r) => {
       const team = r.querySelector(".sw-tname").textContent.trim();
       const rec = st[team]; if (!rec) return true;
-      const filled = [...r.querySelectorAll(".sw-tpips i")].filter((i) => i.className.replace("is-elim", "").trim()).length;
+      /* Count GROUP-stage pips only. computeGroupStandings reports the five
+         Swiss rounds, so the sixth pip — the elimination result, marked
+         is-elim — must not be counted against it. Stripping the class off the
+         name and testing what was left counted "w is-elim" as filled, which
+         was invisible until the elimination round was actually played on
+         16 Aug 2026 and every confirmed team went 6 != 5. */
+      const filled = [...r.querySelectorAll(".sw-tpips i")]
+        .filter((i) => !i.classList.contains("is-elim"))
+        .filter((i) => i.className.trim()).length;
       return filled !== rec.wins + rec.losses;
     });
     ok(mismatched.length === 0,
@@ -207,24 +215,58 @@ console.log("\nthe sixth bubble fills");
     return r.wins < target && r.losses < target && (r.wins + left) < target && (r.losses + left) < target;
   }).map((r) => r.team);
 
-  if (pool.length >= 2 && (played.groupStage.eliminationMatches || []).length) {
-    const m = played.groupStage.eliminationMatches[0];
-    m.teamA = { name: pool[0], score: 2 }; m.teamB = { name: pool[1], score: 0 };
-    m.status = "completed"; m.bestOf = 3;
+  /* PREFER A REAL RESULT. Injecting into eliminationMatches[0] was the only
+     option while the round was unplayed. Once it was played on 16 Aug 2026 the
+     injection became actively wrong: pool[] is chosen from the STANDINGS, not
+     from slot [0], so the two teams under test kept rendering their genuine
+     results — Aurora Gaming really lost 0-2, Iron Wing really won 2-0 — and the
+     assertions read "l" where they wanted "w". The test failed on correct code.
 
+     Replacing the array outright is not the fix either: the real fixtures carry
+     fields the renderer needs, and a bare synthetic object rendered ZERO
+     elimination rows, which merely moved the failure one assertion earlier.
+
+     So: read a genuinely completed fixture when one exists and assert against
+     what actually happened, and fall back to injecting only when the round has
+     not started. The test then tracks reality instead of drifting from it. */
+  const real = (played.groupStage.eliminationMatches || []).find((m) =>
+    m && m.status === "completed" && m.teamA && m.teamB &&
+    typeof m.teamA.score === "number" && typeof m.teamB.score === "number" &&
+    m.teamA.score !== m.teamB.score);
+
+  let winnerName = null, loserName = null, sourceLabel = "";
+  if (real) {
+    const aWon = real.teamA.score > real.teamB.score;
+    winnerName = (aWon ? real.teamA : real.teamB).name;
+    loserName = (aWon ? real.teamB : real.teamA).name;
+    sourceLabel = `real result ${real.teamA.name} ${real.teamA.score}-${real.teamB.score} ${real.teamB.name}`;
+  } else if (pool.length >= 2 && (played.groupStage.eliminationMatches || []).length) {
+    /* Mutate the existing fixture object so it keeps whatever else the renderer
+       reads off it; only the result is ours. */
+    const m = played.groupStage.eliminationMatches[0];
+    m.teamA = Object.assign({}, m.teamA, { name: pool[0], score: 2 });
+    m.teamB = Object.assign({}, m.teamB, { name: pool[1], score: 0 });
+    m.status = "completed"; m.bestOf = 3;
+    winnerName = pool[0]; loserName = pool[1];
+    sourceLabel = "injected — the round has not been played yet";
+  }
+
+  if (winnerName && loserName) {
+    console.log(`  (${sourceLabel})`);
     const host = render(w, played);
     const byName = {};
     [...host.querySelectorAll(".sw-elimteams .sw-team")].forEach((r) => {
       byName[r.querySelector(".sw-tname").textContent.trim()] = r;
     });
-    const winner = byName[pool[0]], loser = byName[pool[1]];
-    ok(!!winner && !!loser, "both teams still listed after their match", "");
+    const winner = byName[winnerName], loser = byName[loserName];
+    ok(!!winner && !!loser, "both teams still listed after their match",
+       winner ? (loser ? "" : `${loserName} missing`) : `${winnerName} missing`);
     if (winner && loser) {
       ok(winner.querySelector(".sw-tpips i:last-child").classList.contains("w"),
-         `${pool[0]} shows a win in the sixth bubble`,
+         `${winnerName} shows a win in the sixth bubble`,
          winner.querySelector(".sw-tpips i:last-child").className);
       ok(loser.querySelector(".sw-tpips i:last-child").classList.contains("l"),
-         `${pool[1]} shows a loss in the sixth bubble`,
+         `${loserName} shows a loss in the sixth bubble`,
          loser.querySelector(".sw-tpips i:last-child").className);
     }
     /* And the group stage STILL has ROUNDS, not ROUNDS+1. */
