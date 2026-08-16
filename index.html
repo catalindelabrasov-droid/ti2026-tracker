@@ -1673,6 +1673,21 @@
   </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* Which locale to format dates, times and weekdays in.
+ *
+ * Every toLocale* call used to be hard-coded to "en-US", so a Russian reader
+ * saw "Thu 5:00 AM" on the fixture cards. localize() cannot help: it walks TEXT
+ * nodes against a dictionary, and these strings are built by Intl at render
+ * time, so there is nothing to look up.
+ *
+ * A FUNCTION, not a const. LANG is a module-scope const declared far below
+ * (line ~6899); reading it at module scope here would hit the temporal dead
+ * zone and blank the page. Function declarations hoist, and the body only runs
+ * when called - which is always from inside a render function, long after LANG
+ * is initialised. That is exactly why the inline ternary already at line ~2399
+ * has always been safe. */
+function LOC(){ return LANG === "ru" ? "ru-RU" : "en-US"; }
+
 // ----- Supabase backend (accounts + shared league) ------------------------
 const SUPABASE_URL = "https://hqpynfzatnmwvlxdfhsw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxcHluZnphdG5td3ZseGRmaHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzE0NjUsImV4cCI6MjA5NzM0NzQ2NX0.lVTsgb1DwTkzeb-G3403IGY3jWvFg4TNbetZR6ANkj0";
@@ -1872,7 +1887,7 @@ function startCountdown(d){
 }
 function render(d){
   DATA=d;const m=d.meta||{};buildLogoMap(d);
-  const upd=m.lastUpdated?new Date(m.lastUpdated).toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}):"unknown";
+  const upd=m.lastUpdated?new Date(m.lastUpdated).toLocaleString(LOC(),{dateStyle:"medium",timeStyle:"short"}):"unknown";
   const champion=((d.prizePool||{}).distribution||[]).find(x=>placeIs(x.place,1)&&x.team);
   const root=document.createElement("div");root.id="app";
   root.innerHTML=`
@@ -2396,7 +2411,7 @@ function liveRailInner(d){
     const started=allMatches(d).some(m=>m.status==="completed");
     const startsAt=((d.meta||{}).dates||{}).groupStageStart;
     const soon=startsAt&&new Date(startsAt).getTime()>Date.now();
-    const day=(iso)=>{try{return new Date(iso).toLocaleDateString(LANG==="ru"?"ru-RU":"en-US",{day:"numeric",month:"long"});}catch(e){return"";}};
+    const day=(iso)=>{try{return new Date(iso).toLocaleDateString(LOC(),{day:"numeric",month:"long"});}catch(e){return"";}};
 
     // Don't dead-end: if Dota is being played somewhere, say so and point there.
     const tail=elsewhere
@@ -2459,7 +2474,7 @@ function seriesGamesBtn(m,cls){
 }
 function liveCard(m){
   const a=m.teamA||{},b=m.teamB||{};const w=matchWinner(m);
-  const time=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):"";
+  const time=m.scheduled?new Date(m.scheduled).toLocaleString(LOC(),{weekday:"short",hour:"numeric",minute:"2-digit"}):"";
   const on=notifIds.has(m.id);
   // Big number = the SERIES score, which is what people came for and which the
   // schedule knows. Kills in the game currently being played sit in the footer,
@@ -2765,7 +2780,7 @@ function renderTeamsTabInto(){
     </div>
     <span class="tm-rating">${t.glicko!=null?t.glicko:t.rating}${t.glicko!=null?ratingTrend(t.glickoDelta):''}</span>
   </div>`;
-  const asOf=LIVE_FEED.ratingsUpdatedAt?new Date(LIVE_FEED.ratingsUpdatedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):null;
+  const asOf=LIVE_FEED.ratingsUpdatedAt?new Date(LIVE_FEED.ratingsUpdatedAt).toLocaleDateString(LOC(),{month:"short",day:"numeric"}):null;
   const src=(LIVE_FEED.ratingSource==="computed")
     ? `Glicko-2, computed from every premier and professional series we track${asOf?`, updated ${esc(asOf)}`:''}. Teams are ordered by the rating we're confident they're <i>at least</i> worth, so a hot streak in three games can't jump the queue.`
     : `Glicko-2 rating from datdota${asOf?`, as of ${esc(asOf)}`:''}.`;
@@ -3188,7 +3203,7 @@ function trBracketMatch(m,nm){
     <div class="tr-bteam ${bw?'win':''}"><span>${esc(nm(m.team_b))}</span><b>${done?m.score_b:"–"}</b></div>
     <div class="tr-bfoot">${drawn?"Drawn · ":""}Bo${m.best_of}${
       stakes?" · "+esc(TR_STAKES[stakes]||""):""}${
-      m.scheduled_at?" · "+new Date(m.scheduled_at).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):""}</div>
+      m.scheduled_at?" · "+new Date(m.scheduled_at).toLocaleString(LOC(),{weekday:"short",hour:"numeric",minute:"2-digit"}):""}</div>
   </div>`;
 }
 const TR_STAKES={advance:"winner goes through",eliminate:"loser is out",both:"winner through, loser out"};
@@ -3735,7 +3750,7 @@ async function openRoster(teamId,teamName,teamLogoUrl){
     const formRow=s=>{
       const drawn=s.us===s.them;
       const cls=drawn?"draw":(s.won?"win":"loss");
-      const when=s.at?new Date(s.at).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+      const when=s.at?new Date(s.at).toLocaleDateString(LOC(),{month:"short",day:"numeric"}):"";
       return `<div class="tf-row">
         <span class="tf-res ${cls}">${drawn?"–":(s.won?"W":"L")}</span>
         <span class="tf-opp">${esc(s.opponent||"?")}${s.opponentRank?`<span class="tf-rank">#${s.opponentRank}</span>`:''}</span>
@@ -3801,7 +3816,7 @@ async function openEvent(leagueId,name,tier){
     const rows=s.map(x=>{
       const done=(x.sa+x.sb)>0;
       const aWin=x.sa>x.sb, bWin=x.sb>x.sa;
-      const when=x.start?new Date(x.start*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+      const when=x.start?new Date(x.start*1000).toLocaleDateString(LOC(),{month:"short",day:"numeric"}):"";
       return `<div class="ev-match">
         <span class="ev-team ${aWin?'win':''}">${teamLogo(x.a,20,x.logoA)}${esc(x.a)}</span>
         <span class="ev-score">${done?`${x.sa}–${x.sb}`:'vs'}</span>
@@ -3853,7 +3868,7 @@ function regionDetailHTML(d,region){
     return `<div class="rd-team ${q?'qualified':''}">${teamLogo(t,24)}${esc(t)}${q?'<span class="qtag">Qualified ✦</span>':''}</div>`;
   }).join("")||`<div class="rd-empty">Team list pending.</div>`;
   const allM=(r.matches||[]);
-  const fmtTime=iso=>{try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}catch(e){return "";}};
+  const fmtTime=iso=>{try{return new Date(iso).toLocaleString(LOC(),{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}catch(e){return "";}};
   const renderM=m=>{
     const a=m.teamA||{},b=m.teamB||{};
     const done=m.status==="completed"||m.status==="done";
@@ -4088,7 +4103,7 @@ function teamDetailHTML(d,name){
                Math.max(os,ts)>=Math.floor((m.bestOf||3)/2)+1;
     const live=m.status==='live'&&!done;
     const cls=done?(os>ts?'won':'lost'):(live?'live':'next');
-    const when=m.scheduled?new Date(m.scheduled).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"}):'';
+    const when=m.scheduled?new Date(m.scheduled).toLocaleString(LOC(),{weekday:"short",hour:"numeric",minute:"2-digit"}):'';
     const mid=done?`${os}–${ts}`:(live?`${os??0}–${ts??0}`:'vs');
     const tag=done?(os>ts?'WON':'LOST'):(live?`LIVE${m.gameMinute!=null?" "+m.gameMinute+"'":''}`:esc(when||'Upcoming'));
     /* A played match opens its full history, game by game. An upcoming one does
@@ -4243,7 +4258,7 @@ async function openMatch(a,b,backTo,schedIso){
   const games=(mPickSeries(meetings,schedIso)||{games:list.games}).games;
   const when=(meetings.length>1&&games[0]&&games[0].startTime)
     ? `<span class="msub">${esc(new Date(games[0].startTime*1000)
-        .toLocaleDateString("en-US",{month:"short",day:"numeric"}))}</span>` : "";
+        .toLocaleDateString(LOC(),{month:"short",day:"numeric"}))}</span>` : "";
   const tabs=games.map((g,i)=>`<button class="mtab${i===games.length-1?" on":""}" data-mgame="${esc(g.matchId)}" data-mkey="${esc(key)}">Game ${g.game}</button>`).join("");
   body.innerHTML=`${back}<div class="mtitle">${esc(a)} vs ${esc(b)} ${when}</div>
     <div class="mtabs">${tabs}</div><div id="mGameBody"></div>`;
@@ -4589,7 +4604,7 @@ function renderGroups(d){
     });
     return {pips,live,last,next,elimPip,elimLive,lastSwiss,liveSwiss};
   };
-  const when=t=>{try{return new Date(t).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"});}catch(e){return"";}};
+  const when=t=>{try{return new Date(t).toLocaleString(LOC(),{weekday:"short",hour:"numeric",minute:"2-digit"});}catch(e){return"";}};
   /* A finished result is a button: it opens the series game by game.
      A real <button> nested inside the team chip is why the chip below is a div
      rather than a button — a button inside a button is invalid and browsers
@@ -6112,7 +6127,7 @@ function lgPredictions(lg){
     const selA=myPred&&myPred.pick===a, selB=myPred&&myPred.pick===b;
     const deadlineTxt=lockPassed
       ? (lgStarted(m)?"Match has started":"Locking deadline passed")
-      : (lockBy?"Lock by "+new Date(lockBy).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"})
+      : (lockBy?"Lock by "+new Date(lockBy).toLocaleString(LOC(),{weekday:"short",hour:"numeric",minute:"2-digit"})
               :"Open until the match starts");
     let body;
     if(locked){
@@ -7123,7 +7138,7 @@ function setLiveStatus(state,when){
   const txt=el.querySelector(".ls-text");
   if(state==="updating"){el.classList.add("updating");if(txt)txt.textContent="Updating…";}
   else if(state==="offline"){el.classList.add("offline");if(txt)txt.textContent="Offline — will retry";}
-  else{const t=when?new Date(when).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"";if(txt)txt.textContent=t?`Updated ${t}`:"Auto-updating";}
+  else{const t=when?new Date(when).toLocaleTimeString(LOC(),{hour:"numeric",minute:"2-digit"}):"";if(txt)txt.textContent=t?`Updated ${t}`:"Auto-updating";}
 }
 function updateLiveRail(newData,oldSig){
   // Refresh only the rail's DOM so the rest of the page (scroll, bracket) is untouched.
