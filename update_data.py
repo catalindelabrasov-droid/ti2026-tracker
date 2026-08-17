@@ -790,7 +790,7 @@ def merge_opendota_scores(data, series):
         # hour. collect_completed_results() only takes status == "completed", so
         # that series never reached match_results and nobody's league picks on it
         # ever scored. Never demote a completed match back to live.
-        if (sa + sb) >= 0 and m.get("status") != "completed":
+        if (sa + sb) > 0 and m.get("status") != "completed":
             clinched = max(sa, sb) >= (m.get("bestOf", 3) // 2 + 1)
             new_status = "completed" if clinched else "live"
             if m.get("status") != new_status:
@@ -1799,6 +1799,43 @@ def _supabase_upsert(table, conflict, rows):
     return total
 
 
+def _supabase_delete_in(table, column, values):
+    """Delete rows whose `column` is one of `values`. Returns the count sent.
+
+    The counterpart to _supabase_upsert, which had no counterpart until
+    17 Aug 2026 - and that asymmetry is what made a bad ingest permanent. See
+    the reconciliation block in push_league_backend.
+
+    Batched at 200 rather than the upsert's 500 because the ids travel in the
+    query string as an in.() list, and a long URL risks a 414.
+    """
+    total = 0
+    for i in range(0, len(values), 200):
+        batch = values[i:i + 200]
+        quoted = ",".join('"%s"' % str(v).replace('"', "") for v in batch)
+        url = (f"{SUPABASE_URL}/rest/v1/{table}"
+               f"?{column}=in.({urllib.parse.quote(quoted)})")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                "Prefer": "return=minimal",
+            },
+            method="DELETE")
+        try:
+            with urllib.request.urlopen(req, timeout=30):
+                total += len(batch)
+        except Exception as e:
+            # Never let a failed clean-up abort the run: the upserts above have
+            # already landed, and the site is better off with one stale row
+            # than with no update at all.
+            print(f"  ! could not withdraw stale {table} rows: {e}",
+                  file=sys.stderr)
+            return total
+    return total
+
+
 def push_league_backend(data, with_ranking=True):
     """
     Feed the prediction league: the schedule/participants (`matches`), the
@@ -1824,6 +1861,29 @@ def push_league_backend(data, with_ranking=True):
     results = collect_completed_results(data)
     if results:
         _supabase_upsert("match_results", "match_id", results)
+
+    # A RESULT MUST BE WITHDRAWABLE.
+    #
+    # This only ever upserted, so a match_results row was permanent once
+    # written. On 17 Aug 2026 that turned a bad ingest into a stuck one: the
+    # fabricated playoff results were deleted by migration 0027, the very next
+    # run re-inserted them from the still-corrupted data.json, and after
+    # data.json was repaired the rows simply stayed. matches.status went back
+    # to 'upcoming' while the result rows survived - and
+    # enforce_prediction_lock refuses a pick when EITHER is set, so the
+    # playoffs stayed unpickable with nothing in data.json left to explain why.
+    # Fixing the source could not fix the symptom.
+    #
+    # So this is now a reconciliation, not an append: any result row for a
+    # fixture data.json no longer considers decided is withdrawn. data.json is
+    # the source of truth, and the guard in _build_match keeps it honest.
+    decided = {r["match_id"] for r in results}
+    stale = sorted(m["match_id"] for m in matches if m["match_id"] not in decided)
+    if stale:
+        removed = _supabase_delete_in("match_results", "match_id", stale)
+        if removed:
+            print(f"  · Withdrew stale result row(s) for {removed} fixture(s) "
+                  f"no longer decided")
 
     print(f"  · League backend: {len(matches)} match(es), {len(games)} game(s), "
           f"{len(results)} result(s).")
