@@ -587,7 +587,7 @@ def _pick_series(candidates, scheduled_iso, claimed=None, not_before=0):
     #    already has "Iron Wing" vs "Iron Wing TI 2026" and "BetBoom Team" vs
     #    "BoomBoys"). Any one of those and a Swiss result lands on an unplayed
     #    playoff match.
-    if False:
+    if not_before and start < not_before:
         return None
 
     # 2. It must be newer than anything already claimed for this pairing — a
@@ -790,7 +790,7 @@ def merge_opendota_scores(data, series):
         # hour. collect_completed_results() only takes status == "completed", so
         # that series never reached match_results and nobody's league picks on it
         # ever scored. Never demote a completed match back to live.
-        if (sa + sb) > 0 and m.get("status") != "completed":
+        if (sa + sb) >= 0 and m.get("status") != "completed":
             clinched = max(sa, sb) >= (m.get("bestOf", 3) // 2 + 1)
             new_status = "completed" if clinched else "live"
             if m.get("status") != new_status:
