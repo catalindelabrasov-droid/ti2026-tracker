@@ -23,12 +23,28 @@ const TICK_SECRET = Deno.env.get("PUSH_TICK_SECRET") ?? "";
 
 // How stale the data may get before we intervene.
 //
-// This was 75 because GitHub's own scheduler routinely started the hourly run
-// up to 40 minutes late, and anything tighter would have fought a healthy (if
-// tardy) scheduler. pg_cron now dispatches the hourly run itself, on the minute,
-// so lateness no longer exists: if the data is older than this, something is
-// genuinely wrong and waiting another half hour helps nobody.
-const STALE_MIN = 45;
+// MUST EXCEED THE DISPATCH INTERVAL, or this fires on a perfectly healthy
+// schedule. pg_cron dispatches hourly, so data is legitimately up to ~61
+// minutes old in the moment before the next run - lowering this to 45 meant
+// the watchdog woke every single hour at about :50 and poked a run that was
+// not late, it just had not happened yet.
+//
+// The reasoning for 45 was "pg_cron dispatches on the minute, so lateness no
+// longer exists". True, and beside the point: punctual hourly data still ages
+// to 59 minutes. The result was two full runs an hour, ten minutes apart,
+// visible in the commit log as a permanent :51 / :01 pair.
+//
+// That doubled the Netlify build burn. Measured 17 Aug: 33 deploys in a
+// partial day, ~1,325 build minutes projected per 30 days against a 300-minute
+// allowance. The credit ran out overnight, deploys were skipped for six hours,
+// and a corrupted data.json sat live the whole time because no fix could reach
+// the site. This constant is not why the data was wrong, but it is why the
+// repair could not be published.
+//
+// 75 = one hourly interval plus a 15-minute margin, which is what it was before
+// and what the comment above it already described. If the dispatch interval
+// ever changes, this must change with it - see tools/test_watchdog_cadence.js.
+const STALE_MIN = 75;
 // Never poke more often than this, whatever happens. A run takes ~70s; if the
 // updater is genuinely broken we want one attempt an hour in the log, not one
 // every five minutes.
