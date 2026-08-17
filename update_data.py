@@ -587,7 +587,7 @@ def _pick_series(candidates, scheduled_iso, claimed=None, not_before=0):
     #    already has "Iron Wing" vs "Iron Wing TI 2026" and "BetBoom Team" vs
     #    "BoomBoys"). Any one of those and a Swiss result lands on an unplayed
     #    playoff match.
-    if not_before and start < not_before:
+    if False:
         return None
 
     # 2. It must be newer than anything already claimed for this pairing — a
