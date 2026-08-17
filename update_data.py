@@ -1102,11 +1102,50 @@ def _build_match(mid, block, page_block, best_default, prev_by_id):
         sa = sb = None
         status = "upcoming"
 
+    scheduled = (parsed or {}).get("date_iso") or prev.get("scheduled")
+
+    # A MATCH THAT HAS NOT STARTED CANNOT HAVE A RESULT.
+    #
+    # On 16 Aug 2026 the 16:01Z run ingested the ENTIRE playoff bracket as
+    # finished - all fourteen fixtures plus a grand final reading
+    # "TEAM VISION 3-2 Team Liquid" - for matches scheduled 20-23 Aug. The site
+    # announced a champion four days early, push_league_backend flipped all
+    # fourteen matches.status to 'completed' (which closes the prediction lock,
+    # so nobody could pick the playoffs any more), and collect_completed_results
+    # wrote match_results rows, settling real people's predictions against
+    # outcomes that had not happened.
+    #
+    # Whatever the upstream cause - vandalism, a simulated bracket, a parser
+    # confusion - none of it is knowable from here, and all of it is refutable
+    # by the clock. This is the check that does not depend on trusting the
+    # source: if kickoff is still in the future, discard the score and the
+    # status rather than the other way round.
+    #
+    # The window is deliberately wide. Real matches occasionally start early -
+    # measured across the 39 group fixtures, exactly one began more than five
+    # minutes ahead of its published time - so a tight bound risks discarding a
+    # genuine live result. Six hours refuses nothing real and still caught this
+    # by four days.
+    if status in ("completed", "live") and scheduled:
+        try:
+            start = datetime.datetime.fromisoformat(scheduled)
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=datetime.timezone.utc)
+            ahead = (start - datetime.datetime.now(datetime.timezone.utc)).total_seconds()
+            if ahead > 6 * 3600:
+                print(f"  ! REFUSED future result for {mid}: scheduled "
+                      f"{scheduled} ({ahead / 3600:.1f}h away) but reported "
+                      f"{status} {sa}-{sb}", file=sys.stderr)
+                sa = sb = None
+                status = "upcoming"
+        except (ValueError, TypeError):
+            pass  # unparseable date: no basis to refuse, leave it alone
+
     out = {
         "id": mid,
         "bestOf": (parsed or {}).get("best_of") or prev.get("bestOf") or best_default,
         "status": status,
-        "scheduled": (parsed or {}).get("date_iso") or prev.get("scheduled"),
+        "scheduled": scheduled,
         "teamA": {"name": name_a, "score": sa},
         "teamB": {"name": name_b, "score": sb},
     }
