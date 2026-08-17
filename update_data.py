@@ -737,6 +737,48 @@ def _match_key(name_a, name_b):
     return f"{a.lower()}|{b.lower()}"
 
 
+# How far ahead of its own kickoff a fixture may be reported decided.
+# Wide on purpose: exactly one of the 39 group fixtures began more than five
+# minutes ahead of its published time, so a tight bound risks discarding a
+# genuine early start. Six hours refuses nothing real and still caught the
+# 17 Aug fabrication by four days.
+FUTURE_RESULT_GRACE_SEC = 6 * 3600
+
+
+def hours_until_start(scheduled):
+    """Hours from now until `scheduled`, or None if it cannot be read.
+
+    None means "no basis to judge" and every caller must fail OPEN on it -
+    refusing on an unparseable date would discard real results, and as of the
+    reconciliation in push_league_backend it would delete them from the
+    database too.
+    """
+    if not scheduled:
+        return None
+    try:
+        start = datetime.datetime.fromisoformat(str(scheduled))
+    except (ValueError, TypeError):
+        return None
+    if start.tzinfo is None:
+        start = start.replace(tzinfo=datetime.timezone.utc)
+    return (start - datetime.datetime.now(datetime.timezone.utc)).total_seconds() / 3600.0
+
+
+def starts_too_far_ahead(scheduled):
+    """True when a result for this fixture cannot be real yet.
+
+    ONE definition, used by BOTH writers. _build_match covers the Liquipedia
+    path; merge_opendota_scores.apply() is a second, independent writer that
+    runs AFTER it and sets scores and status directly. The 17 Aug guard only
+    covered the first, and an adversarial review reproduced the entire incident
+    through the second - a grand final fabricated 143 hours early, with the
+    "fix" in place. A chokepoint that is only half the writers is not a
+    chokepoint.
+    """
+    ahead = hours_until_start(scheduled)
+    return ahead is not None and ahead * 3600 > FUTURE_RESULT_GRACE_SEC
+
+
 def merge_opendota_scores(data, series):
     """
     Fill in/confirm match scores across qualifiers + bracket from the OpenDota
@@ -761,6 +803,27 @@ def merge_opendota_scores(data, series):
         ta = (m.get("teamA") or {}); tb = (m.get("teamB") or {})
         na, nb = ta.get("name"), tb.get("name")
         if not na or not nb or na == "TBD" or nb == "TBD":
+            return
+        # THE SAME CLOCK CHECK _build_match APPLIES.
+        #
+        # This function is a second, independent writer: it sets teamA/teamB
+        # scores and promotes status to live/completed directly, and it runs
+        # AFTER the Liquipedia parse. The 17 Aug guard only covered
+        # _build_match, so the whole incident was still reproducible through
+        # here - a grand final decided 143 hours before kickoff, pushed to
+        # matches.status and match_results.
+        #
+        # Until now the only thing standing between an OpenDota series and an
+        # unplayed rematch was name-matching in _pick_series (`claimed`) plus
+        # _stage_floor, which reads meta.dates.mainEvent - one string in
+        # hand-maintained metadata that nothing writes and no test asserts.
+        # Both had already failed this tournament: "BetBoom Team"/"BoomBoys",
+        # and the trailing space that hid every Nigma fixture.
+        if starts_too_far_ahead(m.get("scheduled")):
+            print(f"  ! REFUSED OpenDota merge into {m.get('id')}: kickoff "
+                  f"{m.get('scheduled')} is "
+                  f"{hours_until_start(m.get('scheduled')):.1f}h away",
+                  file=sys.stderr)
             return
         s = _pick_series(series.get(_match_key(na, nb)), m.get("scheduled"), claimed, floor)
         if not s:
@@ -1877,13 +1940,32 @@ def push_league_backend(data, with_ranking=True):
     # So this is now a reconciliation, not an append: any result row for a
     # fixture data.json no longer considers decided is withdrawn. data.json is
     # the source of truth, and the guard in _build_match keeps it honest.
+    # ONLY FIXTURES THAT HAVE NOT STARTED MAY BE WITHDRAWN.
+    #
+    # Withdrawal exists to undo results that were never played. It must never be
+    # able to erase one that WAS, and without this bound it can: the guard fails
+    # open on an unreadable date, but it fails CLOSED on a misread one. An
+    # unknown {{Abbr/...}} timezone defaults to UTC silently, so a real result
+    # can look hours in the future - and gs-r5-m2 has already had its scheduled
+    # value regress by 154 minutes once (see migration 0026). Before withdrawal
+    # existed, a wrong refusal meant "no update"; after it, it meant "delete the
+    # stored result". An adversarial review demonstrated exactly that, removing
+    # a group match played on 15 August.
+    #
+    # So the two ideas are separated: refusing to WRITE is judged on the clock
+    # and may be wrong cheaply; deleting what is already stored is restricted to
+    # fixtures that cannot possibly have a legitimate result yet.
     decided = {r["match_id"] for r in results}
-    stale = sorted(m["match_id"] for m in matches if m["match_id"] not in decided)
+    by_id = {m["match_id"]: m for m in matches}
+    stale = sorted(
+        mid for mid, m in by_id.items()
+        if mid not in decided and starts_too_far_ahead(m.get("scheduled_at"))
+    )
     if stale:
         removed = _supabase_delete_in("match_results", "match_id", stale)
         if removed:
-            print(f"  · Withdrew stale result row(s) for {removed} fixture(s) "
-                  f"no longer decided")
+            print(f"  · Withdrew results for {len(stale)} unplayed fixture(s): "
+                  f"{', '.join(stale[:5])}{'…' if len(stale) > 5 else ''}")
 
     print(f"  · League backend: {len(matches)} match(es), {len(games)} game(s), "
           f"{len(results)} result(s).")

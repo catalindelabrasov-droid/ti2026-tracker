@@ -90,6 +90,19 @@ refused = sum(
     if U._build_match(mid, block(a, b, sa, sb, iso(96)), None, 3, {})["status"] == "upcoming")
 ok(refused == len(REAL), f"all {len(REAL)} are refused", f"{refused}/{len(REAL)}")
 
+print("\n'live' must be refused too, not just 'completed'")
+# enforce_prediction_lock refuses a pick on status IN ('live','completed'), so
+# half the incident's damage - "nobody could pick the playoffs" - arrives
+# through 'live'. Narrowing the guard to == "completed" survived every test in
+# the suite until this assertion existed; an adversarial review found it.
+future_live = U._build_match(
+    "me-r5m1", block("TEAM VISION", "Team Liquid", 1, 1, iso(96), finished=False), None, 5, {})
+ok(future_live["status"] == "upcoming",
+   "an unclinched 1-1 on a match 96h away is refused, not left 'live'",
+   future_live["status"])
+ok(future_live["teamA"]["score"] is None,
+   "and its scores are discarded as well", str(future_live["teamA"]["score"]))
+
 print("\nit must NOT refuse anything real")
 past = U._build_match("gs-r1-m1", block("Team Falcons", "LGD Gaming", 2, 1, iso(-72)), None, 3, {})
 ok(past["status"] == "completed" and past["teamA"]["score"] == 2,
