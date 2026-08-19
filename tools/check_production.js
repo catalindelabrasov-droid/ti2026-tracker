@@ -53,7 +53,7 @@ const TRIES = 3, TIMEOUT_MS = 15000;
 
 const attempt = async (url, opts) => {
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => ac.abort(), opts.timeout || TIMEOUT_MS);
   try {
     const r = await fetch(url, {
       redirect: "follow", signal: ac.signal,
@@ -189,10 +189,28 @@ const main = async () => {
   ok(!!data, "data.json parses");
   if (data) {
     const age = (Date.now() - Date.parse((data.meta || {}).lastUpdated || 0)) / 60000;
-    /* The updater runs every 15 minutes. An hour without a write means it has
-       stopped, and a tournament page that quietly freezes is worse than one
-       that is visibly down — nobody notices until the scores are wrong. */
-    ok(Number.isFinite(age) && age < 60, "updated within the last hour",
+    /* MUST EXCEED THE FULL-RUN INTERVAL, or this fails on a healthy site.
+       It was 60, on the premise "the updater runs every 15 minutes". That
+       premise is wrong twice over. Only the HOURLY full run writes data.json;
+       the :15/:30/:45 fast passes write match_results in Supabase and never
+       touch it. And this job runs seconds after the commit - measured 19 Aug,
+       the data commit landed at 07:01:01 and verify-production started at
+       07:01:07 - so production is still serving the PREVIOUS hour's file,
+       aged exactly 60 minutes, while Netlify builds. `age < 60` was therefore
+       false on every single :00 run: a red build and a failure email once an
+       hour, on a site that was completely healthy.
+
+       That is not a cosmetic problem. On 17 Aug this same alarm was firing
+       correctly - the site had frozen for six hours because Netlify credit ran
+       out - and it was read as noise, because it had been noise all week.
+
+       75 = the hourly interval plus a 15-minute margin for the build, which is
+       the same number and the same reasoning as STALE_MIN in
+       supabase/functions/updater-watchdog. tools/test_watchdog_cadence.js
+       asserts the two agree; change them together or not at all. */
+    const MAX_DATA_AGE_MIN = 75;
+    ok(Number.isFinite(age) && age < MAX_DATA_AGE_MIN,
+       `data.json is fresher than ${MAX_DATA_AGE_MIN} min`,
        Number.isFinite(age) ? `${age.toFixed(0)} min ago` : "no lastUpdated");
 
     const rounds = data.groupStage.rounds || [];
@@ -312,9 +330,25 @@ const main = async () => {
   }
 
   /* ---- 4. the edge functions the page depends on ------------------------- */
+  /* live-matches fans out to OpenDota and Valve, so its latency is not its
+     own. On 19 Aug 2026 OpenDota went down - HTTP 522 from its edge, ~19 s to
+     fail - and this function still answered 200 with empty arrays after 25
+     seconds, degrading exactly as intended. The default 15 s budget turned
+     that into "HTTP 0" three times over and a red build every fifteen minutes
+     for the length of the outage. A third-party outage is worth SEEING, but it
+     is not this site being down, and it must not be what the alarm is shouting
+     the day before the playoffs. 30 s, with the latency printed either way. */
   console.log("\nthe live feed responds");
-  const feed = await get(FN + "/live-matches");
-  ok(feed.status === 200, "live-matches answers", feed.status === 200 ? "" : `HTTP ${feed.status}`);
+  const t0 = Date.now();
+  const feed = await get(FN + "/live-matches", { timeout: 30000 });
+  const feedSec = ((Date.now() - t0) / 1000).toFixed(1);
+  ok(feed.status === 200, "live-matches answers",
+     feed.status === 200 ? `${feedSec}s` : `HTTP ${feed.status} after ${feedSec}s`);
+  /* Slow is a note, not a failure - and it names the likely cause so nobody has
+     to rediscover it at two in the morning. */
+  if (feed.status === 200 && Number(feedSec) > 10 && !QUIET) {
+    console.log(`  note   ${feedSec}s is slow here - it fans out to OpenDota, check that first`);
+  }
 
   /* These two must REFUSE an unauthenticated call. Their guard reads
      `if (SECRET && header !== SECRET)`, so an empty secret removes the check

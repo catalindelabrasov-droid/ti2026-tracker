@@ -79,6 +79,39 @@ ok(COOLDOWN_MIN > 0 && COOLDOWN_MIN <= DISPATCH_MIN,
    "COOLDOWN_MIN keeps retries to at most one per dispatch interval",
    String(COOLDOWN_MIN));
 
+console.log("\nand the production freshness check uses the same interval");
+/* Same invariant, different file, and they were NOT consistent.
+ *
+ * check_production.js asserted data.json was under 60 minutes old, on the
+ * premise "the updater runs every 15 minutes". Only the hourly FULL run writes
+ * data.json - the quarter-hour passes write match_results and never touch it -
+ * and verify-production runs seconds after the commit, before Netlify has
+ * built. Measured 19 Aug 2026: the data commit landed at 07:01:01 and the
+ * check started at 07:01:07, reading the previous hour's file at exactly 60
+ * minutes old. So it failed on every :00 run, on a healthy site.
+ *
+ * A red build every hour is worse than no check. On 17 Aug this alarm was
+ * firing CORRECTLY - the site had been frozen for six hours on exhausted
+ * Netlify credit - and it was read as noise, because it had been noise all
+ * week. Both constants are now 75; if the dispatch interval changes, they move
+ * together or this goes red. */
+const CHECK_SRC = fs.readFileSync(path.join(__dirname, "check_production.js"), "utf8");
+const cm = CHECK_SRC.match(/const\s+MAX_DATA_AGE_MIN\s*=\s*(\d+)/);
+const MAX_DATA_AGE_MIN = cm ? Number(cm[1]) : null;
+ok(MAX_DATA_AGE_MIN !== null, "MAX_DATA_AGE_MIN found in check_production.js",
+   String(MAX_DATA_AGE_MIN));
+ok(MAX_DATA_AGE_MIN > DISPATCH_MIN,
+   `MAX_DATA_AGE_MIN (${MAX_DATA_AGE_MIN}) exceeds the ${DISPATCH_MIN}-minute full-run interval`,
+   MAX_DATA_AGE_MIN > DISPATCH_MIN ? "" : "-> fails on every :00 run of a healthy site");
+ok(MAX_DATA_AGE_MIN >= DISPATCH_MIN + 10,
+   "and leaves at least 10 minutes for the Netlify build to publish it",
+   `margin ${MAX_DATA_AGE_MIN - DISPATCH_MIN} min`);
+ok(MAX_DATA_AGE_MIN === STALE_MIN,
+   "the watchdog and the production check agree on the same bound",
+   `watchdog ${STALE_MIN}, checker ${MAX_DATA_AGE_MIN}`);
+ok(!/age < 60/.test(CHECK_SRC),
+   "the hardcoded 60 that produced an hourly false red is gone", "");
+
 console.log("\nthe comment has not drifted from the constant");
 ok(/dispatches hourly|hourly/i.test(SRC),
    "index.ts still describes an hourly dispatch", "");
