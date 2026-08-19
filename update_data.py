@@ -744,6 +744,34 @@ def _match_key(name_a, name_b):
 # 17 Aug fabrication by four days.
 FUTURE_RESULT_GRACE_SEC = 6 * 3600
 
+# How far ahead of kickoff the LIQUIPEDIA parser may report a fixture decided.
+#
+# Separate from FUTURE_RESULT_GRACE_SEC on purpose, and read at exactly one
+# site (_build_match). Six hours was chosen to be certain of never discarding a
+# real early start. The measurement in migration 0026 says that fear was
+# overstated - comparing the published time to the real first-game start from
+# OpenDota across all 39 completed group matches:
+#
+#     median +2 min, mean 0 min, worst LATE +34 min
+#     started more than 5 minutes EARLY: 1 of 39
+#
+# and that one outlier (gs-r5-m2, -154 min) was a corrupted schedule row that
+# regressed mid-afternoon, not a series that actually started early. Early is
+# the only direction this guard reacts to, so one hour is twelve times the
+# largest genuine early start ever recorded here.
+#
+# What six hours does buy is an unguarded window before every fixture, and
+# during 20-23 Aug that is precisely the fixture worth faking. One hour is
+# still forty times the largest genuine early start ever measured here, and it
+# cuts total playoff exposure from 84 fixture-hours to 14.
+#
+# It deliberately does NOT change the withdrawal bound in push_league_backend,
+# and does not touch the OpenDota writer. Refusing to WRITE is wrong cheaply -
+# the next run retries in fifteen minutes. DELETING a stored result is not, so
+# the wider grace stays on the path that deletes. OpenDota results are backed
+# by real game rows, so they keep the wider grace too.
+LIQUIPEDIA_WRITE_GRACE_SEC = 60 * 60
+
 
 def hours_until_start(scheduled):
     """Hours from now until `scheduled`, or None if it cannot be read.
@@ -767,13 +795,20 @@ def hours_until_start(scheduled):
 def starts_too_far_ahead(scheduled):
     """True when a result for this fixture cannot be real yet.
 
-    ONE definition, used by BOTH writers. _build_match covers the Liquipedia
-    path; merge_opendota_scores.apply() is a second, independent writer that
-    runs AFTER it and sets scores and status directly. The 17 Aug guard only
-    covered the first, and an adversarial review reproduced the entire incident
-    through the second - a grand final fabricated 143 hours early, with the
-    "fix" in place. A chokepoint that is only half the writers is not a
-    chokepoint.
+    READ THIS BEFORE TOUCHING FUTURE_RESULT_GRACE_SEC. This function is called
+    from exactly TWO sites - merge_opendota_scores.apply() and the withdrawal
+    reconciliation in push_league_backend. It is NOT called from _build_match,
+    which keeps its own clock check on its own constant
+    (LIQUIPEDIA_WRITE_GRACE_SEC). An earlier version of this docstring claimed
+    "ONE definition, used by BOTH writers" and that was simply untrue: anyone
+    tightening FUTURE_RESULT_GRACE_SEC to close the window would have tightened
+    the OpenDota writer and the deletion bound while leaving the Liquipedia
+    parser - the path that actually fabricated the bracket - untouched.
+
+    The two are separate on purpose, not by accident. Refusing to WRITE costs a
+    retry fifteen minutes later; the withdrawal path DELETES a stored result,
+    so it keeps the wider six-hour grace. Unifying them is a post-event job and
+    needs a test that fails when either writer is mutated on its own.
     """
     ahead = hours_until_start(scheduled)
     return ahead is not None and ahead * 3600 > FUTURE_RESULT_GRACE_SEC
@@ -917,11 +952,47 @@ MAIN_BRACKET_SLOTS = {
     "R5M1": ("final", 0, "Grand Final"),
 }
 
-# Rough tz-abbreviation offsets for Liquipedia date strings ("{{Abbr/CEST}}").
-# Only needs to cover what TI pages realistically use.
-_TZ_OFFSETS = {"UTC": 0, "GMT": 0, "CET": 1, "CEST": 2, "EET": 2, "EEST": 3,
-               "MSK": 3, "SGT": 8, "CST": 8, "HKT": 8, "KST": 9, "JST": 9,
-               "PST": -8, "PDT": -7, "EST": -5, "EDT": -4, "BST": 1}
+# Tz-abbreviation offsets for Liquipedia date strings ("{{Abbr/CEST}}").
+#
+# Mirrors Module:Timezone/Data on liquipedia.net/commons (fetched 19 Aug 2026).
+# CST there is CHINA Standard Time - US Central is named separately as CT - and
+# the TI 2026 Main Event page uses {{Abbr/CST}} on all fourteen playoff
+# fixtures, meaning Shanghai.
+#
+# A MISSING ABBREVIATION SILENTLY BECOMES UTC, which does not fail loudly: it
+# produces a confident wrong answer shifted by that zone's offset. Eastward
+# that makes a played match look like it has not started, so the guard refuses
+# the REAL result and push_league_backend then deletes the stored row. Six of
+# the entries below (MYT PHT PHST TST BNT WITA ULAT) are the same +8 wall clock
+# as CST - an editor switching between them changes nothing a reader sees, and
+# under the old 17-entry table it broke everything.
+_TZ_OFFSETS = {
+    "UTC": 0, "GMT": 0, "WET": 0,
+    "WEST": 1, "CET": 1, "BST": 1, "WAT": 1,
+    "CEST": 2, "EET": 2, "CAT": 2, "SAST": 2,
+    "EEST": 3, "MSK": 3, "TRT": 3, "EAT": 3, "AST": 3, "IDT": 3,
+    "AMT": 4, "AZT": 4, "GET": 4, "GST": 4, "MUT": 4,
+    "ALMT": 5, "AQTT": 5, "MVT": 5, "PKT": 5, "TJT": 5, "TMT": 5, "UZT": 5,
+    "BDST": 6, "KGT": 6,
+    "ICT": 7, "THA": 7, "WIB": 7,
+    "BNT": 8, "CST": 8, "HKT": 8, "MYT": 8, "PHT": 8, "PHST": 8,
+    "SGT": 8, "TST": 8, "ULAT": 8, "WITA": 8,
+    "JST": 9, "KST": 9,
+    "AEST": 10, "VLAT": 10, "AEDT": 11, "NZST": 12, "NZDT": 13,
+    "BRST": -2,
+    "ADT": -3, "ART": -3, "BRT": -3, "CLST": -3,
+    "ATST": -4, "BOT": -4, "CLT": -4, "EDT": -4, "PYT": -4, "VET": -4,
+    "CDT": -5, "COT": -5, "ECT": -5, "EST": -5, "PET": -5,
+    "CT": -6, "MDT": -6,
+    "MST": -7, "PDT": -7,
+    "AKDT": -8, "PST": -8,
+    "AKST": -9,
+    # Nine Liquipedia zones are not whole hours (IST +5:30, NPT +5:45,
+    # ACST +9:30, ACDT +10:30, MMT +6:30, IRST, IRDT, NDT, NST) and are
+    # DELIBERATELY absent - this int-hours table cannot express them and a
+    # rounded value would be a quieter lie. TI 2026 uses none of them. The
+    # minutes-based table is the post-event job.
+}
 
 
 def strip_html_comments(wt):
@@ -985,7 +1056,18 @@ def _liqui_date_to_iso(raw):
     """'June 24, 2026 - 19:00 {{Abbr/CEST}}' -> ISO string, or None."""
     if not raw or not raw.strip():
         return None
-    tz_m = re.search(r"\{\{[Aa]bbr/(\w+)\}\}", raw)
+    # The `[|}]` at the end, not `\}\}`, is load-bearing.
+    #
+    # Liquipedia writes both {{Abbr/CST}} and {{Abbr/CST|China Standard Time}}.
+    # This regex demanded the closing braces immediately after the
+    # abbreviation, so the piped form did not match - while the stripper one
+    # line below (`\{\{[^}]*\}\}`) removed the template either way. The result
+    # was not an error: it was a confident wrong answer at UTC. All fourteen
+    # playoff fixtures would have jumped eight hours later, results would have
+    # been refused as "not started yet" until an hour after real kickoff, and
+    # push_league_backend would then have withdrawn any row that had landed.
+    # A playoff blackout from one character class.
+    tz_m = re.search(r"\{\{\s*[Aa]bbr/(\w+)\s*[|}]", raw)
     offset = _TZ_OFFSETS.get(tz_m.group(1).upper(), 0) if tz_m else 0
     s = re.sub(r"\{\{[^}]*\}\}", "", raw).replace(" - ", " ").strip()
     for fmt in ("%B %d, %Y %H:%M", "%B %d, %Y", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
@@ -1184,18 +1266,20 @@ def _build_match(mid, block, page_block, best_default, prev_by_id):
     # source: if kickoff is still in the future, discard the score and the
     # status rather than the other way round.
     #
-    # The window is deliberately wide. Real matches occasionally start early -
-    # measured across the 39 group fixtures, exactly one began more than five
-    # minutes ahead of its published time - so a tight bound risks discarding a
-    # genuine live result. Six hours refuses nothing real and still caught this
-    # by four days.
+    # The window used to be six hours, on the theory that real matches start
+    # early often enough that a tight bound would discard a genuine result.
+    # Migration 0026 measured it: across all 39 completed group matches exactly
+    # ONE started more than five minutes early, and that one was a corrupted
+    # schedule row rather than an early start. So the extra five hours bought
+    # nothing real and cost an unguarded window before every fixture - see
+    # LIQUIPEDIA_WRITE_GRACE_SEC.
     if status in ("completed", "live") and scheduled:
         try:
             start = datetime.datetime.fromisoformat(scheduled)
             if start.tzinfo is None:
                 start = start.replace(tzinfo=datetime.timezone.utc)
             ahead = (start - datetime.datetime.now(datetime.timezone.utc)).total_seconds()
-            if ahead > 6 * 3600:
+            if ahead > LIQUIPEDIA_WRITE_GRACE_SEC:
                 print(f"  ! REFUSED future result for {mid}: scheduled "
                       f"{scheduled} ({ahead / 3600:.1f}h away) but reported "
                       f"{status} {sa}-{sb}", file=sys.stderr)

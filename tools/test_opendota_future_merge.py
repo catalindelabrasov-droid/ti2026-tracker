@@ -22,7 +22,17 @@ update_data.py writes and no test asserted was present. Both had already failed
 this tournament: "BetBoom Team" vs "BoomBoys", and the trailing space that hid
 every Nigma Galaxy fixture.
 
-Both writers now share one clock check, starts_too_far_ahead().
+So this file exists to hold merge_opendota_scores to its own clock check.
+
+WHAT IT DOES *NOT* PROVE. An earlier version of this docstring said "both
+writers now share one clock check, starts_too_far_ahead()". That was false and
+it mattered: _build_match has always kept its own inline check, on its own
+constant (LIQUIPEDIA_WRITE_GRACE_SEC, one hour since 19 Aug), and this file
+never touches that path. Anyone reading only this file and then tightening
+FUTURE_RESULT_GRACE_SEC would leave the Liquipedia parser - the writer that
+actually fabricated the bracket - exactly as it was. The Liquipedia side is
+covered by tools/test_no_future_results.py, separately. Unifying the two is a
+post-event job and needs a test that fails when either is mutated alone.
 """
 import datetime
 import os
@@ -106,7 +116,7 @@ ok(early["status"] == "completed",
    "a fixture that started 3h before its published time still settles - schedules slip",
    early["status"])
 
-print("\nboth writers share ONE definition of 'too far ahead'")
+print("\nthe OpenDota writer's own definition of 'too far ahead'")
 ok(U.starts_too_far_ahead(at(96)) is True, "96h ahead -> refused", "")
 ok(U.starts_too_far_ahead(at(5.9)) is False, "5.9h ahead -> allowed", "")
 ok(U.starts_too_far_ahead(at(6.5)) is True, "6.5h ahead -> refused", "")

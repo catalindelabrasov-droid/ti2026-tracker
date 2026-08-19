@@ -82,7 +82,42 @@ const get = async (url, opts = {}) => {
   return { ...r, retried: TRIES, exhausted: true };
 };
 
-(async () => {
+/* The bracket predicate, lifted out of the run so a test can drive THIS code
+   rather than a copy of it. tools/test_bracket_assertion.js runs it over the
+   real 16 Aug fabrication pulled from git and over ten synthetic states; a
+   lifted copy would have proved only that the copy works. */
+const NO_WRITER_GRACE_H = 6;   /* the wider of the two update_data.py bounds */
+const SLACK_H = 1 / 6;         /* 10 min, for clock skew between us and the CDN */
+
+function collectBracketFixtures(data) {
+  const brr = ((data || {}).bracket || {}).rounds || {};
+  const out = [];
+  [...(brr.upper || []), ...(brr.lower || [])].forEach((rd) =>
+    (rd.matches || []).forEach((m) => out.push(m)));
+  if (((data || {}).bracket || {}).grandFinal) out.push(data.bracket.grandFinal);
+  (((data || {}).groupStage || {}).eliminationMatches || []).forEach((m) => out.push(m));
+  return out;
+}
+
+function bracketVerdict(data, nowMs) {
+  const all = collectBracketFixtures(data);
+  const judged = [], earlyAll = [], beyondGrace = [];
+  for (const m of all) {
+    if (m.status !== "completed" && m.status !== "live") continue;
+    const start = Date.parse(m.scheduled || "");
+    if (!Number.isFinite(start)) continue;        /* no date: nothing to judge */
+    judged.push(m.id);
+    const ahead = (start - nowMs) / 3600000;
+    if (ahead <= SLACK_H) continue;
+    const line = `${m.id} reported ${m.status} `
+      + `${(m.teamA || {}).score}-${(m.teamB || {}).score} but starts in ${ahead.toFixed(1)}h`;
+    earlyAll.push(line);
+    if (ahead > NO_WRITER_GRACE_H) beyondGrace.push(line);
+  }
+  return { total: all.length, judged, earlyAll, beyondGrace };
+}
+
+const main = async () => {
   /* ---- 1. every public URL, under every prefix the site serves ----------- */
   console.log("every public URL answers");
   const PAGES = ["", "watch.html", "guide.html", "legal.html", "delete-account.html"];
@@ -212,6 +247,68 @@ const get = async (url, opts = {}) => {
       });
     }));
     ok(elsewhere.length === 0, "no team name appears only outside the Swiss rounds", elsewhere.join("; "));
+
+    /* A RESULT BEFORE ITS OWN KICKOFF.
+     *
+     * On 16 Aug the whole playoff bracket arrived as finished, four days
+     * early. It landed in `data.bracket`, which this file walked only for team
+     * names and never once status-checked. Nothing in the repo can see this
+     * either: it is a property of what production is serving right now.
+     *
+     * TWO RULES, because "decided before kickoff" is NOT by itself a fault.
+     * Both writers deliberately allow it - _build_match up to an hour ahead,
+     * merge_opendota_scores up to six - because a Bo3 that ends 2-0 in seventy
+     * minutes frees the stage and the next series starts early, and the
+     * published schedule is then stale rather than wrong. A single assertion
+     * at ten minutes would have called that correct data a failure and gone
+     * red every fifteen minutes until the clock caught up - up to twenty-four
+     * consecutive red builds on one legitimate early finish. This file's own
+     * comment above says why that is the worst outcome available: a red build
+     * nobody trusts is how a real failure gets missed.
+     *
+     * So the two rules fire on what a legitimate early settle CANNOT look
+     * like:
+     *
+     *   1. Beyond six hours, no writer in update_data.py will produce it at
+     *      all. Both refuse first. Data in that state did not come through
+     *      either guard - which is exactly the shape of 16 Aug, where the
+     *      grand final was decided 143 hours out.
+     *
+     *   2. In bulk. An early settle is one series at a time, and the stage
+     *      only frees up once. Across 627 data.json revisions no genuine
+     *      update ever decided more than three fixtures at once; the
+     *      fabrication decided fourteen simultaneously.
+     *
+     * A lone fixture settled inside the writers' own grace is printed as a
+     * note and does not fail the build. That is the false-red this pair is
+     * shaped to avoid.
+     *
+     * KNOWN BLIND SPOT, stated so the green line is not read as more than it
+     * is: once a match has legitimately kicked off, the clock has nothing left
+     * to say and neither rule can see anything. Per-fixture, real coverage
+     * runs from six hours before kickoff to ten minutes before it, and stops
+     * there. A fabricated result arriving mid-series is invisible here, and
+     * refuting it needs OpenDota game-row corroboration, which lives in the
+     * updater, not in this file.
+     */
+    const { total, judged, earlyAll, beyondGrace } = bracketVerdict(data, Date.now());
+    ok(beyondGrace.length === 0,
+       "no playoff fixture is decided beyond what either writer can produce",
+       beyondGrace.join("; "));
+    ok(earlyAll.length < 2,
+       "playoff fixtures are not being decided before kickoff in bulk",
+       earlyAll.length < 2 ? "" : `${earlyAll.length} at once: ` + earlyAll.join("; "));
+    if (earlyAll.length === 1 && !beyondGrace.length && !QUIET) {
+      console.log("  note   a single early settle, inside the writers' grace: " + earlyAll[0]);
+    }
+    /* Judged, not counted. The array length is not evidence: every bracket
+       fixture is 'upcoming' until it plays, so before the playoffs start this
+       pair legitimately judges almost nothing, and printing 19 would read as
+       19 things verified. */
+    if (!QUIET) {
+      console.log(`         (${judged.length} of ${total} bracket fixtures `
+        + `had a decided status and a readable date to judge)`);
+    }
   }
 
   /* ---- 4. the edge functions the page depends on ------------------------- */
@@ -242,4 +339,11 @@ const get = async (url, opts = {}) => {
     console.log(`\nproduction is healthy (${checked} checks)`);
   }
   process.exit(fail ? 1 : 0);
-})();
+};
+
+/* Only run when invoked directly. `require`ing this file must not fire 45
+   network requests at production or call process.exit - that is what lets the
+   test drive the real predicate. */
+if (require.main === module) main();
+
+module.exports = { bracketVerdict, collectBracketFixtures, NO_WRITER_GRACE_H, SLACK_H };

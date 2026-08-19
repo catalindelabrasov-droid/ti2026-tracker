@@ -16,7 +16,14 @@ Liquid" - for matches scheduled 20-23 Aug. The consequences were not cosmetic:
 
 The upstream cause was never knowable from our side. The clock is, so the guard
 in _build_match refuses any completed/live result whose kickoff is still more
-than six hours away.
+than LIQUIPEDIA_WRITE_GRACE_SEC away.
+
+That bound was six hours until 19 Aug, which made it a WINDOW rather than a
+wall: every fixture was unguarded for the six hours before it played, and in a
+playoff week that is exactly the fixture worth faking. It is now one hour. The
+assertions below are bound to the behaviour, not to the number, so restoring
+6 * 3600 - or pointing _build_match at FUTURE_RESULT_GRACE_SEC, which is a
+DIFFERENT constant on a different path - turns this file red.
 
 THE FIXTURES BELOW ARE THE REAL ONES. Match ids, team names, scores and
 scheduled times are taken from the corrupted data.json at commit 64f57da1.
@@ -113,15 +120,71 @@ live = U._build_match("gs-r5-m1", block("A", "B", 1, 0, iso(-0.5), finished=Fals
 ok(live["status"] in ("live", "completed") and live["teamA"]["score"] == 1,
    "a match that began half an hour ago is untouched", live["status"])
 
-early = U._build_match("gs-r5-m2", block("A", "B", 2, 0, iso(1.5)), None, 3, {})
-ok(early["status"] == "completed",
-   "a match starting 90 min from now but already reported finished is ALLOWED "
-   "- real fixtures do start early and the schedule is often stale", early["status"])
+grace = U._build_match("gs-r5-m2", block("A", "B", 2, 0, iso(0.75)), None, 3, {})
+ok(grace["status"] == "completed",
+   "a match starting 45 min from now but already reported finished is ALLOWED "
+   "- that is forty times the largest early start ever measured here",
+   grace["status"])
+
+flip = U._build_match("gs-r5-m4", block("A", "B", 1, 0, iso(0.2), finished=False), None, 3, {})
+ok(flip["status"] == "live",
+   "and a legitimate flip to 'live' 12 min before kickoff is not blocked",
+   flip["status"])
+
+print("\nthe window is ONE hour, not six")
+# This section is the whole point of the 19 Aug change, and the two assertions
+# below are the mutants it must catch:
+#   restore `ahead > 6 * 3600` in _build_match          -> both go red
+#   point _build_match at FUTURE_RESULT_GRACE_SEC (6h)  -> both go red
+#
+# The previous version of this file asserted the OPPOSITE of the first one -
+# "a match starting 90 min from now but already reported finished is ALLOWED,
+# real fixtures do start early and the schedule is often stale". That rationale
+# was never measured here. It had already been measured next door, in migration
+# 0026, over all 39 completed group matches: median +2 min, worst LATE +34 min,
+# and started more than five minutes EARLY exactly 1 of 39 - that one a
+# corrupted schedule row, not an early start. Early is the only direction this
+# guard reacts to. Inverting a passing assertion looks exactly like cheating on
+# a test, so the measurement is cited here rather than in a commit message.
+#
+# The cost is real and bounded: if Liquipedia publishes a result while its own
+# published kickoff is still over an hour away (1 occurrence in 44, and it was
+# a schedule rewrite), the score is delayed until the clock passes the stale
+# time. A refusal is not a deletion - the next run retries in 15 minutes.
+early = U._build_match("early", block("A", "B", 2, 0, iso(1.5)), None, 3, {})
+ok(early["status"] == "upcoming",
+   "90 min ahead and reported finished: REFUSED", early["status"])
+ok(early["teamA"]["score"] is None, "and its score is discarded too",
+   str(early["teamA"]["score"]))
 
 edge = U._build_match("edge", block("A", "B", 2, 0, iso(5.9)), None, 3, {})
-ok(edge["status"] == "completed", "5.9h ahead: inside the window, allowed", edge["status"])
-edge2 = U._build_match("edge2", block("A", "B", 2, 0, iso(6.5)), None, 3, {})
-ok(edge2["status"] == "upcoming", "6.5h ahead: outside the window, refused", edge2["status"])
+ok(edge["status"] == "upcoming",
+   "5.9h ahead: refused - the six-hour version ALLOWED this one", edge["status"])
+
+# The boundary itself, tight enough that the constant cannot drift quietly.
+# Without this pair, LIQUIPEDIA_WRITE_GRACE_SEC could be set to anything from
+# 45 to 90 minutes and the file stayed green - a mutation review set it to 89
+# minutes and nothing noticed. These two narrow that to 54-66 min, and the
+# value assertion below closes the rest.
+near = U._build_match("near", block("A", "B", 2, 0, iso(0.9)), None, 3, {})
+ok(near["status"] == "completed", "54 min ahead: still inside the grace", near["status"])
+past = U._build_match("past", block("A", "B", 2, 0, iso(1.1)), None, 3, {})
+ok(past["status"] == "upcoming", "66 min ahead: outside it", past["status"])
+ok(U.LIQUIPEDIA_WRITE_GRACE_SEC == 3600,
+   "and the constant is exactly one hour",
+   str(U.LIQUIPEDIA_WRITE_GRACE_SEC))
+
+print("\nbut the DELETION bound is deliberately still six hours")
+# push_league_backend withdraws stored rows for fixtures that have not started.
+# Refusing to write is cheap; deleting a real result is not. So the two bounds
+# are separate constants on purpose - see the docstring on starts_too_far_ahead.
+ok(U.starts_too_far_ahead(iso_prev(1.5)) is False,
+   "a fixture 90 min out is NOT withdrawn, even though a write would be refused", "")
+ok(U.starts_too_far_ahead(iso_prev(6.5)) is True,
+   "6.5h out is still withdrawn", "")
+ok(U.LIQUIPEDIA_WRITE_GRACE_SEC < U.FUTURE_RESULT_GRACE_SEC,
+   "the write bound is tighter than the delete bound",
+   f"{U.LIQUIPEDIA_WRITE_GRACE_SEC}s < {U.FUTURE_RESULT_GRACE_SEC}s")
 
 print("\nno scheduled time means no basis to refuse")
 nodate = U._build_match("nd", "|opponent1={{TeamOpponent|A|score=2}}"

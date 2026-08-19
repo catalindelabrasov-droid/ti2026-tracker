@@ -38,7 +38,7 @@ const record = (f, r, kind) => {
 
 /* ---- JavaScript ---- */
 const jsFiles = fs.readdirSync(DIR).filter((f) => /^test_.*\.js$/.test(f)).sort();
-const EXPECTED_JS = 30;
+const EXPECTED_JS = 31;   /* + tools/test_bracket_assertion.js, 19 Aug */
 if (jsFiles.length < EXPECTED_JS) {
   console.error(`Expected at least ${EXPECTED_JS} test_*.js files in tools/, found ${jsFiles.length}.`);
   console.error(`Found: ${jsFiles.join(", ") || "(none)"}`);
@@ -57,6 +57,19 @@ for (const f of jsFiles) {
 
 /* ---- Python ---- */
 const pyFiles = fs.readdirSync(DIR).filter((f) => /^test_.*\.py$/.test(f)).sort();
+/* The Python side had no floor at all until 19 Aug, which made it the softer
+   target: deleting BOTH guard files - test_no_future_results.py and
+   test_opendota_future_merge.py, the two that stand between the updater and a
+   repeat of the fabricated bracket - left `npm test` printing "all 33 test
+   files passed" and exiting 0. */
+const EXPECTED_PY = 6;
+if (pyFiles.length < EXPECTED_PY) {
+  console.error(`Expected at least ${EXPECTED_PY} test_*.py files in tools/, found ${pyFiles.length}.`);
+  console.error(`Found: ${pyFiles.join(", ") || "(none)"}`);
+  console.error("A test file was deleted, renamed, or moved into a subdirectory.");
+  console.error("If that was deliberate, lower EXPECTED_PY in tools/run-all.js.");
+  process.exit(1);
+}
 for (const f of pyFiles) {
   let r = spawnSync("python", [path.join(DIR, f)], { encoding: "utf8", cwd: ROOT, timeout: TIMEOUT_MS });
   if (r.error && r.error.code === "ENOENT") {
