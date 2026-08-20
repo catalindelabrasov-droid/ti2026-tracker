@@ -86,6 +86,70 @@ async function jurl(url: string, ms = 8000) {
   }
 }
 
+/* Valve's league history is INTERMITTENT, not reliable-or-down. Measured 20 Aug
+   over three consecutive calls a second apart: 200, 200, 502. A single attempt
+   therefore fails roughly whenever it feels like it, and this endpoint exists
+   precisely to be the thing that still works when the other source does not. */
+async function jurlRetry(url: string, tries = 3) {
+  for (let i = 1; i <= tries; i++) {
+    const j = await jurl(url);
+    if (j) return j;
+    if (i < tries) await new Promise((r) => setTimeout(r, 250 * i));
+  }
+  return null;
+}
+
+/* Bounded concurrency. Firing 25 sequence lookups at once is what appears to
+   trip Valve's rate limiter in the first place — the burst is self-inflicted,
+   and slowing it down costs a second and buys the whole response. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R>) {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  const worker = async () => {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+/* LAST KNOWN GOOD.
+   Finished match results do not change, so a stale answer here is not a
+   degraded answer - it is the same answer, slightly older. Returning 502 to the
+   updater when Valve blinks would reintroduce exactly the hole this endpoint
+   was built to close, one layer further down. */
+const SHARED_OK = !!SB_URL && !!SVC_KEY;
+const svcH = { apikey: SVC_KEY, Authorization: `Bearer ${SVC_KEY}`, "Content-Type": "application/json" };
+
+async function lastGood(key: string): Promise<any | null> {
+  if (!SHARED_OK) return null;
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 3000);
+    const r = await fetch(
+      `${SB_URL}/rest/v1/edge_cache?select=body,updated_at&key=eq.${encodeURIComponent(key)}`,
+      { headers: svcH, signal: ctl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const rows = await r.json();
+    if (!Array.isArray(rows) || !rows.length) return null;
+    return { body: JSON.parse(String(rows[0].body)), at: rows[0].updated_at };
+  } catch (_e) { return null; }
+}
+
+function putGood(key: string, body: unknown) {
+  if (!SHARED_OK) return;
+  /* Deliberately not awaited: the caller already has its answer and must not
+     wait on a cache write to hand it over. */
+  fetch(`${SB_URL}/rest/v1/edge_cache?on_conflict=key`, {
+    method: "POST",
+    headers: { ...svcH, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ key, body: JSON.stringify(body), updated_at: new Date().toISOString() }),
+  }).catch(() => {});
+}
+
 async function teamNames(): Promise<Map<number, string>> {
   if (_names && Date.now() - _namesAt < NAMES_TTL) return _names;
   const out = new Map<number, string>();
@@ -145,11 +209,19 @@ Deno.serve(async (req) => {
        Steam calls. 25 covers a full playoff day with room to spare. */
     const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") ?? "25") || 25));
 
-    const hist = await jurl(
+    const cacheKey = `valve-results:${league}:${limit}`;
+    const hist = await jurlRetry(
       `${HISTORY}?key=${encodeURIComponent(STEAM_KEY)}`
       + `&league_id=${league}&matches_requested=${limit}`);
     const matches = hist?.result?.matches;
     if (!Array.isArray(matches)) {
+      /* Valve blinked. Serve the last good answer rather than nothing: these
+         are FINISHED games, so an older copy is the same data, not worse data.
+         Flagged stale so the caller can tell. */
+      const prev = await lastGood(cacheKey);
+      if (prev?.body?.rows?.length) {
+        return json({ ...prev.body, stale: true, staleSince: prev.at });
+      }
       /* rows: null, NOT []. The caller falls back to this only when OpenDota
          gave it nothing, so it has to tell "Valve says no games" from "Valve
          did not answer" — collapsing the second into the first is how a source
@@ -159,7 +231,7 @@ Deno.serve(async (req) => {
 
     const [names, records] = await Promise.all([
       teamNames(),
-      Promise.all(matches.map((m: any) => record(m).catch(() => null))),
+      mapLimit(matches, 5, (m: any) => record(m).catch(() => null)),
     ]);
 
     const rows: any[] = [];
@@ -186,12 +258,17 @@ Deno.serve(async (req) => {
     /* Reported separately so a name-resolution failure is visible instead of
        reading as "no games were played". */
     const unnamed = rows.filter((r) => !r.radiant_name || !r.dire_name).length;
-    return json({
+    const body = {
       league: Number(league), rows, count: rows.length,
       pending: matches.length - rows.length, unnamed,
       knownTeams: names.size, cached: _byId.size,
       source: "valve", updatedAt: new Date().toISOString(),
-    });
+    };
+    /* Only a USEFUL answer becomes the fallback. Storing an empty or nameless
+       one would mean a future outage is served a body that looks fine and says
+       nothing happened. */
+    if (rows.length && !unnamed) putGood(cacheKey, body);
+    return json(body);
   } catch (e) {
     return json({ error: String(e), rows: null }, 500);
   }
