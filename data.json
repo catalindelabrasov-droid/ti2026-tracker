@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-20T08:30:13.460593+00:00",
+    "lastUpdated": "2026-08-20T09:00:53.922168+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3202186,
-    "note": "$1,600,000 base plus $1,602,186 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3203240,
+    "note": "$1,600,000 base plus $1,603,240 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1360896,
+        "amount": 1361344,
         "team": null
       },
       {
         "place": "2",
-        "amount": 416332,
+        "amount": 416469,
         "team": null
       },
       {
         "place": "3",
-        "amount": 288150,
+        "amount": 288245,
         "team": null
       },
       {
         "place": "4",
-        "amount": 192143,
+        "amount": 192207,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 160098,
+        "amount": 160150,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 128052,
+        "amount": 128094,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 57578,
+        "amount": 57597,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 32046,
+        "amount": 32056,
         "team": null
       },
       {
         "place": "16",
-        "amount": 16023,
+        "amount": 16028,
         "team": "TEAM VISION"
       }
     ]
@@ -2559,14 +2559,14 @@
               },
               "teamB": {
                 "name": "BoomBoys",
-                "score": 0
+                "score": 1
               }
             },
             {
               "id": "me-r1m3",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-20T17:00:00+08:00",
+              "scheduled": "2026-08-20T18:00:00+08:00",
               "teamA": {
                 "name": "Team Liquid",
                 "score": null
@@ -2580,7 +2580,7 @@
               "id": "me-r1m4",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-20T19:30:00+08:00",
+              "scheduled": "2026-08-20T20:30:00+08:00",
               "teamA": {
                 "name": "Nigma Galaxy",
                 "score": null
