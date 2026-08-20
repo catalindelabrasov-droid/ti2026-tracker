@@ -2083,6 +2083,65 @@ def _pairing_snapshot(data):
     return out
 
 
+# How far along a fixture is. Only ever published when it moves FORWARD.
+_STATUS_RANK = {"upcoming": 0, "live": 1, "completed": 2}
+
+
+def _status_snapshot(data):
+    """Every fixture's status - the part people need in order to WATCH."""
+    out = {}
+    gs = data.get("groupStage") or {}
+    rounds = list(gs.get("rounds") or [])
+    br = (data.get("bracket") or {}).get("rounds") or {}
+    rounds += list(br.get("upper") or []) + list(br.get("lower") or [])
+    for r in rounds:
+        for m in (r.get("matches") or []):
+            if m.get("id"):
+                out[m["id"]] = m.get("status")
+    for m in (gs.get("eliminationMatches") or []):
+        if m.get("id"):
+            out[m["id"]] = m.get("status")
+    gf = (data.get("bracket") or {}).get("grandFinal")
+    if gf and gf.get("id"):
+        out[gf["id"]] = gf.get("status")
+    return out
+
+
+def _status_advances(before, after):
+    """Fixtures that moved FORWARD, e.g. upcoming -> live -> completed.
+
+    Forward only, and that is the whole point of the rule.
+
+    The bracket on the page is read from data.json, and until 20 Aug the fast
+    pass never rewrote that file - _pairing_snapshot carries only (teamA, teamB,
+    scheduled), so a flip to 'live' reached Supabase and the prediction lock but
+    not the published site until the next hourly run. Measured that morning:
+    me-r1m2 had been under way for 28 minutes and the bracket still read
+    'upcoming'. Every one of the fourteen playoff fixtures would have done the
+    same, for up to an hour each.
+
+    Publishing on ANY status change would fix that and introduce something
+    worse. _build_match refuses a result reported more than
+    LIQUIPEDIA_WRITE_GRACE_SEC before kickoff and resets the fixture to
+    'upcoming'; the OpenDota merge can then set it back to 'live' on the same
+    run. A fixture caught between those two flaps every fifteen minutes, and
+    every flap is a commit, a Netlify deploy and 15 credits - 96 deploys a day,
+    against a balance that already ran dry once mid-tournament and froze a
+    corrupted file on the live site for six hours.
+
+    A regression is also the direction we do not want to publish: showing a
+    match that has been played as 'upcoming' is the bug, not the fix. So a
+    backward move is left for the hourly run, which rebuilds from scratch.
+    """
+    out = []
+    for k, v in after.items():
+        b = _STATUS_RANK.get(before.get(k), -1)
+        a = _STATUS_RANK.get(v, -1)
+        if a > b:
+            out.append(k)
+    return out
+
+
 def run_fast(data):
     """
     The 15-minute pass.
@@ -2100,12 +2159,19 @@ def run_fast(data):
          minutes AFTER their scheduled start. There was no window to predict in.
          Two Liquipedia page reads close that gap.
 
-    data.json is written ONLY when a pairing or a kick-off time actually
-    changed. A score-only pass leaves the file alone, which keeps the workflow's
+    data.json is written when a pairing or kick-off time changed, or when a
+    fixture's status moved FORWARD (upcoming -> live -> completed). A
+    score-only pass still leaves the file alone, which keeps the workflow's
     `git diff` check honest and avoids ninety-six commits and deploys a day for
     numbers the page already merges live.
+
+    Status is in that list and scores are not, because the page does NOT merge
+    status live - the bracket reads it straight from data.json, so a fixture
+    that has kicked off keeps saying 'upcoming' until the next hourly run. See
+    _status_advances for why the rule is forward-only.
     """
     before = _pairing_snapshot(data)
+    before_status = _status_snapshot(data)
     known = lambda snap: sum(1 for v in snap.values()
                              if v[0] and v[0] != "TBD" and v[1] and v[1] != "TBD")
 
@@ -2127,13 +2193,18 @@ def run_fast(data):
     after = _pairing_snapshot(data)
     new_pairs = [k for k, v in after.items()
                  if before.get(k) != v and v[0] and v[0] != "TBD" and v[1] and v[1] != "TBD"]
-    if new_pairs:
-        print(f"  · Fixtures changed ({len(new_pairs)}): {', '.join(sorted(new_pairs)[:6])}"
-              f"{' …' if len(new_pairs) > 6 else ''} — publishing.")
+    advanced = _status_advances(before_status, _status_snapshot(data))
+    if new_pairs or advanced:
+        if new_pairs:
+            print(f"  · Fixtures changed ({len(new_pairs)}): {', '.join(sorted(new_pairs)[:6])}"
+                  f"{' …' if len(new_pairs) > 6 else ''} — publishing.")
+        if advanced:
+            print(f"  · Status advanced ({len(advanced)}): {', '.join(sorted(advanced)[:6])}"
+                  f"{' …' if len(advanced) > 6 else ''} — publishing.")
         data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         save(data)
     else:
-        print("  · No fixture changes — not republishing data.json.")
+        print("  · No fixture or status changes — not republishing data.json.")
 
     try:
         push_league_backend(data, with_ranking=False)

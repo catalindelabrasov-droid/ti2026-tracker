@@ -197,6 +197,41 @@ v = bracketVerdict(doc([played("me-r5m1", "2026-08-23T05:00:00Z")], null), T("20
 ok(v.beyondGrace.length === 0 && v.earlyAll.length === 0,
    "a result faked 10 min AFTER kickoff is NOT caught here - by design", "");
 
+console.log("\nLATE is a failure too, not only EARLY");
+/* Added 20 Aug after the fixture that actually reached users: me-r1m2 had been
+   played for 28 minutes while the site read "upcoming", and production reported
+   healthy the whole time because every rule here only looked for results that
+   were too early. */
+const T0 = T("2026-08-20T06:00:00Z");
+v = bracketVerdict(doc([{ id: "me-r1m2", status: "upcoming",
+  scheduled: "2026-08-20T05:30:00Z",
+  teamA: { name: "A", score: null }, teamB: { name: "B", score: null } }], null), T0);
+ok(v.lateStart.length === 0,
+   "30 min past kickoff: inside the tolerance, not flagged", String(v.lateStart.length));
+
+v = bracketVerdict(doc([{ id: "me-r1m2", status: "upcoming",
+  scheduled: "2026-08-20T05:00:00Z",
+  teamA: { name: "A", score: null }, teamB: { name: "B", score: null } }], null), T0);
+ok(v.lateStart.length === 1, "60 min past kickoff and still upcoming: FLAGGED", v.lateStart[0] || "");
+
+v = bracketVerdict(doc([{ id: "me-r1m3", status: "upcoming",
+  scheduled: "2026-08-20T08:00:00Z",
+  teamA: { name: "A", score: null }, teamB: { name: "B", score: null } }], null), T0);
+ok(v.lateStart.length === 0, "a fixture that has not started yet is not late", "");
+
+v = bracketVerdict(doc([played("me-r1m1", "2026-08-20T02:00:00Z")], null), T0);
+ok(v.lateStart.length === 0, "a completed fixture is never late", "");
+
+v = bracketVerdict(doc([{ id: "me-r2m1", status: "upcoming", scheduled: null,
+  teamA: { name: "TBD", score: null }, teamB: { name: "TBD", score: null } }], null), T0);
+ok(v.lateStart.length === 0, "an undrawn TBD fixture with no date is not late", "");
+
+console.log("\nand a status that stopped moving");
+v = bracketVerdict(doc([played("me-r1m1", "2026-08-19T22:00:00Z", "live")], null), T0);
+ok(v.stuckLive.length === 1, "live for 8h is stuck", v.stuckLive[0] || "");
+v = bracketVerdict(doc([played("me-r1m1", "2026-08-20T03:30:00Z", "live")], null), T0);
+ok(v.stuckLive.length === 0, "live for 2.5h is just a long Bo3", "");
+
 console.log();
 console.log(fail ? fail + " FAILURE(S)" : "all good");
 process.exit(fail ? 1 : 0);

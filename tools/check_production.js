@@ -101,10 +101,46 @@ function collectBracketFixtures(data) {
 
 function bracketVerdict(data, nowMs) {
   const all = collectBracketFixtures(data);
-  const judged = [], earlyAll = [], beyondGrace = [];
+  const judged = [], earlyAll = [], beyondGrace = [], lateStart = [], stuckLive = [];
   for (const m of all) {
-    if (m.status !== "completed" && m.status !== "live") continue;
     const start = Date.parse(m.scheduled || "");
+
+    /* THE OTHER DIRECTION: a fixture that is LATE.
+     *
+     * Everything above this asks whether a result arrived too EARLY, because
+     * that is how the bracket was fabricated on 16 Aug. It says nothing about
+     * the failure that actually reached users: on 20 Aug me-r1m2 had been
+     * being played for 28 minutes and the site still read "upcoming", because
+     * the quarter-hourly pass wrote status to the database but never rewrote
+     * data.json. Production reported healthy throughout.
+     *
+     * A fixture whose own published kick-off has passed while it still reads
+     * upcoming is either not being published or genuinely delayed - and
+     * Liquipedia has moved the published time within the hour both times a
+     * match slipped today (10:00->10:30, 13:00->13:30), so a stale time is the
+     * less likely of the two. Either way it is worth a look.
+     *
+     * 45 minutes: three quarter-hour passes. With status now publishing on the
+     * fast pass the honest lag is one cycle, so this fires only when something
+     * is genuinely stuck rather than merely between runs. */
+    if (m.status === "upcoming" && Number.isFinite(start)) {
+      const lateMin = (nowMs - start) / 60000;
+      if (lateMin > 45) {
+        lateStart.push(`${m.id} kicked off ${Math.round(lateMin)} min ago `
+          + `but still reads upcoming`);
+      }
+    }
+
+    /* And a fixture that never stops. The existing stuck-live check walks
+       groupStage.rounds only, which from 20 Aug contains nothing being played -
+       every real match is in data.bracket. A Dota series runs 1-3 hours; six is
+       not a long game, it is a status that stopped moving. */
+    if (m.status === "live" && Number.isFinite(start)) {
+      const hrs = (nowMs - start) / 3600000;
+      if (hrs > 6) stuckLive.push(`${m.id} has been live for ${hrs.toFixed(1)}h`);
+    }
+
+    if (m.status !== "completed" && m.status !== "live") continue;
     if (!Number.isFinite(start)) continue;        /* no date: nothing to judge */
     judged.push(m.id);
     const ahead = (start - nowMs) / 3600000;
@@ -114,7 +150,7 @@ function bracketVerdict(data, nowMs) {
     earlyAll.push(line);
     if (ahead > NO_WRITER_GRACE_H) beyondGrace.push(line);
   }
-  return { total: all.length, judged, earlyAll, beyondGrace };
+  return { total: all.length, judged, earlyAll, beyondGrace, lateStart, stuckLive };
 }
 
 const main = async () => {
@@ -309,13 +345,20 @@ const main = async () => {
      * refuting it needs OpenDota game-row corroboration, which lives in the
      * updater, not in this file.
      */
-    const { total, judged, earlyAll, beyondGrace } = bracketVerdict(data, Date.now());
+    const { total, judged, earlyAll, beyondGrace, lateStart, stuckLive } =
+      bracketVerdict(data, Date.now());
     ok(beyondGrace.length === 0,
        "no playoff fixture is decided beyond what either writer can produce",
        beyondGrace.join("; "));
     ok(earlyAll.length < 2,
        "playoff fixtures are not being decided before kickoff in bulk",
        earlyAll.length < 2 ? "" : `${earlyAll.length} at once: ` + earlyAll.join("; "));
+    ok(lateStart.length === 0,
+       "no playoff fixture has kicked off while the site still says upcoming",
+       lateStart.join("; "));
+    ok(stuckLive.length === 0,
+       "no playoff fixture is stuck in live",
+       stuckLive.join("; "));
     if (earlyAll.length === 1 && !beyondGrace.length && !QUIET) {
       console.log("  note   a single early settle, inside the writers' grace: " + earlyAll[0]);
     }

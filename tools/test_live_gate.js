@@ -140,14 +140,27 @@ ok(/STEAM_API_KEY/.test(SRC),
    come back. So run the REAL valveLiveIds() against a stubbed Valve. */
 console.log("\nvalveLiveIds() actually parses Valve's payload");
 {
+  /* The parsing moved. valveLiveIds() used to fetch and parse; on 20 Aug it
+     became a thin derivation over valveLiveGames(), which keeps the whole
+     payload so Valve can act as a SOURCE during an OpenDota outage rather than
+     only as a gate over a list that outage had already emptied. Both are
+     extracted here, so every assertion below still drives the real
+     fetch-and-parse rather than a stub standing in for it. */
+  const src = SRC.match(/async function valveLiveGames\(\)[\s\S]*?\n\}/);
   const body = SRC.match(/async function valveLiveIds\(\)[\s\S]*?\n\}/);
+  ok(!!src, "valveLiveGames() body could be extracted", "");
   ok(!!body, "the function body could be extracted", "");
-  if (body) {
+  if (body && src) {
+    const strip = (t) => t
+      .replace(/: Promise<Set<string> \| null>/, "")
+      .replace(/: Promise<any\[\] \| null>/, "")
+      .replace(/: any/g, "");
     const harness = `
-      let STEAM_KEY = __KEY__, _valveIds = null;
+      let STEAM_KEY = __KEY__, _valve = null;
       const STEAM_LIVE = "https://api.steampowered.com/IDOTA2Match_570/GetLiveLeagueGames/v1/";
       const VALVE_IDS_TTL = 20000, UA = {};
-      ${body[0].replace(/: Promise<Set<string> \| null>/, "").replace(/: any/g, "")}
+      ${strip(src[0])}
+      ${strip(body[0])}
       return valveLiveIds;`;
 
     const withFetch = (payload, status = 200) => {
