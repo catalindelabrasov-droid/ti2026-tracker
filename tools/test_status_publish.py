@@ -159,6 +159,76 @@ _run("upcoming", "live")
 got = U._status_snapshot(saved[0]).get("me-r1m2") if saved else None
 ok(got == "live", "the document handed to save() says 'live'", str(got))
 
+print("\nA CORRECTION to an already-finished score must publish too")
+# The third and last way data.json can be wrong on screen. me-r1m1 published as
+# Iron Wing 0-1 Team Spirit - a score no Bo3 can end on - and the repair from
+# Valve fixed the number on the next quarter-hour pass while the SITE stayed
+# wrong, because a score change on a completed match is neither a new pairing
+# nor a forward status move.
+ok(U._score_corrections({"m": (0, 1)}, {"m": (0, 2)}) == ["m"],
+   "0-1 -> 0-2 on a finished match publishes", "")
+ok(U._score_corrections({"m": (0, 2)}, {"m": (0, 2)}) == [],
+   "an unchanged finished score does not", "")
+
+# Reaching 'completed' for the first time is NOT a correction: the status move
+# already published it, and double-counting would mean two commits per match.
+ok(U._score_corrections({}, {"m": (2, 0)}) == [],
+   "a fixture finishing for the first time is not a correction", "")
+
+# Live scores must stay out. The page merges those from the feed every 30s;
+# publishing them would be ~96 commits and deploys a day.
+live_doc = doc(**{"gs-r1-m1": "live", "me-r1m1": "completed", "me-r5m1": "upcoming"})
+snap = U._final_scores(live_doc)
+ok(list(snap.keys()) == ["me-r1m1"],
+   "only COMPLETED fixtures are snapshotted", str(list(snap.keys())))
+
+print("\nand the shared fixture walk reaches the grand final")
+# It lives beside the rounds, not in them. A walk that forgets it silently
+# stops publishing the one match everybody is waiting for.
+allf = U._all_fixtures(doc(**{"gs-r1-m1": "completed", "me-r1m1": "completed",
+                              "me-r5m1": "completed"}))
+ok(set(allf) == {"gs-r1-m1", "me-r1m1", "me-r5m1"},
+   "group round, bracket round and grand final", str(sorted(allf)))
+ok(set(U._final_scores(doc(**{"gs-r1-m1": "completed", "me-r1m1": "completed",
+                              "me-r5m1": "completed"}))) == set(allf),
+   "and the score snapshot covers exactly the same set", "")
+
+print("\nrun_fast publishes on a correction - the call site, again")
+saved2 = []
+real2 = (U.update_stages_from_liquipedia, U.run_opendota, U.push_league_backend, U.save)
+
+
+def _run_correction(before_score, after_score):
+    del saved2[:]
+    data = doc(**{"gs-r1-m1": "completed", "me-r1m2": "completed", "me-r5m1": "upcoming"})
+    for r in data["bracket"]["rounds"]["upper"]:
+        for m in r["matches"]:
+            if m["id"] == "me-r1m2":
+                m["teamA"]["score"], m["teamB"]["score"] = before_score
+
+    def fix(d):
+        for r in d["bracket"]["rounds"]["upper"]:
+            for m in r["matches"]:
+                if m["id"] == "me-r1m2":
+                    m["teamA"]["score"], m["teamB"]["score"] = after_score
+
+    U.update_stages_from_liquipedia = fix
+    U.run_opendota = lambda d, main_only=False: (0, 0)
+    U.push_league_backend = lambda d, with_ranking=True: None
+    U.save = lambda d: saved2.append(d)
+    try:
+        U.run_fast(data)
+    finally:
+        (U.update_stages_from_liquipedia, U.run_opendota,
+         U.push_league_backend, U.save) = real2
+    return len(saved2)
+
+
+ok(_run_correction((0, 1), (0, 2)) == 1,
+   "the real me-r1m1 case: 0-1 corrected to 0-2 writes data.json", "")
+ok(_run_correction((0, 2), (0, 2)) == 0,
+   "and an unchanged score still writes nothing", "")
+
 print()
 print(f"{fail} FAILURE(S)" if fail else "all good")
 sys.exit(1 if fail else 0)

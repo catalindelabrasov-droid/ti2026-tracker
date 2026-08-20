@@ -2211,24 +2211,34 @@ def _pairing_snapshot(data):
 _STATUS_RANK = {"upcoming": 0, "live": 1, "completed": 2}
 
 
-def _status_snapshot(data):
-    """Every fixture's status - the part people need in order to WATCH."""
+def _all_fixtures(data):
+    """Every fixture by id, from all four places one can live.
+
+    Shared so the status and score snapshots cannot drift apart - the grand
+    final in particular lives beside the rounds rather than in them, and a walk
+    that forgets it silently stops publishing the one match everybody is
+    waiting for.
+    """
     out = {}
     gs = data.get("groupStage") or {}
-    rounds = list(gs.get("rounds") or [])
     br = (data.get("bracket") or {}).get("rounds") or {}
-    rounds += list(br.get("upper") or []) + list(br.get("lower") or [])
+    rounds = list(gs.get("rounds") or []) + list(br.get("upper") or []) + list(br.get("lower") or [])
     for r in rounds:
         for m in (r.get("matches") or []):
             if m.get("id"):
-                out[m["id"]] = m.get("status")
+                out[m["id"]] = m
     for m in (gs.get("eliminationMatches") or []):
         if m.get("id"):
-            out[m["id"]] = m.get("status")
+            out[m["id"]] = m
     gf = (data.get("bracket") or {}).get("grandFinal")
     if gf and gf.get("id"):
-        out[gf["id"]] = gf.get("status")
+        out[gf["id"]] = gf
     return out
+
+
+def _status_snapshot(data):
+    """Every fixture's status - the part people need in order to WATCH."""
+    return {mid: m.get("status") for mid, m in _all_fixtures(data).items()}
 
 
 def _status_advances(before, after):
@@ -2266,6 +2276,42 @@ def _status_advances(before, after):
     return out
 
 
+def _final_scores(data):
+    """The score of every fixture that is already FINISHED.
+
+    Live scores are deliberately absent. The page merges those from the live
+    feed every thirty seconds, so republishing data.json for them would be
+    ninety-six commits and ninety-six Netlify deploys a day for numbers already
+    on screen. A finished fixture is the opposite: data.json IS what the
+    bracket shows, and nothing else will correct it.
+    """
+    out = {}
+    for mid, m in _all_fixtures(data).items():
+        if m.get("status") == "completed":
+            out[mid] = ((m.get("teamA") or {}).get("score"),
+                        (m.get("teamB") or {}).get("score"))
+    return out
+
+
+def _score_corrections(before, after):
+    """Finished fixtures whose score CHANGED after it was already final.
+
+    Rare by construction, and worth publishing immediately when it happens.
+
+    A fixture reaching 'completed' for the first time is not a correction - the
+    status move already publishes it, and this returns nothing because the id
+    was not in `before`. What this catches is the case that has no other way
+    out: 20 Aug, me-r1m1 published as Iron Wing 0-1 Team Spirit, a score no Bo3
+    can end on, because OpenDota returned series_id null for one of the two
+    games and the roll-up counted one. The repair from Valve fixed the number
+    on the very next quarter-hour pass and it still sat wrong on the site,
+    because a score change on an already-completed match is neither a new
+    pairing nor a forward status move - the only two things that used to
+    publish. It would have waited for the hourly run.
+    """
+    return [k for k, v in after.items() if k in before and before[k] != v]
+
+
 def run_fast(data):
     """
     The 15-minute pass.
@@ -2296,6 +2342,7 @@ def run_fast(data):
     """
     before = _pairing_snapshot(data)
     before_status = _status_snapshot(data)
+    before_scores = _final_scores(data)
     known = lambda snap: sum(1 for v in snap.values()
                              if v[0] and v[0] != "TBD" and v[1] and v[1] != "TBD")
 
@@ -2318,17 +2365,22 @@ def run_fast(data):
     new_pairs = [k for k, v in after.items()
                  if before.get(k) != v and v[0] and v[0] != "TBD" and v[1] and v[1] != "TBD"]
     advanced = _status_advances(before_status, _status_snapshot(data))
-    if new_pairs or advanced:
+    corrected = _score_corrections(before_scores, _final_scores(data))
+    if new_pairs or advanced or corrected:
         if new_pairs:
             print(f"  · Fixtures changed ({len(new_pairs)}): {', '.join(sorted(new_pairs)[:6])}"
                   f"{' …' if len(new_pairs) > 6 else ''} — publishing.")
         if advanced:
             print(f"  · Status advanced ({len(advanced)}): {', '.join(sorted(advanced)[:6])}"
                   f"{' …' if len(advanced) > 6 else ''} — publishing.")
+        if corrected:
+            print(f"  · Finished score corrected ({len(corrected)}): "
+                  f"{', '.join(sorted(corrected)[:6])} — publishing.")
         data["meta"]["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         save(data)
     else:
-        print("  · No fixture or status changes — not republishing data.json.")
+        print("  · No fixture, status or finished-score changes — "
+              "not republishing data.json.")
 
     try:
         push_league_backend(data, with_ranking=False)
