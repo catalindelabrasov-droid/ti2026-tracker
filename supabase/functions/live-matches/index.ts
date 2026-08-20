@@ -657,15 +657,26 @@ function shapeValveLive(g: any) {
 const TI_LEAGUE_ID = Number(Deno.env.get("TI_LEAGUE_ID") ?? "19719");
 
 function buildValveLive(games: any[]) {
+  /* TI ONLY. This is the narrowest useful scope and it is deliberate.
+   *
+   * GetLiveLeagueGames lists EVERY league game on a Valve server, including
+   * amateur and pub-tier leagues, and the OpenDota path's isPro() is only
+   * "has a league id and two team names" - it does not screen those out
+   * either. The first version of this fallback sorted TI first and kept the
+   * rest, which was fine while TI was playing and wrong the moment it stopped:
+   * on 20 Aug, minutes after the first quarterfinal ended, the front page of a
+   * TI tracker showed "Team Hollow_skies37 0-0 Team Kishi Kaisei" as its LIVE
+   * match. That is worse than the honest empty state it replaced - the strip
+   * says "No pro matches live right now" and means it.
+   *
+   * This fallback exists for exactly one job: keep TI visible when OpenDota is
+   * unreachable. It should not invent coverage it was never asked for. Between
+   * TI matches it now returns nothing and the rail is correctly empty. */
+  const ti = _tiLeagueId || TI_LEAGUE_ID;
   return games
-    .filter((g: any) => g && g.league_id
+    .filter((g: any) => g && g.league_id === ti
       && (g.radiant_team?.team_name) && (g.dire_team?.team_name))
-    .sort((a: any, b: any) => {
-      const at = a.league_id === TI_LEAGUE_ID ? 1 : 0;
-      const bt = b.league_id === TI_LEAGUE_ID ? 1 : 0;
-      if (at !== bt) return bt - at;
-      return (b.spectators ?? 0) - (a.spectators ?? 0);
-    })
+    .sort((a: any, b: any) => (b.spectators ?? 0) - (a.spectators ?? 0))
     .slice(0, 25)
     .map(shapeValveLive);
 }
