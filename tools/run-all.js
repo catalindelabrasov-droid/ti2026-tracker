@@ -62,7 +62,7 @@ const pyFiles = fs.readdirSync(DIR).filter((f) => /^test_.*\.py$/.test(f)).sort(
    test_opendota_future_merge.py, the two that stand between the updater and a
    repeat of the fabricated bracket - left `npm test` printing "all 33 test
    files passed" and exiting 0. */
-const EXPECTED_PY = 7;   /* + tools/test_status_publish.py, 20 Aug */
+const EXPECTED_PY = 8;   /* + tools/test_results_fallback.py, 20 Aug */   /* + tools/test_status_publish.py, 20 Aug */
 if (pyFiles.length < EXPECTED_PY) {
   console.error(`Expected at least ${EXPECTED_PY} test_*.py files in tools/, found ${pyFiles.length}.`);
   console.error(`Found: ${pyFiles.join(", ") || "(none)"}`);

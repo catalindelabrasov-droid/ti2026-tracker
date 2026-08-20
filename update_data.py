@@ -399,14 +399,138 @@ def opendota_get(path):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def fetch_opendota_league_games(league_id):
-    """All game rows for one OpenDota league, or [] on any failure."""
+# Our own Valve-backed results endpoint. Overridable so a test can point it at
+# a local stub, and so it can be turned off entirely by setting it empty.
+VALVE_RESULTS_URL = os.environ.get(
+    "VALVE_RESULTS_URL",
+    "https://hqpynfzatnmwvlxdfhsw.functions.supabase.co/valve-results").strip()
+
+
+def fetch_valve_league_games(league_id):
+    """Finished games for one league from Valve, in OpenDota's row shape.
+
+    Returns [] on any failure, because every caller already treats [] as "no
+    data from this source" and the point of this function is to be the thing
+    that runs when the other source failed.
+
+    The Steam key lives in Supabase, not in the GitHub Action, so this goes out
+    through our own edge function - see supabase/functions/valve-results.
+    """
+    if not VALVE_RESULTS_URL:
+        return []
+    url = f"{VALVE_RESULTS_URL}?league={league_id}&limit=25"
     try:
-        rows = opendota_get(f"/leagues/{league_id}/matches")
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"  ! Valve results for {league_id} unreachable: {e}", file=sys.stderr)
+        return []
+    rows = payload.get("rows")
+    if not isinstance(rows, list):
+        # rows is null when Valve itself did not answer, which the endpoint
+        # deliberately distinguishes from "no games".
+        print(f"  ! Valve results for {league_id}: {payload.get('error') or 'no rows'}",
+              file=sys.stderr)
+        return []
+    unnamed = payload.get("unnamed") or 0
+    if unnamed:
+        # Rows without both team names cannot merge - _match_key needs them -
+        # so this is worth seeing rather than silently dropping.
+        print(f"  ! Valve results for {league_id}: {unnamed} row(s) with an "
+              f"unresolved team name.", file=sys.stderr)
+    return rows
+
+
+def fetch_opendota_league_games(league_id):
+    """All game rows for one league, from OpenDota or - failing that - Valve.
+
+    TWO SOURCES, because one was not enough. OpenDota went down twice on 20 Aug
+    2026, the day the TI playoffs began: HTTP 522 from its edge, its own
+    /api/health reporting Postgres at 98.5% and Cassandra at 98.8% of limit. It
+    is the only source of FINISHED games this file has ever had, so while it
+    was down me-r1m2 was played, finished, and never appeared - the bracket
+    read "upcoming" 104 minutes after kickoff.
+
+    The fallback triggers on an EMPTY result, not only on an exception.
+    OpenDota answers 200 with an empty list when its own upstream is sick, and
+    treating that as "no games have been played" is precisely how the outage
+    stayed invisible to this function.
+
+    It is not only a fallback. Valve's series ids are consistent where
+    OpenDota's are not: me-r1m1's two games came back from OpenDota with
+    series_id null and 1132142, so aggregate_series counted one game and
+    published a Bo3 as 0-1 - a score no Bo3 can end on. Valve returns 1132142
+    for both.
+    """
+    rows = []
+    try:
+        got = opendota_get(f"/leagues/{league_id}/matches")
+        rows = got if isinstance(got, list) else []
     except Exception as e:
         print(f"  ! OpenDota league {league_id} unreachable: {e}", file=sys.stderr)
-        return []
-    return rows if isinstance(rows, list) else []
+    if rows:
+        return _repair_series_ids(league_id, rows)
+    valve = fetch_valve_league_games(league_id)
+    if valve:
+        print(f"  · OpenDota gave nothing for league {league_id}; "
+              f"using {len(valve)} game(s) from Valve.")
+    return valve
+
+
+# A game older than this cannot still be mid-series, so a missing series_id on
+# it is settled history rather than something worth a round trip to repair.
+_REPAIR_WINDOW_SEC = 36 * 3600
+
+
+def _repair_series_ids(league_id, rows):
+    """Fill in series ids OpenDota left null, using Valve's.
+
+    NOT a fallback - this runs when OpenDota is perfectly healthy, because the
+    data it returns is wrong in a way that changes what the site publishes.
+
+    On 20 Aug 2026 me-r1m1's two games came back from OpenDota with series_id
+    null and 1132142. aggregate_series keys on series_id when present and on
+    team-pair + day when it is not, so one Bo3 became two series, only one game
+    was counted, and the site published a completed Bo3 as 0-1 - a score no Bo3
+    can end on. Valve returns 1132142 for both games. Verified: with the ids
+    repaired the same rows roll up to Iron Wing 0-2 Team Spirit, which is what
+    was actually played.
+
+    Deliberately narrow:
+      * only games inside _REPAIR_WINDOW_SEC, so it never rewrites settled
+        history;
+      * only rows whose series_id is MISSING - an id OpenDota supplied is left
+        alone, because disagreeing with it is a different and much larger
+        decision than filling a hole;
+      * costs one request, and only when there is actually a hole to fill.
+    """
+    try:
+        cutoff = time.time() - _REPAIR_WINDOW_SEC
+        holes = [r for r in rows
+                 if not r.get("series_id") and (r.get("start_time") or 0) > cutoff]
+        if not holes:
+            return rows
+        valve = fetch_valve_league_games(league_id)
+        if not valve:
+            print(f"  ! {len(holes)} recent game(s) have no series id and Valve "
+                  f"could not supply one; a Bo3 may publish short.", file=sys.stderr)
+            return rows
+        by_id = {str(v.get("match_id")): v.get("series_id")
+                 for v in valve if v.get("series_id")}
+        fixed = 0
+        for r in holes:
+            sid = by_id.get(str(r.get("match_id")))
+            if sid:
+                r["series_id"] = sid
+                fixed += 1
+        if fixed:
+            print(f"  · Repaired {fixed} missing series id(s) from Valve.")
+        return rows
+    except Exception as e:
+        # Never let a repair take down a run that already has its data.
+        print(f"  ! Series id repair failed: {e}", file=sys.stderr)
+        return rows
 
 
 def fetch_opendota_league_teams(league_id):

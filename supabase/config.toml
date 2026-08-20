@@ -28,6 +28,15 @@ verify_jwt = false
 # ?fast=1); authenticated by x-tick-secret.
 verify_jwt = false
 
+[functions.valve-results]
+# Finished league games straight from Valve, in the row shape update_data.py
+# already expects from OpenDota. Called by the GitHub Action, which has no
+# Steam key of its own, and by nothing else. Public because the data is
+# public - it is the same match results the tournament broadcasts - and
+# because the caller is a workflow with no user session. The Steam key stays
+# server-side here and is never exposed in a response.
+verify_jwt = false
+
 [functions.delete-account]
 # NOT public. The function verifies the caller's token itself and deletes only
 # that user — it accepts no id and no email. Left false because the platform's
