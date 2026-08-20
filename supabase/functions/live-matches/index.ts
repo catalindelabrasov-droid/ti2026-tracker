@@ -45,22 +45,37 @@ const DIVISIONS = ["europe", "americas", "se_asia", "china"];
  * as before — the page degrades to today's behaviour rather than emptying. */
 const STEAM_KEY = Deno.env.get("STEAM_API_KEY") ?? "";
 const STEAM_LIVE = "https://api.steampowered.com/IDOTA2Match_570/GetLiveLeagueGames/v1/";
-let _valveIds: { at: number; ids: Set<string> } | null = null;
+let _valve: { at: number; games: any[] } | null = null;
 const VALVE_IDS_TTL = 20_000;
 
-async function valveLiveIds(): Promise<Set<string> | null> {
+/* THE WHOLE PAYLOAD, not just the ids.
+ *
+ * This used to keep only a Set of match ids, because Valve was only ever a
+ * gate over OpenDota's list. On 20 Aug 2026, ninety minutes into the first
+ * playoff quarterfinal, OpenDota went down (HTTP 522 from its edge) and the
+ * live rail emptied — while THIS call was returning the live game, with teams,
+ * kills and series score, the entire time. A gate over an empty list filters
+ * nothing. Throwing the payload away was the reason one upstream outage could
+ * take the feature down. Keep it; buildValveLive() below turns it into rail
+ * entries when OpenDota has nothing to offer. */
+async function valveLiveGames(): Promise<any[] | null> {
   if (!STEAM_KEY) return null;
-  if (_valveIds && Date.now() - _valveIds.at < VALVE_IDS_TTL) return _valveIds.ids;
+  if (_valve && Date.now() - _valve.at < VALVE_IDS_TTL) return _valve.games;
   try {
     const r = await fetch(`${STEAM_LIVE}?key=${encodeURIComponent(STEAM_KEY)}`, { headers: UA });
-    if (!r.ok) return _valveIds?.ids ?? null;
+    if (!r.ok) return _valve?.games ?? null;
     const j = await r.json();
     const games = j?.result?.games;
-    if (!Array.isArray(games)) return _valveIds?.ids ?? null;
-    const ids = new Set(games.map((g: any) => String(g.match_id)));
-    _valveIds = { at: Date.now(), ids };
-    return ids;
-  } catch (_e) { return _valveIds?.ids ?? null; }   // last good answer, else fall back
+    if (!Array.isArray(games)) return _valve?.games ?? null;
+    _valve = { at: Date.now(), games };
+    return games;
+  } catch (_e) { return _valve?.games ?? null; }   // last good answer, else fall back
+}
+
+async function valveLiveIds(): Promise<Set<string> | null> {
+  const games = await valveLiveGames();
+  if (!games) return null;
+  return new Set(games.map((g: any) => String(g.match_id)));
 }
 
 const UA = { "User-Agent": "dota2tileague/1.0" };
@@ -594,6 +609,67 @@ function shapeLive(g: any) {
   };
 }
 
+/* A Valve league game, in the same shape shapeLive produces.
+ *
+ * Two differences from the OpenDota path, both in Valve's favour:
+ *   - the SERIES score comes free (radiant_series_wins / dire_series_wins).
+ *     The OpenDota path has to roll games up per league to get it, which is an
+ *     extra round trip to the API that is, in this scenario, the thing that is
+ *     down.
+ *   - scoreboard is absent while the teams are still drafting, so gameMinute
+ *     is null there, which is exactly what the page already renders as
+ *     "drafting" rather than minute zero.
+ *
+ * Logos come from the OpenDota team cache when it is warm and are null when it
+ * is not. A missing crest is a cosmetic loss; an empty rail is not. */
+function shapeValveLive(g: any) {
+  const lg = _leagues && _leagues[g.league_id];
+  const evName = String((lg && lg.name) || "Pro Match").replace(/\s+/g, " ").trim();
+  const sb = g.scoreboard || {};
+  const mins = sb.duration != null ? Math.max(0, Math.floor(sb.duration / 60)) : null;
+  const rt = g.radiant_team || {};
+  const dt = g.dire_team || {};
+  const tA = _teams && _teams[rt.team_id];
+  const tB = _teams && _teams[dt.team_id];
+  return {
+    id: String(g.match_id), leagueId: g.league_id, event: evName,
+    /* KILLS, not series wins - matching what the OpenDota path puts here.
+       The first version used radiant_series_wins, which is truthful (game one
+       of a Bo3 really is 0-0) but reads as "nothing is happening" next to the
+       35-20 the rail shows the rest of the time. Verified against the live
+       quarterfinal on 20 Aug: series wins gave 0-0 while the game was 39
+       minutes in. The series standing is carried separately below. */
+    teamA: { name: rt.team_name || "Radiant", score: (sb.radiant?.score) ?? 0,
+             logo: tA?.logo ?? null },
+    teamB: { name: dt.team_name || "Dire", score: (sb.dire?.score) ?? 0,
+             logo: tB?.logo ?? null },
+    seriesA: g.radiant_series_wins ?? 0, seriesB: g.dire_series_wins ?? 0,
+    gameMinute: mins, spectators: g.spectators ?? 0, status: "live",
+    watch: "https://www.twitch.tv/search?term=" + encodeURIComponent(evName),
+    stats: `https://www.opendota.com/matches/${g.match_id}`,
+    source: "valve",
+  };
+}
+
+/* TI first, then whatever else Valve says is on a server right now.
+ * Valve reports spectators as 0 for TI, so sorting on that alone would bury
+ * the one event anybody is here for underneath a tier-4 league. */
+const TI_LEAGUE_ID = Number(Deno.env.get("TI_LEAGUE_ID") ?? "19719");
+
+function buildValveLive(games: any[]) {
+  return games
+    .filter((g: any) => g && g.league_id
+      && (g.radiant_team?.team_name) && (g.dire_team?.team_name))
+    .sort((a: any, b: any) => {
+      const at = a.league_id === TI_LEAGUE_ID ? 1 : 0;
+      const bt = b.league_id === TI_LEAGUE_ID ? 1 : 0;
+      if (at !== bt) return bt - at;
+      return (b.spectators ?? 0) - (a.spectators ?? 0);
+    })
+    .slice(0, 25)
+    .map(shapeValveLive);
+}
+
 /* ------------------------------------------------------------ response cache
    This endpoint fans out to OpenDota, whose league-matches call answers in
    ~5.6s and whose /leagues list is a one-megabyte download — measured 8 to 19
@@ -720,7 +796,25 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
 
-    if (url.searchParams.get("fresh") !== "1") {
+    /* ?src=valve — force the OpenDota-is-down path on a healthy day.
+     *
+     * The fallback below only runs when the rail would otherwise be EMPTY,
+     * which means it is exercised exactly when nobody can afford it to be
+     * wrong and never when anyone is watching. It was written during the
+     * 20 Aug outage and OpenDota recovered ten minutes later, leaving it
+     * deployed and unproven - which is worth nothing, and worse than nothing
+     * if it throws, because between rounds an empty rail is the HEALTHY state
+     * and an exception there would take tournaments, ladder and topTeams down
+     * with it.
+     *
+     * So: a switch, and tools/test_valve_fallback.js drives it against
+     * production. It is deliberately excluded from the cache in BOTH
+     * directions - shapeOf() maps unknown params to the default key, so a
+     * forced response that were allowed to be written would be served to every
+     * visitor for the next thirty seconds. */
+    const forceValve = url.searchParams.get("src") === "valve";
+
+    if (!forceValve && url.searchParams.get("fresh") !== "1") {
       const { key, ttl } = shapeOf(url);
       const local = _resp.get(key);
       if (local && Date.now() - local.at < ttl) return servedFromCache(url, local);
@@ -851,10 +945,27 @@ Deno.serve(async (req) => {
       const prev = newestByPair[pair];
       if (!prev || (g.match_id || 0) > (prev.match_id || 0)) newestByPair[pair] = g;
     }
-    const liveMatches = Object.values(newestByPair)
+    let liveMatches = Object.values(newestByPair)
       .sort((a: any, b: any) => (b.spectators ?? 0) - (a.spectators ?? 0))
       .slice(0, 25)
       .map(shapeLive);
+
+    /* FALL BACK TO VALVE WHEN OPENDOTA HAS NOTHING.
+       Not "when OpenDota errored" - when the rail would be EMPTY. Those are
+       different: OpenDota can answer 200 with an empty or stale dump, which is
+       what a 522 upstream of it looks like from here, and the old code treated
+       that as "no matches are being played". Valve is the authority on what is
+       on a game server, so if it lists games and we are about to show none, it
+       wins. Between rounds it lists nothing either and the rail is correctly
+       empty. */
+    let liveSource = "opendota";
+    if (liveMatches.length === 0 || forceValve) {
+      const vgames = await valveLiveGames();
+      if (vgames && vgames.length) {
+        const fromValve = buildValveLive(vgames);
+        if (fromValve.length) { liveMatches = fromValve; liveSource = "valve"; }
+      }
+    }
 
     // Attach the SERIES score to every live match.
     //
@@ -864,7 +975,12 @@ Deno.serve(async (req) => {
     // game, which is the one number anybody actually wants. The same
     // game-to-series roll-up the event detail already does gives it to us, and
     // it is cached, so this costs one OpenDota round trip per live event.
-    const liveLeagueIds = new Set(liveMatches.map((m: any) => m.leagueId));
+    const liveLeagueIds = new Set(
+      liveSource === "valve" ? [] : liveMatches.map((m: any) => m.leagueId));
+    /* Skipped entirely on the Valve path. radiant_series_wins IS the series
+       score, already on each entry, and fetchLeagueDetail would spend an
+       eight-second timeout against the API that is down only to return null
+       and leave those numbers alone. */
     try {
       const ids = [...liveLeagueIds].filter(Boolean) as number[];
       const details = await Promise.all(
@@ -936,7 +1052,7 @@ Deno.serve(async (req) => {
     const tournaments = (_tournaments || []).map((t) => ({ ...t, live: liveLeagueIds.has(t.id) }));
 
     return served(url, JSON.stringify({
-      liveMatches, tournaments, tiPrize: _tiPrize,
+      liveMatches, liveSource, tournaments, tiPrize: _tiPrize,
       tiLeagueId: _tiLeagueId, tiSeries,
       meta: _meta || [],
       topTeams: _topTeams || [], topPlayers: _topPlayers || [],
@@ -975,7 +1091,7 @@ Deno.serve(async (req) => {
     // between rounds there genuinely is nothing live, and refusing to cache
     // then would be wrong. jget returns null on failure and an array on
     // success, so the array is the honest signal for "we actually asked".
-    }), !!_leagues && !!_teams &&
+    }), !forceValve && !!_leagues && !!_teams &&
         Array.isArray(_topTeams) && _topTeams.length > 0 &&
         Array.isArray(_topPlayers) && _topPlayers.length > 0 &&
         Array.isArray(games) &&
