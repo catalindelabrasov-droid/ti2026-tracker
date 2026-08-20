@@ -1064,7 +1064,11 @@ Deno.serve(async (req) => {
 
     return served(url, JSON.stringify({
       liveMatches, liveSource, tournaments, tiPrize: _tiPrize,
-      tiLeagueId: _tiLeagueId, tiSeries,
+      /* Fall back to the constant. _tiLeagueId is discovered from OpenDota's
+         league list, so during an OpenDota outage it is null - and the page's
+         isTIMatch() uses it to decide what belongs in the TI-only strip. Null
+         sends it down a team-name path exactly when the feed is degraded. */
+      tiLeagueId: _tiLeagueId || TI_LEAGUE_ID, tiSeries,
       meta: _meta || [],
       topTeams: _topTeams || [], topPlayers: _topPlayers || [],
       ladder: _ladder || null,

@@ -38,7 +38,7 @@ const record = (f, r, kind) => {
 
 /* ---- JavaScript ---- */
 const jsFiles = fs.readdirSync(DIR).filter((f) => /^test_.*\.js$/.test(f)).sort();
-const EXPECTED_JS = 31;   /* + tools/test_bracket_assertion.js, 19 Aug */
+const EXPECTED_JS = 32;   /* + tools/test_bracket_assertion.js, 19 Aug */
 if (jsFiles.length < EXPECTED_JS) {
   console.error(`Expected at least ${EXPECTED_JS} test_*.js files in tools/, found ${jsFiles.length}.`);
   console.error(`Found: ${jsFiles.join(", ") || "(none)"}`);

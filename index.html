@@ -312,6 +312,8 @@
   .ls-game .ls-sc{font-family:'Oswald',sans-serif;color:var(--aegis-bright);font-weight:600}
   .ls-game .ls-min{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
   .ls-empty{color:var(--ink-faint);font-size:12px}
+  .ls-jump{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline}
+  .ls-jump:hover{opacity:.8}
   /* ---- tab views ---- */
   .tabview{display:none}
   .tabview.on{display:block}
@@ -2644,10 +2646,34 @@ function timeAgo(unixSec){
 }
 
 // The global live-now strip (shown across all tabs)
+//
+// TI ONLY. The feed carries every pro game on a Valve server, and "pro" is a
+// weak test — a league id and two team names. On 20 Aug, minutes after the
+// first quarterfinal ended, the top of a TI tracker read
+//     LIVE  Team Hollow_skies37  0-0  Team Kishi Kaisei  7'
+// which is an amateur league game wearing the same badge as the Grand Final.
+//
+// Those games are not dropped: the Tournaments tab already renders all of them
+// under "Playing right now", which is where someone looking for any pro game
+// to watch would go. This strip sits above every tab and answers one question —
+// is TI on right now — so it should not answer a different one.
 function renderLiveStrip(){
   const el=$("#liveStripScroll"); if(!el) return;
-  const live=(LIVE_FEED.liveMatches||[]);
-  if(!live.length){ el.innerHTML=`<span class="ls-empty">No pro matches live right now</span>`; return; }
+  const all=(LIVE_FEED.liveMatches||[]);
+  const live=all.filter(isTIMatch);
+  const others=all.length-live.length;
+  if(!live.length){
+    // Say what is actually true, and point at where the rest of it lives.
+    el.innerHTML = others
+      ? `<span class="ls-empty">No TI match live right now — <button type="button" class="ls-jump" id="lsToTrn">${others} other pro game${others>1?'s':''} playing</button></span>`
+      : `<span class="ls-empty">No pro matches live right now</span>`;
+    const j=$("#lsToTrn");
+    if(j) j.onclick=()=>{
+      const b=document.querySelector('.hubtab[data-hubtab="tournaments"]');
+      if(b){ b.click(); window.scrollTo({top:0,behavior:"smooth"}); }
+    };
+    return;
+  }
   el.innerHTML=live.slice(0,12).map(m=>{
     const a=m.teamA||{},b=m.teamB||{};
     // seriesA/seriesB is the Bo3 standing. a.score is kills in the game being
