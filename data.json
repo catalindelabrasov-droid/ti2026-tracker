@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-21T16:00:54.904879+00:00",
+    "lastUpdated": "2026-08-21T17:00:56.459734+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3250933,
-    "note": "$1,600,000 base plus $1,650,933 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3253652,
+    "note": "$1,600,000 base plus $1,653,652 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1381613,
+        "amount": 1382769,
         "team": null
       },
       {
         "place": "2",
-        "amount": 422670,
+        "amount": 423024,
         "team": null
       },
       {
         "place": "3",
-        "amount": 292536,
+        "amount": 292781,
         "team": null
       },
       {
         "place": "4",
-        "amount": 195068,
+        "amount": 195232,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 162535,
+        "amount": 162671,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 130002,
+        "amount": 130110,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 58454,
+        "amount": 58503,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 32533,
+        "amount": 32561,
         "team": null
       },
       {
         "place": "16",
-        "amount": 16267,
+        "amount": 16280,
         "team": "TEAM VISION"
       }
     ]
