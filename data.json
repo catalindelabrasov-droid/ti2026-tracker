@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-21T05:00:57.514884+00:00",
+    "lastUpdated": "2026-08-21T05:45:13.619535+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2652,7 +2652,7 @@
             {
               "id": "me-r1m5",
               "bestOf": 3,
-              "status": "live",
+              "status": "completed",
               "scheduled": "2026-08-21T10:00:00+08:00",
               "teamA": {
                 "name": "Iron Wing",
@@ -2660,14 +2660,14 @@
               },
               "teamB": {
                 "name": "BoomBoys",
-                "score": 1
+                "score": 2
               }
             },
             {
               "id": "me-r1m6",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-21T13:45:00+08:00",
+              "scheduled": "2026-08-21T14:00:00+08:00",
               "teamA": {
                 "name": "Team Liquid",
                 "score": null
@@ -2692,7 +2692,7 @@
                 "score": null
               },
               "teamB": {
-                "name": "TBD",
+                "name": "BoomBoys",
                 "score": null
               }
             },
