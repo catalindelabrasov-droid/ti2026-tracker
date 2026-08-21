@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-21T08:45:15.147466+00:00",
+    "lastUpdated": "2026-08-21T09:00:56.165309+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3234747,
-    "note": "$1,600,000 base plus $1,634,747 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3236472,
+    "note": "$1,600,000 base plus $1,636,472 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1374734,
+        "amount": 1375467,
         "team": null
       },
       {
         "place": "2",
-        "amount": 420566,
+        "amount": 420790,
         "team": null
       },
       {
         "place": "3",
-        "amount": 291080,
+        "amount": 291235,
         "team": null
       },
       {
         "place": "4",
-        "amount": 194097,
+        "amount": 194201,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 161726,
+        "amount": 161812,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 129354,
+        "amount": 129423,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 58163,
+        "amount": 58194,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 32371,
+        "amount": 32389,
         "team": null
       },
       {
         "place": "16",
-        "amount": 16186,
+        "amount": 16194,
         "team": "TEAM VISION"
       }
     ]
@@ -2599,7 +2599,7 @@
               "id": "me-r2m1",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-21T17:30:00+08:00",
+              "scheduled": "2026-08-21T18:00:00+08:00",
               "teamA": {
                 "name": "Team Spirit",
                 "score": null
@@ -2613,7 +2613,7 @@
               "id": "me-r2m2",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-21T19:00:00+08:00",
+              "scheduled": "2026-08-21T20:30:00+08:00",
               "teamA": {
                 "name": "Team Yandex",
                 "score": null
