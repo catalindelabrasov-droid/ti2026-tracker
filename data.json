@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-21T13:15:13.713883+00:00",
+    "lastUpdated": "2026-08-21T13:45:16.057106+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2598,7 +2598,7 @@
             {
               "id": "me-r2m1",
               "bestOf": 3,
-              "status": "live",
+              "status": "completed",
               "scheduled": "2026-08-21T18:20:00+08:00",
               "teamA": {
                 "name": "Team Spirit",
@@ -2606,14 +2606,14 @@
               },
               "teamB": {
                 "name": "TEAM VISION",
-                "score": 1
+                "score": 2
               }
             },
             {
               "id": "me-r2m2",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-21T21:45:00+08:00",
+              "scheduled": "2026-08-21T22:00:00+08:00",
               "teamA": {
                 "name": "Team Yandex",
                 "score": null
@@ -2634,7 +2634,7 @@
               "status": "upcoming",
               "scheduled": "2026-08-22T16:00:00+08:00",
               "teamA": {
-                "name": "TBD",
+                "name": "TEAM VISION",
                 "score": null
               },
               "teamB": {
@@ -2702,7 +2702,7 @@
               "status": "upcoming",
               "scheduled": "2026-08-22T10:00:00+08:00",
               "teamA": {
-                "name": "TBD",
+                "name": "Team Spirit",
                 "score": null
               },
               "teamB": {
