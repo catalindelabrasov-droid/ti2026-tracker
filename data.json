@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-22T12:00:53.680226+00:00",
+    "lastUpdated": "2026-08-22T12:45:12.694341+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2631,11 +2631,11 @@
             {
               "id": "me-r4m1",
               "bestOf": 3,
-              "status": "live",
+              "status": "completed",
               "scheduled": "2026-08-22T16:45:00+08:00",
               "teamA": {
                 "name": "TEAM VISION",
-                "score": 1
+                "score": 2
               },
               "teamB": {
                 "name": "Team Yandex",
@@ -2719,7 +2719,7 @@
               "id": "me-r3m1",
               "bestOf": 3,
               "status": "upcoming",
-              "scheduled": "2026-08-22T20:45:00+08:00",
+              "scheduled": "2026-08-22T21:00:00+08:00",
               "teamA": {
                 "name": "BoomBoys",
                 "score": null
@@ -2740,7 +2740,7 @@
               "status": "upcoming",
               "scheduled": "2026-08-23T10:00:00+08:00",
               "teamA": {
-                "name": "TBD",
+                "name": "Team Yandex",
                 "score": null
               },
               "teamB": {
@@ -2758,7 +2758,7 @@
       "status": "upcoming",
       "scheduled": "2026-08-23T13:00:00+08:00",
       "teamA": {
-        "name": "TBD",
+        "name": "TEAM VISION",
         "score": null
       },
       "teamB": {
