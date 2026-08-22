@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-22T15:45:13.497555+00:00",
+    "lastUpdated": "2026-08-22T16:00:52.827458+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3291407,
-    "note": "$1,600,000 base plus $1,691,407 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3295948,
+    "note": "$1,600,000 base plus $1,695,948 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1398814,
+        "amount": 1400744,
         "team": null
       },
       {
         "place": "2",
-        "amount": 427932,
+        "amount": 428523,
         "team": null
       },
       {
         "place": "3",
-        "amount": 296179,
+        "amount": 296587,
         "team": null
       },
       {
         "place": "4",
-        "amount": 197497,
+        "amount": 197769,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 164559,
+        "amount": 164786,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 131620,
+        "amount": 131802,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 59182,
+        "amount": 59264,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 32938,
+        "amount": 32984,
         "team": null
       },
       {
         "place": "16",
-        "amount": 16469,
+        "amount": 16492,
         "team": "TEAM VISION"
       }
     ]
@@ -771,10 +771,56 @@
         "Estar Backs",
         "Hokori",
         "LGD Gaming",
+        "Lindorfitos",
         "PlayTime",
-        "Team Nemesis"
+        "Red Hot Chili Pibble",
+        "Rising Rage",
+        "Team Nemesis",
+        "x5 Gaming"
       ],
       "matches": [
+        {
+          "id": "q19891-1111142",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T14:10:03+00:00",
+          "teamA": {
+            "name": "Lindorfitos",
+            "score": 2
+          },
+          "teamB": {
+            "name": "x5 Gaming",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1111191",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T17:46:01+00:00",
+          "teamA": {
+            "name": "Estar Backs",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rising Rage",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111245",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T20:39:16+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Red Hot Chili Pibble",
+            "score": 0
+          }
+        },
         {
           "id": "q19891-1111264",
           "bestOf": 3,
@@ -786,7 +832,35 @@
           },
           "teamB": {
             "name": "Team Nemesis",
-            "score": 1
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111477",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T16:46:15+00:00",
+          "teamA": {
+            "name": "Hokori",
+            "score": 2
+          },
+          "teamB": {
+            "name": "x5 Gaming",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111539",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T19:32:31+00:00",
+          "teamA": {
+            "name": "LGD Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Lindorfitos",
+            "score": 0
           }
         },
         {
@@ -800,6 +874,20 @@
           },
           "teamB": {
             "name": "PlayTime",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111737",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T14:01:11+00:00",
+          "teamA": {
+            "name": "Lindorfitos",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Red Hot Chili Pibble",
             "score": 2
           }
         },
@@ -856,6 +944,20 @@
           },
           "teamB": {
             "name": "Estar Backs",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1112115",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T18:09:37+00:00",
+          "teamA": {
+            "name": "Red Hot Chili Pibble",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Team Nemesis",
             "score": 1
           }
         },
@@ -1209,13 +1311,259 @@
         "_PowerRangers",
         "enjoy",
         "HULIGANI",
+        "Inner Circle x Insanity",
+        "MODUS",
         "MOUZ",
         "Natus Vincere",
+        "Nigma Galaxy",
+        "RE ARISE",
+        "Rune Eaters",
+        "Team Bald",
+        "Team Spirit",
         "TEAM VISION",
         "Virtus.pro",
+        "VP.Prodigy",
         "Yellow Submarine"
       ],
       "matches": [
+        {
+          "id": "q19892-1113064",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T08:02:16+00:00",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": 2
+          },
+          "teamB": {
+            "name": "VP.Prodigy",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113092",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T10:17:28+00:00",
+          "teamA": {
+            "name": "enjoy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Bald",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113140",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T12:25:10+00:00",
+          "teamA": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rune Eaters",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113209",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T15:01:13+00:00",
+          "teamA": {
+            "name": "MODUS",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Natus Vincere",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113442",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T08:01:03+00:00",
+          "teamA": {
+            "name": "MOUZ",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113450",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T10:22:34+00:00",
+          "teamA": {
+            "name": "Inner Circle x Insanity",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Virtus.pro",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113497",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T14:02:43+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 2
+          },
+          "teamB": {
+            "name": "HULIGANI",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1113566",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-22T18:07:15+00:00",
+          "teamA": {
+            "name": "RE ARISE",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM VISION",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113703",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T08:19:14+00:00",
+          "teamA": {
+            "name": "Team Bald",
+            "score": 2
+          },
+          "teamB": {
+            "name": "VP.Prodigy",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19892-1113711",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T10:44:44+00:00",
+          "teamA": {
+            "name": "MODUS",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rune Eaters",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1113782",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T14:38:24+00:00",
+          "teamA": {
+            "name": "enjoy",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Team Spirit",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113827",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-23T17:06:12+00:00",
+          "teamA": {
+            "name": "Natus Vincere",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1113997",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T08:05:33+00:00",
+          "teamA": {
+            "name": "Inner Circle x Insanity",
+            "score": 0
+          },
+          "teamB": {
+            "name": "MOUZ",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114007",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T10:03:29+00:00",
+          "teamA": {
+            "name": "HULIGANI",
+            "score": 2
+          },
+          "teamB": {
+            "name": "RE ARISE",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1114067",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T13:40:32+00:00",
+          "teamA": {
+            "name": "Virtus.pro",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1114127",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-24T17:07:33+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 0
+          },
+          "teamB": {
+            "name": "TEAM VISION",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114331",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-25T11:00:47+00:00",
+          "teamA": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Spirit",
+            "score": 0
+          }
+        },
         {
           "id": "q19892-1114407",
           "bestOf": 3,
@@ -1223,7 +1571,7 @@
           "scheduled": "2026-06-25T15:00:16+00:00",
           "teamA": {
             "name": "TEAM VISION",
-            "score": 0
+            "score": 2
           },
           "teamB": {
             "name": "Virtus.pro",
@@ -1241,31 +1589,59 @@
           },
           "teamB": {
             "name": "HULIGANI",
-            "score": 1
+            "score": 2
           }
         },
         {
           "id": "q19892-1114615",
           "bestOf": 3,
           "status": "completed",
-          "scheduled": "2026-06-26T11:42:10+00:00",
+          "scheduled": "2026-06-26T10:20:12+00:00",
           "teamA": {
             "name": "MOUZ",
             "score": 0
           },
           "teamB": {
             "name": "Natus Vincere",
-            "score": 1
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114643",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T12:56:08+00:00",
+          "teamA": {
+            "name": "MODUS",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19892-1114716",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-26T16:55:50+00:00",
+          "teamA": {
+            "name": "_PowerRangers",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Team Bald",
+            "score": 0
           }
         },
         {
           "id": "q19892-1114946",
           "bestOf": 3,
           "status": "completed",
-          "scheduled": "2026-06-27T12:29:59+00:00",
+          "scheduled": "2026-06-27T11:00:04+00:00",
           "teamA": {
             "name": "HULIGANI",
-            "score": 1
+            "score": 2
           },
           "teamB": {
             "name": "Natus Vincere",
@@ -1276,28 +1652,42 @@
           "id": "q19892-1115067",
           "bestOf": 3,
           "status": "completed",
-          "scheduled": "2026-06-27T16:57:03+00:00",
+          "scheduled": "2026-06-27T14:39:59+00:00",
           "teamA": {
             "name": "_PowerRangers",
-            "score": 0
+            "score": 1
           },
           "teamB": {
             "name": "Yellow Submarine",
-            "score": 1
+            "score": 2
           }
         },
         {
           "id": "q19892-1115295",
           "bestOf": 3,
           "status": "completed",
-          "scheduled": "2026-06-28T12:05:47+00:00",
+          "scheduled": "2026-06-28T10:59:43+00:00",
           "teamA": {
             "name": "HULIGANI",
-            "score": 1
+            "score": 2
           },
           "teamB": {
             "name": "Virtus.pro",
-            "score": 0
+            "score": 1
+          }
+        },
+        {
+          "id": "q19892-1115384",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-28T14:48:14+00:00",
+          "teamA": {
+            "name": "Nigma Galaxy",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yellow Submarine",
+            "score": 1
           }
         }
       ]
