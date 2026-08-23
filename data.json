@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-23T10:00:52.824155+00:00",
+    "lastUpdated": "2026-08-23T11:00:52.171479+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3342736,
-    "note": "$1,600,000 base plus $1,742,736 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3347064,
+    "note": "$1,600,000 base plus $1,747,064 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1420628,
+        "amount": 1422468,
         "team": null
       },
       {
         "place": "2",
-        "amount": 434606,
+        "amount": 435169,
         "team": null
       },
       {
         "place": "3",
-        "amount": 300797,
+        "amount": 301187,
         "team": null
       },
       {
         "place": "4",
-        "amount": 200577,
+        "amount": 200837,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 167125,
+        "amount": 167341,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 133673,
+        "amount": 133846,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 60105,
+        "amount": 60183,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 33452,
+        "amount": 33495,
         "team": null
       },
       {
         "place": "16",
-        "amount": 16726,
+        "amount": 16748,
         "team": "TEAM VISION"
       }
     ]
@@ -2763,7 +2763,7 @@
       },
       "teamB": {
         "name": "Team Spirit",
-        "score": 1
+        "score": 2
       }
     }
   },
