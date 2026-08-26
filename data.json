@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-26T15:04:39.396211+00:00",
+    "lastUpdated": "2026-08-26T16:02:57.492863+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3615605,
-    "note": "$1,600,000 base plus $2,015,605 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3618568,
+    "note": "$1,600,000 base plus $2,018,568 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1536632,
+        "amount": 1537891,
         "team": null
       },
       {
         "place": "2",
-        "amount": 470029,
+        "amount": 470414,
         "team": null
       },
       {
         "place": "3",
-        "amount": 325404,
+        "amount": 325671,
         "team": null
       },
       {
         "place": "4",
-        "amount": 216936,
+        "amount": 217114,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 180780,
+        "amount": 180928,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 144624,
+        "amount": 144743,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 65081,
+        "amount": 65134,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 36156,
+        "amount": 36186,
         "team": null
       },
       {
         "place": "16",
-        "amount": 18078,
+        "amount": 18093,
         "team": "TEAM VISION"
       }
     ]
@@ -771,56 +771,10 @@
         "Estar Backs",
         "Hokori",
         "LGD Gaming",
-        "Lindorfitos",
         "PlayTime",
-        "Red Hot Chili Pibble",
-        "Rising Rage",
-        "Team Nemesis",
-        "x5 Gaming"
+        "Team Nemesis"
       ],
       "matches": [
-        {
-          "id": "q19891-1111142",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T14:10:03+00:00",
-          "teamA": {
-            "name": "Lindorfitos",
-            "score": 2
-          },
-          "teamB": {
-            "name": "x5 Gaming",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19891-1111191",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T17:46:01+00:00",
-          "teamA": {
-            "name": "Estar Backs",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Rising Rage",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19891-1111245",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T20:39:16+00:00",
-          "teamA": {
-            "name": "Amaru Gaming",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Red Hot Chili Pibble",
-            "score": 0
-          }
-        },
         {
           "id": "q19891-1111264",
           "bestOf": 3,
@@ -836,34 +790,6 @@
           }
         },
         {
-          "id": "q19891-1111477",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T16:46:15+00:00",
-          "teamA": {
-            "name": "Hokori",
-            "score": 2
-          },
-          "teamB": {
-            "name": "x5 Gaming",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19891-1111539",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T19:32:31+00:00",
-          "teamA": {
-            "name": "LGD Gaming",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Lindorfitos",
-            "score": 0
-          }
-        },
-        {
           "id": "q19891-1111574",
           "bestOf": 3,
           "status": "completed",
@@ -874,20 +800,6 @@
           },
           "teamB": {
             "name": "PlayTime",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19891-1111737",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T14:01:11+00:00",
-          "teamA": {
-            "name": "Lindorfitos",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Red Hot Chili Pibble",
             "score": 2
           }
         },
@@ -944,20 +856,6 @@
           },
           "teamB": {
             "name": "Estar Backs",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19891-1112115",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-18T18:09:37+00:00",
-          "teamA": {
-            "name": "Red Hot Chili Pibble",
-            "score": 1
-          },
-          "teamB": {
-            "name": "Team Nemesis",
             "score": 1
           }
         },
