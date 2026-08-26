@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-26T12:01:37.733189+00:00",
+    "lastUpdated": "2026-08-26T13:02:44.628716+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3605978,
-    "note": "$1,600,000 base plus $2,005,978 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3609391,
+    "note": "$1,600,000 base plus $2,009,391 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1532541,
+        "amount": 1533991,
         "team": null
       },
       {
         "place": "2",
-        "amount": 468777,
+        "amount": 469221,
         "team": null
       },
       {
         "place": "3",
-        "amount": 324538,
+        "amount": 324845,
         "team": null
       },
       {
         "place": "4",
-        "amount": 216359,
+        "amount": 216563,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 180299,
+        "amount": 180470,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 144239,
+        "amount": 144376,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 64908,
+        "amount": 64969,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 36060,
+        "amount": 36094,
         "team": null
       },
       {
         "place": "16",
-        "amount": 18030,
+        "amount": 18047,
         "team": "TEAM VISION"
       }
     ]
@@ -563,114 +563,11 @@
         "Vici Gaming"
       ],
       "teams": [
-        "Cloud Rising",
-        "Game Master",
-        "Grey Track",
-        "Roar",
-        "Team Refuser",
         "Team Resilience",
         "Vici Gaming",
         "Yakult Brothers"
       ],
       "matches": [
-        {
-          "id": "q19893-1111036",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T04:03:40+00:00",
-          "teamA": {
-            "name": "Roar",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Refuser",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111061",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T06:35:50+00:00",
-          "teamA": {
-            "name": "Cloud Rising",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Resilience",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111071",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T09:00:19+00:00",
-          "teamA": {
-            "name": "Game Master",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Yakult Brothers",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111084",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T10:59:50+00:00",
-          "teamA": {
-            "name": "Grey Track",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Vici Gaming",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111326",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T04:00:34+00:00",
-          "teamA": {
-            "name": "Cloud Rising",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Roar",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19893-1111355",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T07:54:50+00:00",
-          "teamA": {
-            "name": "Game Master",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Grey Track",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19893-1111363",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T09:50:58+00:00",
-          "teamA": {
-            "name": "Team Refuser",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Resilience",
-            "score": 2
-          }
-        },
         {
           "id": "q19893-1111402",
           "bestOf": 3,
@@ -682,48 +579,6 @@
           },
           "teamB": {
             "name": "Yakult Brothers",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111637",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T04:00:13+00:00",
-          "teamA": {
-            "name": "Game Master",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Refuser",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111656",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T06:38:04+00:00",
-          "teamA": {
-            "name": "Cloud Rising",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Vici Gaming",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111669",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T09:25:58+00:00",
-          "teamA": {
-            "name": "Team Refuser",
-            "score": 1
-          },
-          "teamB": {
-            "name": "Vici Gaming",
             "score": 2
           }
         },
@@ -771,56 +626,10 @@
         "Estar Backs",
         "Hokori",
         "LGD Gaming",
-        "Lindorfitos",
         "PlayTime",
-        "Red Hot Chili Pibble",
-        "Rising Rage",
-        "Team Nemesis",
-        "x5 Gaming"
+        "Team Nemesis"
       ],
       "matches": [
-        {
-          "id": "q19891-1111142",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T14:10:03+00:00",
-          "teamA": {
-            "name": "Lindorfitos",
-            "score": 2
-          },
-          "teamB": {
-            "name": "x5 Gaming",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19891-1111191",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T17:46:01+00:00",
-          "teamA": {
-            "name": "Estar Backs",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Rising Rage",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19891-1111245",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T20:39:16+00:00",
-          "teamA": {
-            "name": "Amaru Gaming",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Red Hot Chili Pibble",
-            "score": 0
-          }
-        },
         {
           "id": "q19891-1111264",
           "bestOf": 3,
@@ -836,34 +645,6 @@
           }
         },
         {
-          "id": "q19891-1111477",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T16:46:15+00:00",
-          "teamA": {
-            "name": "Hokori",
-            "score": 2
-          },
-          "teamB": {
-            "name": "x5 Gaming",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19891-1111539",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T19:32:31+00:00",
-          "teamA": {
-            "name": "LGD Gaming",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Lindorfitos",
-            "score": 0
-          }
-        },
-        {
           "id": "q19891-1111574",
           "bestOf": 3,
           "status": "completed",
@@ -874,20 +655,6 @@
           },
           "teamB": {
             "name": "PlayTime",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19891-1111737",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T14:01:11+00:00",
-          "teamA": {
-            "name": "Lindorfitos",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Red Hot Chili Pibble",
             "score": 2
           }
         },
@@ -944,20 +711,6 @@
           },
           "teamB": {
             "name": "Estar Backs",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19891-1112115",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-18T18:09:37+00:00",
-          "teamA": {
-            "name": "Red Hot Chili Pibble",
-            "score": 1
-          },
-          "teamB": {
-            "name": "Team Nemesis",
             "score": 1
           }
         },
@@ -1312,48 +1065,17 @@
         "enjoy",
         "HULIGANI",
         "Inner Circle x Insanity",
-        "MODUS",
         "MOUZ",
         "Natus Vincere",
         "Nigma Galaxy",
         "RE ARISE",
         "Rune Eaters",
-        "Team Bald",
         "Team Spirit",
         "TEAM VISION",
         "Virtus.pro",
-        "VP.Prodigy",
         "Yellow Submarine"
       ],
       "matches": [
-        {
-          "id": "q19892-1113064",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-21T08:02:16+00:00",
-          "teamA": {
-            "name": "Team Spirit",
-            "score": 2
-          },
-          "teamB": {
-            "name": "VP.Prodigy",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19892-1113092",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-21T10:17:28+00:00",
-          "teamA": {
-            "name": "enjoy",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Team Bald",
-            "score": 0
-          }
-        },
         {
           "id": "q19892-1113140",
           "bestOf": 3,
@@ -1366,20 +1088,6 @@
           "teamB": {
             "name": "Rune Eaters",
             "score": 0
-          }
-        },
-        {
-          "id": "q19892-1113209",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-21T15:01:13+00:00",
-          "teamA": {
-            "name": "MODUS",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Natus Vincere",
-            "score": 2
           }
         },
         {
@@ -1436,34 +1144,6 @@
           "teamB": {
             "name": "TEAM VISION",
             "score": 2
-          }
-        },
-        {
-          "id": "q19892-1113703",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-23T08:19:14+00:00",
-          "teamA": {
-            "name": "Team Bald",
-            "score": 2
-          },
-          "teamB": {
-            "name": "VP.Prodigy",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19892-1113711",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-23T10:44:44+00:00",
-          "teamA": {
-            "name": "MODUS",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Rune Eaters",
-            "score": 1
           }
         },
         {
@@ -1604,34 +1284,6 @@
           "teamB": {
             "name": "Natus Vincere",
             "score": 2
-          }
-        },
-        {
-          "id": "q19892-1114643",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-26T12:56:08+00:00",
-          "teamA": {
-            "name": "MODUS",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Yellow Submarine",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19892-1114716",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-26T16:55:50+00:00",
-          "teamA": {
-            "name": "_PowerRangers",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Team Bald",
-            "score": 0
           }
         },
         {
@@ -1810,12 +1462,7 @@
         "losses": 1
       },
       {
-        "team": "Team Liquid",
-        "wins": 4,
-        "losses": 1
-      },
-      {
-        "team": "Aurora Gaming",
+        "team": "BoomBoys",
         "wins": 3,
         "losses": 2
       },
@@ -1835,12 +1482,22 @@
         "losses": 2
       },
       {
+        "team": "Team Liquid",
+        "wins": 3,
+        "losses": 2
+      },
+      {
         "team": "Team Spirit",
         "wins": 3,
         "losses": 2
       },
       {
-        "team": "BoomBoys",
+        "team": "Team Yandex",
+        "wins": 3,
+        "losses": 2
+      },
+      {
+        "team": "Aurora Gaming",
         "wins": 2,
         "losses": 3
       },
@@ -1851,11 +1508,6 @@
       },
       {
         "team": "Team Resilience",
-        "wins": 2,
-        "losses": 3
-      },
-      {
-        "team": "Team Yandex",
         "wins": 2,
         "losses": 3
       },
@@ -2050,11 +1702,11 @@
             "scheduled": "2026-08-14T10:00:00+08:00",
             "teamA": {
               "name": "Team Yandex",
-              "score": 1
+              "score": 2
             },
             "teamB": {
               "name": "Team Liquid",
-              "score": 2
+              "score": 0
             }
           },
           {
@@ -2125,7 +1777,7 @@
             "scheduled": "2026-08-14T12:30:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": 0
+              "score": 1
             },
             "teamB": {
               "name": "TEAM VISION",
@@ -2139,7 +1791,7 @@
             "scheduled": "2026-08-14T15:25:00+08:00",
             "teamA": {
               "name": "Team Liquid",
-              "score": 1
+              "score": 0
             },
             "teamB": {
               "name": "Team Spirit",
@@ -2270,11 +1922,11 @@
             "scheduled": "2026-08-15T14:10:00+08:00",
             "teamA": {
               "name": "BoomBoys",
-              "score": 0
+              "score": 2
             },
             "teamB": {
               "name": "Aurora Gaming",
-              "score": 2
+              "score": 0
             }
           },
           {
@@ -2545,7 +2197,7 @@
               },
               "teamB": {
                 "name": "Team Spirit",
-                "score": 1
+                "score": 2
               }
             },
             {
