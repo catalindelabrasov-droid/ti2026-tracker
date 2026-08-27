@@ -17,58 +17,58 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-08-27T04:15:23.646404+00:00",
+    "lastUpdated": "2026-08-27T05:01:05.911089+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3641058,
-    "note": "$1,600,000 base plus $2,041,058 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3643141,
+    "note": "$1,600,000 base plus $2,043,141 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
-        "amount": 1547450,
+        "amount": 1548335,
         "team": null
       },
       {
         "place": "2",
-        "amount": 473338,
+        "amount": 473608,
         "team": null
       },
       {
         "place": "3",
-        "amount": 327695,
+        "amount": 327883,
         "team": null
       },
       {
         "place": "4",
-        "amount": 218463,
+        "amount": 218588,
         "team": null
       },
       {
         "place": "5-6",
-        "amount": 182053,
+        "amount": 182157,
         "team": null
       },
       {
         "place": "7-8",
-        "amount": 145642,
+        "amount": 145726,
         "team": null
       },
       {
         "place": "9-13",
-        "amount": 65539,
+        "amount": 65577,
         "team": null
       },
       {
         "place": "14-15",
-        "amount": 36411,
+        "amount": 36431,
         "team": null
       },
       {
         "place": "16",
-        "amount": 18205,
+        "amount": 18216,
         "team": "TEAM VISION"
       }
     ]
@@ -1810,7 +1810,12 @@
         "losses": 1
       },
       {
-        "team": "BoomBoys",
+        "team": "Team Liquid",
+        "wins": 4,
+        "losses": 1
+      },
+      {
+        "team": "Aurora Gaming",
         "wins": 3,
         "losses": 2
       },
@@ -1830,22 +1835,12 @@
         "losses": 2
       },
       {
-        "team": "Team Liquid",
-        "wins": 3,
-        "losses": 2
-      },
-      {
         "team": "Team Spirit",
         "wins": 3,
         "losses": 2
       },
       {
-        "team": "Team Yandex",
-        "wins": 3,
-        "losses": 2
-      },
-      {
-        "team": "Aurora Gaming",
+        "team": "BoomBoys",
         "wins": 2,
         "losses": 3
       },
@@ -1856,6 +1851,11 @@
       },
       {
         "team": "Team Resilience",
+        "wins": 2,
+        "losses": 3
+      },
+      {
+        "team": "Team Yandex",
         "wins": 2,
         "losses": 3
       },
