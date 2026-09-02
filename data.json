@@ -17,14 +17,14 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-02T19:01:03.811564+00:00",
+    "lastUpdated": "2026-09-02T20:00:56.632855+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
   },
   "prizePool": {
-    "total": 3906267,
-    "note": "$1,600,000 base plus $2,306,267 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
+    "total": 3906265,
+    "note": "$1,600,000 base plus $2,306,265 from supporter bundle sales (30% of each bundle). No Battle Pass or Compendium in 2026.",
     "distribution": [
       {
         "place": "1",
@@ -33,7 +33,7 @@
       },
       {
         "place": "2",
-        "amount": 507815,
+        "amount": 507814,
         "team": null
       },
       {
