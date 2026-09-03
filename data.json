@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-03T12:05:03.540027+00:00",
+    "lastUpdated": "2026-09-03T12:45:54.873798+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -2328,7 +2328,7 @@
       },
       "teamB": {
         "name": "Team Spirit",
-        "score": 3
+        "score": 2
       }
     }
   },
