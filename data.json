@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-03T17:05:09.123424+00:00",
+    "lastUpdated": "2026-09-03T18:04:28.383217+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1206,7 +1206,7 @@
           "scheduled": "2026-06-27T11:00:04+00:00",
           "teamA": {
             "name": "HULIGANI",
-            "score": 2
+            "score": 1
           },
           "teamB": {
             "name": "Natus Vincere",
