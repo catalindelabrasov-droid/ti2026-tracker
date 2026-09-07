@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-07T08:01:01.312993+00:00",
+    "lastUpdated": "2026-09-07T09:06:09.519940+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -771,56 +771,10 @@
         "Estar Backs",
         "Hokori",
         "LGD Gaming",
-        "Lindorfitos",
         "PlayTime",
-        "Red Hot Chili Pibble",
-        "Rising Rage",
-        "Team Nemesis",
-        "x5 Gaming"
+        "Team Nemesis"
       ],
       "matches": [
-        {
-          "id": "q19891-1111142",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T14:10:03+00:00",
-          "teamA": {
-            "name": "Lindorfitos",
-            "score": 2
-          },
-          "teamB": {
-            "name": "x5 Gaming",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19891-1111191",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T17:46:01+00:00",
-          "teamA": {
-            "name": "Estar Backs",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Rising Rage",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19891-1111245",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T20:39:16+00:00",
-          "teamA": {
-            "name": "Amaru Gaming",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Red Hot Chili Pibble",
-            "score": 0
-          }
-        },
         {
           "id": "q19891-1111264",
           "bestOf": 3,
@@ -836,34 +790,6 @@
           }
         },
         {
-          "id": "q19891-1111477",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T16:46:15+00:00",
-          "teamA": {
-            "name": "Hokori",
-            "score": 2
-          },
-          "teamB": {
-            "name": "x5 Gaming",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19891-1111539",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T19:32:31+00:00",
-          "teamA": {
-            "name": "LGD Gaming",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Lindorfitos",
-            "score": 0
-          }
-        },
-        {
           "id": "q19891-1111574",
           "bestOf": 3,
           "status": "completed",
@@ -874,20 +800,6 @@
           },
           "teamB": {
             "name": "PlayTime",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19891-1111737",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T14:01:11+00:00",
-          "teamA": {
-            "name": "Lindorfitos",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Red Hot Chili Pibble",
             "score": 2
           }
         },
@@ -944,20 +856,6 @@
           },
           "teamB": {
             "name": "Estar Backs",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19891-1112115",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-18T18:09:37+00:00",
-          "teamA": {
-            "name": "Red Hot Chili Pibble",
-            "score": 1
-          },
-          "teamB": {
-            "name": "Team Nemesis",
             "score": 1
           }
         },
@@ -1326,20 +1224,6 @@
         "Yellow Submarine"
       ],
       "matches": [
-        {
-          "id": "q19892-1113064",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-21T08:02:16+00:00",
-          "teamA": {
-            "name": "Team Spirit",
-            "score": 2
-          },
-          "teamB": {
-            "name": "VP.Prodigy",
-            "score": 0
-          }
-        },
         {
           "id": "q19892-1113092",
           "bestOf": 3,
