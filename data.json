@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-07T11:03:32.801699+00:00",
+    "lastUpdated": "2026-09-07T12:01:48.163780+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -771,10 +771,56 @@
         "Estar Backs",
         "Hokori",
         "LGD Gaming",
+        "Lindorfitos",
         "PlayTime",
-        "Team Nemesis"
+        "Red Hot Chili Pibble",
+        "Rising Rage",
+        "Team Nemesis",
+        "x5 Gaming"
       ],
       "matches": [
+        {
+          "id": "q19891-1111142",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T14:10:03+00:00",
+          "teamA": {
+            "name": "Lindorfitos",
+            "score": 2
+          },
+          "teamB": {
+            "name": "x5 Gaming",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1111191",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T17:46:01+00:00",
+          "teamA": {
+            "name": "Estar Backs",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Rising Rage",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111245",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-15T20:39:16+00:00",
+          "teamA": {
+            "name": "Amaru Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Red Hot Chili Pibble",
+            "score": 0
+          }
+        },
         {
           "id": "q19891-1111264",
           "bestOf": 3,
@@ -790,6 +836,34 @@
           }
         },
         {
+          "id": "q19891-1111477",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T16:46:15+00:00",
+          "teamA": {
+            "name": "Hokori",
+            "score": 2
+          },
+          "teamB": {
+            "name": "x5 Gaming",
+            "score": 0
+          }
+        },
+        {
+          "id": "q19891-1111539",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-16T19:32:31+00:00",
+          "teamA": {
+            "name": "LGD Gaming",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Lindorfitos",
+            "score": 0
+          }
+        },
+        {
           "id": "q19891-1111574",
           "bestOf": 3,
           "status": "completed",
@@ -800,6 +874,20 @@
           },
           "teamB": {
             "name": "PlayTime",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19891-1111737",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-17T14:01:11+00:00",
+          "teamA": {
+            "name": "Lindorfitos",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Red Hot Chili Pibble",
             "score": 2
           }
         },
@@ -856,6 +944,20 @@
           },
           "teamB": {
             "name": "Estar Backs",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19891-1112115",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-18T18:09:37+00:00",
+          "teamA": {
+            "name": "Red Hot Chili Pibble",
+            "score": 1
+          },
+          "teamB": {
+            "name": "Team Nemesis",
             "score": 1
           }
         },
@@ -928,12 +1030,15 @@
       ],
       "teams": [
         "Carstensz Esports",
+        "DIREBORN",
         "Execration",
         "GLYPH",
+        "InterActive Philippines",
         "Mentality Monsters",
         "OG",
         "REKONIX",
-        "TEAM GRIND"
+        "TEAM GRIND",
+        "Yangon Galacticos"
       ],
       "matches": [
         {
@@ -951,6 +1056,20 @@
           }
         },
         {
+          "id": "q19894-1112307",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T04:56:30+00:00",
+          "teamA": {
+            "name": "InterActive Philippines",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yangon Galacticos",
+            "score": 1
+          }
+        },
+        {
           "id": "q19894-1112332",
           "bestOf": 3,
           "status": "completed",
@@ -961,6 +1080,48 @@
           },
           "teamB": {
             "name": "Execration",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1112345",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-19T10:45:38+00:00",
+          "teamA": {
+            "name": "DIREBORN",
+            "score": 0
+          },
+          "teamB": {
+            "name": "GLYPH",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1112581",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T02:00:38+00:00",
+          "teamA": {
+            "name": "Carstensz Esports",
+            "score": 2
+          },
+          "teamB": {
+            "name": "Yangon Galacticos",
+            "score": 1
+          }
+        },
+        {
+          "id": "q19894-1112625",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T05:34:22+00:00",
+          "teamA": {
+            "name": "DIREBORN",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Mentality Monsters",
             "score": 2
           }
         },
@@ -979,6 +1140,20 @@
           }
         },
         {
+          "id": "q19894-1112690",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-20T10:00:58+00:00",
+          "teamA": {
+            "name": "InterActive Philippines",
+            "score": 0
+          },
+          "teamB": {
+            "name": "OG",
+            "score": 2
+          }
+        },
+        {
           "id": "q19894-1113007",
           "bestOf": 3,
           "status": "completed",
@@ -989,6 +1164,20 @@
           },
           "teamB": {
             "name": "TEAM GRIND",
+            "score": 2
+          }
+        },
+        {
+          "id": "q19894-1113036",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T04:06:43+00:00",
+          "teamA": {
+            "name": "InterActive Philippines",
+            "score": 0
+          },
+          "teamB": {
+            "name": "Mentality Monsters",
             "score": 2
           }
         },
