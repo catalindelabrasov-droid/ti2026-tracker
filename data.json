@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-07T09:31:14.587166+00:00",
+    "lastUpdated": "2026-09-07T10:05:53.143937+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -563,168 +563,23 @@
         "Vici Gaming"
       ],
       "teams": [
-        "Cloud Rising",
-        "Game Master",
-        "Grey Track",
-        "Roar",
-        "Team Refuser",
         "Team Resilience",
         "Vici Gaming",
         "Yakult Brothers"
       ],
       "matches": [
         {
-          "id": "q19893-1111036",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T04:03:40+00:00",
-          "teamA": {
-            "name": "Roar",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Refuser",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111061",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T06:35:50+00:00",
-          "teamA": {
-            "name": "Cloud Rising",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Resilience",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111071",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T09:00:19+00:00",
-          "teamA": {
-            "name": "Game Master",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Yakult Brothers",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111084",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-15T10:59:50+00:00",
-          "teamA": {
-            "name": "Grey Track",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Vici Gaming",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111326",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T04:00:34+00:00",
-          "teamA": {
-            "name": "Cloud Rising",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Roar",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19893-1111355",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T07:54:50+00:00",
-          "teamA": {
-            "name": "Game Master",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Grey Track",
-            "score": 0
-          }
-        },
-        {
-          "id": "q19893-1111363",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-16T09:50:58+00:00",
-          "teamA": {
-            "name": "Team Refuser",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Resilience",
-            "score": 2
-          }
-        },
-        {
           "id": "q19893-1111402",
           "bestOf": 3,
           "status": "completed",
-          "scheduled": "2026-06-16T12:36:18+00:00",
+          "scheduled": "2026-06-16T14:21:32+00:00",
           "teamA": {
             "name": "Vici Gaming",
             "score": 0
           },
           "teamB": {
             "name": "Yakult Brothers",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111637",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T04:00:13+00:00",
-          "teamA": {
-            "name": "Game Master",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Team Refuser",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111656",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T06:38:04+00:00",
-          "teamA": {
-            "name": "Cloud Rising",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Vici Gaming",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19893-1111669",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-17T09:25:58+00:00",
-          "teamA": {
-            "name": "Team Refuser",
             "score": 1
-          },
-          "teamB": {
-            "name": "Vici Gaming",
-            "score": 2
           }
         },
         {
@@ -928,15 +783,12 @@
       ],
       "teams": [
         "Carstensz Esports",
-        "DIREBORN",
         "Execration",
         "GLYPH",
-        "InterActive Philippines",
         "Mentality Monsters",
         "OG",
         "REKONIX",
-        "TEAM GRIND",
-        "Yangon Galacticos"
+        "TEAM GRIND"
       ],
       "matches": [
         {
@@ -954,20 +806,6 @@
           }
         },
         {
-          "id": "q19894-1112307",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-19T04:56:30+00:00",
-          "teamA": {
-            "name": "InterActive Philippines",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Yangon Galacticos",
-            "score": 1
-          }
-        },
-        {
           "id": "q19894-1112332",
           "bestOf": 3,
           "status": "completed",
@@ -978,48 +816,6 @@
           },
           "teamB": {
             "name": "Execration",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19894-1112345",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-19T10:45:38+00:00",
-          "teamA": {
-            "name": "DIREBORN",
-            "score": 0
-          },
-          "teamB": {
-            "name": "GLYPH",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19894-1112581",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-20T02:00:38+00:00",
-          "teamA": {
-            "name": "Carstensz Esports",
-            "score": 2
-          },
-          "teamB": {
-            "name": "Yangon Galacticos",
-            "score": 1
-          }
-        },
-        {
-          "id": "q19894-1112625",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-20T05:34:22+00:00",
-          "teamA": {
-            "name": "DIREBORN",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Mentality Monsters",
             "score": 2
           }
         },
@@ -1038,20 +834,6 @@
           }
         },
         {
-          "id": "q19894-1112690",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-20T10:00:58+00:00",
-          "teamA": {
-            "name": "InterActive Philippines",
-            "score": 0
-          },
-          "teamB": {
-            "name": "OG",
-            "score": 2
-          }
-        },
-        {
           "id": "q19894-1113007",
           "bestOf": 3,
           "status": "completed",
@@ -1062,20 +844,6 @@
           },
           "teamB": {
             "name": "TEAM GRIND",
-            "score": 2
-          }
-        },
-        {
-          "id": "q19894-1113036",
-          "bestOf": 3,
-          "status": "completed",
-          "scheduled": "2026-06-21T04:06:43+00:00",
-          "teamA": {
-            "name": "InterActive Philippines",
-            "score": 0
-          },
-          "teamB": {
-            "name": "Mentality Monsters",
             "score": 2
           }
         },
@@ -1224,6 +992,20 @@
         "Yellow Submarine"
       ],
       "matches": [
+        {
+          "id": "q19892-1113064",
+          "bestOf": 3,
+          "status": "completed",
+          "scheduled": "2026-06-21T08:02:16+00:00",
+          "teamA": {
+            "name": "Team Spirit",
+            "score": 2
+          },
+          "teamB": {
+            "name": "VP.Prodigy",
+            "score": 0
+          }
+        },
         {
           "id": "q19892-1113092",
           "bestOf": 3,
@@ -1441,11 +1223,11 @@
           "scheduled": "2026-06-25T11:00:47+00:00",
           "teamA": {
             "name": "Nigma Galaxy",
-            "score": 2
+            "score": 1
           },
           "teamB": {
             "name": "Team Spirit",
-            "score": 0
+            "score": 2
           }
         },
         {
@@ -1673,7 +1455,7 @@
           },
           "teamB": {
             "name": "GamerLegion",
-            "score": 3
+            "score": 2
           }
         }
       ]
@@ -1694,12 +1476,7 @@
         "losses": 1
       },
       {
-        "team": "Team Liquid",
-        "wins": 4,
-        "losses": 1
-      },
-      {
-        "team": "Aurora Gaming",
+        "team": "BoomBoys",
         "wins": 3,
         "losses": 2
       },
@@ -1719,12 +1496,22 @@
         "losses": 2
       },
       {
+        "team": "Team Liquid",
+        "wins": 3,
+        "losses": 2
+      },
+      {
         "team": "Team Spirit",
         "wins": 3,
         "losses": 2
       },
       {
-        "team": "BoomBoys",
+        "team": "Team Yandex",
+        "wins": 3,
+        "losses": 2
+      },
+      {
+        "team": "Aurora Gaming",
         "wins": 2,
         "losses": 3
       },
@@ -1735,11 +1522,6 @@
       },
       {
         "team": "Team Resilience",
-        "wins": 2,
-        "losses": 3
-      },
-      {
-        "team": "Team Yandex",
         "wins": 2,
         "losses": 3
       },
@@ -2610,7 +2392,7 @@
               },
               "teamB": {
                 "name": "Team Spirit",
-                "score": 1
+                "score": 2
               }
             }
           ]
