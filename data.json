@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-08T01:30:21.069145+00:00",
+    "lastUpdated": "2026-09-08T02:02:08.431740+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1796,7 +1796,12 @@
         "losses": 1
       },
       {
-        "team": "BoomBoys",
+        "team": "Team Liquid",
+        "wins": 4,
+        "losses": 1
+      },
+      {
+        "team": "Aurora Gaming",
         "wins": 3,
         "losses": 2
       },
@@ -1816,22 +1821,12 @@
         "losses": 2
       },
       {
-        "team": "Team Liquid",
-        "wins": 3,
-        "losses": 2
-      },
-      {
         "team": "Team Spirit",
         "wins": 3,
         "losses": 2
       },
       {
-        "team": "Team Yandex",
-        "wins": 3,
-        "losses": 2
-      },
-      {
-        "team": "Aurora Gaming",
+        "team": "BoomBoys",
         "wins": 2,
         "losses": 3
       },
@@ -1842,6 +1837,11 @@
       },
       {
         "team": "Team Resilience",
+        "wins": 2,
+        "losses": 3
+      },
+      {
+        "team": "Team Yandex",
         "wins": 2,
         "losses": 3
       },
