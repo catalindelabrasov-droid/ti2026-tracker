@@ -17,7 +17,7 @@
       "groupStageStart": "2026-08-13T10:00:00+08:00",
       "mainEvent": "2026-08-20 to 2026-08-23"
     },
-    "lastUpdated": "2026-09-11T22:04:28.314465+00:00",
+    "lastUpdated": "2026-09-11T23:04:57.630856+00:00",
     "dataSource": "Auto-updated from Liquipedia (CC-BY-SA) + OpenDota",
     "officialUrl": "https://www.dota2.com/esports",
     "note": "Group stage & main event fields fill in as regional qualifiers conclude (June 28)."
@@ -1252,7 +1252,7 @@
           },
           "teamB": {
             "name": "Yellow Submarine",
-            "score": 0
+            "score": 1
           }
         }
       ]
